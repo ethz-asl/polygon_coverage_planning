@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>mav_coverage_graph_solvers</name>
+  <version>0.0.0</version>
+  <description>
+    Solver instances to solve the underlying graph problems.
+  </description>
+  <author>Rik Bähnemann</author>
+  <maintainer email="brik@ethz.ch">Rik Bähnemann</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>catkin_simple</buildtool_depend>
+
+</package>
