@@ -1,16 +1,12 @@
-#ifndef MAV_COVERAGE_PLANNING_GRAPH_GRAPH_BASE_IMPL_H_
-#define MAV_COVERAGE_PLANNING_GRAPH_GRAPH_BASE_IMPL_H_
+#ifndef MAV_COVERAGE_GRAPH_SOLVERS_GRAPH_BASE_IMPL_H_
+#define MAV_COVERAGE_GRAPH_SOLVERS_GRAPH_BASE_IMPL_H_
 
+#include <algorithm>
 #include <set>
 
 #include <glog/logging.h>
-#include <ros/ros.h>
-
-#include "mav_coverage_planning/common.h"
 
 namespace mav_coverage_planning {
-
-const std::string kGraphBasePrefix = kOutputPrefix + "graph_base]: ";
 
 template <class NodeProperty, class EdgeProperty>
 bool GraphBase<NodeProperty, EdgeProperty>::addNode(
@@ -37,7 +33,7 @@ bool GraphBase<NodeProperty, EdgeProperty>::addStartNode(
   if (addNode(node_property)) {
     return true;
   } else {
-    ROS_ERROR_STREAM(kGraphBasePrefix << "Failed adding start node.");
+    LOG(ERROR) << "Failed adding start node.";
     return false;
   }
 }
@@ -50,7 +46,7 @@ bool GraphBase<NodeProperty, EdgeProperty>::addGoalNode(
   if (addNode(node_property)) {
     return true;
   } else {
-    ROS_ERROR_STREAM(kGraphBasePrefix << "Failed adding goal node.");
+    LOG(ERROR) << "Failed adding goal node.";
     return false;
   }
 }
@@ -75,7 +71,7 @@ void GraphBase<NodeProperty, EdgeProperty>::clearEdges() {
 
 template <class NodeProperty, class EdgeProperty>
 bool GraphBase<NodeProperty, EdgeProperty>::create() {
-  ROS_ERROR_STREAM(kGraphBasePrefix << "create() not implemented.");
+  LOG(ERROR) << "create() not implemented.";
   return false;
 }
 
@@ -111,8 +107,8 @@ bool GraphBase<NodeProperty, EdgeProperty>::getEdgeCost(const EdgeId& edge_id,
     *cost = graph_.at(edge_id.first).at(edge_id.second);
     return true;
   } else {
-    ROS_ERROR_STREAM(kGraphBasePrefix << "Edge from " << edge_id.first << " to "
-                                      << edge_id.second << " does not exist.");
+    LOG(ERROR) << "Edge from " << edge_id.first << " to " << edge_id.second
+               << " does not exist.";
     *cost = -1.0;
     return false;
   }
@@ -124,8 +120,7 @@ const NodeProperty* GraphBase<NodeProperty, EdgeProperty>::getNodeProperty(
   if (nodePropertyExists(node_id)) {
     return &(node_properties_.at(node_id));
   } else {
-    ROS_ERROR_STREAM(kGraphBasePrefix << "Cannot access node property "
-                                      << node_id << ".");
+    LOG(ERROR) << "Cannot access node property " << node_id << ".";
     return nullptr;
   }
 }
@@ -137,9 +132,8 @@ GraphBase<NodeProperty, EdgeProperty>::GraphBase::getEdgeProperty(
   if (edgePropertyExists(edge_id)) {
     return &(edge_properties_.at(edge_id));
   } else {
-    ROS_ERROR_STREAM(kGraphBasePrefix << "Cannot access edge property from "
-                                      << edge_id.first << " to "
-                                      << edge_id.second << ".");
+    LOG(ERROR) << "Cannot access edge property from " << edge_id.first << " to "
+               << edge_id.second << ".";
     return nullptr;
   }
 }
@@ -207,7 +201,7 @@ bool GraphBase<NodeProperty, EdgeProperty>::solveDijkstra(
 template <class NodeProperty, class EdgeProperty>
 bool GraphBase<NodeProperty, EdgeProperty>::calculateHeuristic(
     size_t goal, Heuristic* heuristic) const {
-  ROS_ERROR_STREAM(kGraphBasePrefix << "Heuristic not implemented.");
+  LOG(ERROR) << "Heuristic not implemented.";
   return false;
 }
 
@@ -291,7 +285,7 @@ bool GraphBase<NodeProperty, EdgeProperty>::solveAStar(
 
 template <class NodeProperty, class EdgeProperty>
 bool GraphBase<NodeProperty, EdgeProperty>::addEdges() {
-  ROS_ERROR_STREAM(kGraphBasePrefix << "addEdges not implemented.");
+  LOG(ERROR) << "addEdges not implemented.";
   return false;
 }
 
@@ -342,4 +336,4 @@ GraphBase<NodeProperty, EdgeProperty>::getAdjacencyMatrix() const {
 
 }  // namespace mav_coverage_planning
 
-#endif  // MAV_COVERAGE_PLANNING_GRAPH_GRAPH_BASE_IMPL_H_
+#endif  // MAV_COVERAGE_GRAPH_SOLVERS_GRAPH_BASE_IMPL_H_

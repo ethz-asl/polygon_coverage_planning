@@ -1,5 +1,5 @@
-#ifndef MAV_COVERAGE_PLANNING_GRAPH_GRAPH_BASE_H_
-#define MAV_COVERAGE_PLANNING_GRAPH_GRAPH_BASE_H_
+#ifndef MAV_COVERAGE_GRAPH_SOLVERS_GRAPH_BASE_H_
+#define MAV_COVERAGE_GRAPH_SOLVERS_GRAPH_BASE_H_
 
 #include <limits>
 #include <map>
@@ -108,7 +108,6 @@ class GraphBase {
   Solution reconstructSolution(const std::map<size_t, size_t>& came_from,
                                size_t current) const;
 
-
   Graph graph_;
   // Map to store all node properties. Key is the graph node id.
   NodeProperties node_properties_;
@@ -120,6 +119,6 @@ class GraphBase {
 };
 }  // namespace mav_coverage_planning
 
-#include "mav_coverage_planning/graph/impl/graph_base_impl.h"
+#include "mav_coverage_graph_solvers/impl/graph_base_impl.h"
 
-#endif  // MAV_COVERAGE_PLANNING_GRAPH_GRAPH_BASE_H_
+#endif  // MAV_COVERAGE_GRAPH_SOLVERS_GRAPH_BASE_H_

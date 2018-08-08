@@ -2,7 +2,7 @@
 
 #include <glog/logging.h>
 
-namespace mav_coverage_planner {
+namespace mav_coverage_planning {
 
 void getAllCombinationsOfKElementsFromN(
     const std::vector<size_t>& sorted_elements, int k,
@@ -41,4 +41,4 @@ void getAllCombinationsOfKElementsFromN(
   }
 }
 
-}  // namespace mav_coverage_planner
+}  // namespace mav_coverage_planning

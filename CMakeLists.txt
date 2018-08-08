@@ -49,6 +49,7 @@ cs_add_library(${NATIVE_HELPER}
 
 cs_add_library(${PROJECT_NAME}
   src/combinatorics.cc
+  src/boolean_lattice.cc
 )
 target_link_libraries(${PROJECT_NAME} ${MONO_LIBRARIES})
 

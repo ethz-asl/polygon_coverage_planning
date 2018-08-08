@@ -2,9 +2,8 @@
 #define MAV_COVERAGE_PLANNING_GRAPH_BOOLEAN_LATTICE_H_
 
 #include <set>
-#include <numeric>
 
-#include "mav_coverage_planning/graph/graph_base.h"
+#include "mav_coverage_graph_solvers/graph_base.h"
 
 namespace mav_coverage_planning {
 namespace boolean_lattice {

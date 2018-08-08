@@ -2,7 +2,7 @@
 
 #include "mav_coverage_graph_solvers/combinatorics.h"
 
-using namespace mav_coverage_planner;
+using namespace mav_coverage_planning;
 
 TEST(MathTest, KElementsFromNTest) {
   std::vector<size_t> sorted_elements = {0, 1, 2};

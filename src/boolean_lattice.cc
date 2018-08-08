@@ -2,16 +2,12 @@
 #include <numeric>
 
 #include <glog/logging.h>
-#include <ros/ros.h>
 
-#include "mav_coverage_planning/common.h"
-#include "mav_coverage_planning/graph/boolean_lattice.h"
-#include "mav_coverage_planning/math.h"
+#include "mav_coverage_graph_solvers/boolean_lattice.h"
+#include "mav_coverage_graph_solvers/combinatorics.h"
 
 namespace mav_coverage_planning {
 namespace boolean_lattice {
-
-const std::string kPrefix = kOutputPrefix + "boolean_lattice]: ";
 
 void BooleanLattice::clear() {
   GraphBase::clear();
@@ -38,9 +34,8 @@ bool BooleanLattice::create() {
     }
   }
 
-  ROS_INFO_STREAM(kPrefix << "Successfully created boolean lattice with "
-                           << graph_.size() << " nodes and "
-                           << edge_properties_.size() << " edges.");
+  LOG(INFO) << "Successfully created boolean lattice with " << graph_.size()
+            << " nodes and " << edge_properties_.size() << " edges.";
 
   is_created_ = true;
   return graph_.size() == std::exp2(num_clusters_)  // 2^n elements.
@@ -52,7 +47,7 @@ bool BooleanLattice::create() {
 
 bool BooleanLattice::addEdges() {
   if (graph_.empty()) {
-    ROS_ERROR_STREAM(kPrefix << "Cannot add edges to an empty graph.");
+    LOG(ERROR) << "Cannot add edges to an empty graph.";
     return false;
   }
 
@@ -92,7 +87,7 @@ bool BooleanLattice::isConnected(const EdgeId& edge_id) {
 
 bool BooleanLattice::addStartNode(const NodeProperty& node_property) {
   if (!is_created_) {
-    ROS_ERROR_STREAM(kPrefix << "create() needs to be called first.");
+    LOG(ERROR) << "create() needs to be called first.";
     return false;
   }
 
@@ -121,7 +116,7 @@ bool BooleanLattice::addStartNode() { return addStartNode(NodeProperty()); }
 
 bool BooleanLattice::addGoalNode(const NodeProperty& node_property) {
   if (!is_created_) {
-    ROS_ERROR_STREAM(kPrefix << "create() needs to be called first.");
+    LOG(ERROR) << "create() needs to be called first.";
     return false;
   }
 
