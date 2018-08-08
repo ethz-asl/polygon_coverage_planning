@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
-#include "mav_coverage_planning/gk_ma/native_helper/NativeHelper.h"
+#include "mav_coverage_graph_solvers/gk_ma/native_helper/NativeHelper.h"
 
 int clusterCount = 0;
 int vertexCount = 0;

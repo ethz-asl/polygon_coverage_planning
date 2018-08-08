@@ -1,5 +1,5 @@
-#include "mav_coverage_planning/gk_ma/native_helper/Insert.h"
-#include "mav_coverage_planning/gk_ma/native_helper/NativeHelper.h"
+#include "mav_coverage_graph_solvers/gk_ma/native_helper/Insert.h"
+#include "mav_coverage_graph_solvers/gk_ma/native_helper/NativeHelper.h"
 #include <stdio.h>
 #include <string.h>
 #include <limits.h>

@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
-#include "mav_coverage_planning/gk_ma/native_helper/KOpt.h"
-#include "mav_coverage_planning/gk_ma/native_helper/NativeHelper.h"
+#include "mav_coverage_graph_solvers/gk_ma/native_helper/KOpt.h"
+#include "mav_coverage_graph_solvers/gk_ma/native_helper/NativeHelper.h"
 
 int TwoOptFullSym(int *solution)
 {

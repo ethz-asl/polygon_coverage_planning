@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
-#include "mav_coverage_planning/gk_ma/native_helper/NativeHelper.h"
+#include "mav_coverage_graph_solvers/gk_ma/native_helper/NativeHelper.h"
 
 int *solution;
 int clusterSequence[MAX_CLUSTER_COUNT];
