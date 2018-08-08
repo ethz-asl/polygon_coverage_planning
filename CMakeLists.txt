@@ -52,6 +52,16 @@ cs_add_library(${PROJECT_NAME}
 )
 target_link_libraries(${PROJECT_NAME} ${MONO_LIBRARIES})
 
+#########
+# TESTS #
+#########
+catkin_add_gtest(test_combinatorics
+  test/combinatorics-test.cpp
+)
+target_link_libraries(test_combinatorics
+                      ${PROJECT_NAME})
+
+
 ##########
 # EXPORT #
 ##########
