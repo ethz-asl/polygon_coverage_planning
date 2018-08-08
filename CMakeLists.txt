@@ -47,6 +47,11 @@ cs_add_library(${NATIVE_HELPER}
   src/native_helper/Swap.cpp
 )
 
+cs_add_library(${PROJECT_NAME}
+  src/combinatorics.cc
+)
+target_link_libraries(${PROJECT_NAME} ${MONO_LIBRARIES})
+
 ##########
 # EXPORT #
 ##########
