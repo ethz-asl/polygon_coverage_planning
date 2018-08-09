@@ -1,0 +1,10 @@
+cost_function_type: 1 # [0: Euclidean Distance, 1: Time]
+v_max: 2.0 # [m/s] when minimizing time
+a_max: 2.0 # [m/s^2] when minimizing time
+
+latch_topic: true
+
+local_frame_id: 'odom'
+
+publish_plan_points_on_planning_complete: false
+publish_visualization_on_planning_complete: true

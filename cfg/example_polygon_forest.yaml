@@ -1,0 +1,94 @@
+# A planning_msgs/PolygonWithHoles.msg to describe a forest.
+# The planner always picks the largest z as the fixed altitude it plans in.
+polygon:
+  header:
+    seq: 0
+    stamp:
+      secs: 0
+      nsecs: 0
+    frame_id: 'world'
+  altitude: 5.0
+  polygon:
+    hull:
+      points:
+      - x: 0.0
+        y: 0.0
+      - x: 90.0
+        y: 0.0
+      - x: 90.0
+        y: 150.0
+      - x: 0.0
+        y: 150.0
+    holes:
+      - points:
+        - x: 20.0
+          y: 20.0
+        - x: 40.0
+          y: 20.0
+        - x: 40.0
+          y: 40.0
+        - x: 20.0
+          y: 40.0
+      - points:
+        - x: 50.0
+          y: 20.0
+        - x: 70.0
+          y: 20.0
+        - x: 70.0
+          y: 40.0
+        - x: 50.0
+          y: 40.0
+      - points:
+        - x: 30.0
+          y: 50.0
+        - x: 50.0
+          y: 50.0
+        - x: 50.0
+          y: 70.0
+        - x: 30.0
+          y: 70.0
+      - points:
+        - x: 60.0
+          y: 50.0
+        - x: 80.0
+          y: 50.0
+        - x: 80.0
+          y: 70.0
+        - x: 60.0
+          y: 70.0
+      - points:
+        - x: 10.0
+          y: 80.0
+        - x: 30.0
+          y: 80.0
+        - x: 30.0
+          y: 100.0
+        - x: 10.0
+          y: 100.0
+      - points:
+        - x: 40.0
+          y: 80.0
+        - x: 60.0
+          y: 80.0
+        - x: 60.0
+          y: 100.0
+        - x: 40.0
+          y: 100.0
+      - points:
+        - x: 20.0
+          y: 110.0
+        - x: 40.0
+          y: 110.0
+        - x: 40.0
+          y: 130.0
+        - x: 20.0
+          y: 130.0
+      - points:
+        - x: 50.0
+          y: 110.0
+        - x: 70.0
+          y: 110.0
+        - x: 70.0
+          y: 130.0
+        - x: 50.0
+          y: 130.0
