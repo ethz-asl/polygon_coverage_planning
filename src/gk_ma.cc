@@ -1,4 +1,4 @@
-#include "mav_coverage_planning/gk_ma.h"
+#include "mav_coverage_graph_solvers/gk_ma.h"
 
 #include <mono/jit/jit.h>
 #include <mono/metadata/assembly.h>
@@ -10,7 +10,7 @@ namespace mav_coverage_planning {
 namespace gk_ma {
 
 const std::string kFile = "GkMa.exe";
-const std::string kPackageName = "mav_coverage_planning";
+const std::string kPackageName = "mav_coverage_graph_solvers";
 const std::string kPackagePath = ros::package::getPath(kPackageName);
 const std::string kCatkinPath = kPackagePath.substr(0, kPackagePath.find("/src/"));
 const std::string kLibraryPath = kCatkinPath + "/devel/lib";

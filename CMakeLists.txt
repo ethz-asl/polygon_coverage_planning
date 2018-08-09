@@ -48,6 +48,7 @@ cs_add_library(${NATIVE_HELPER}
 )
 
 cs_add_library(${PROJECT_NAME}
+  src/gk_ma.cc
   src/combinatorics.cc
   src/boolean_lattice.cc
 )
