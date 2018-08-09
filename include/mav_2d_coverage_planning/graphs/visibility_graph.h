@@ -5,8 +5,8 @@
 
 #include <mav_coverage_graph_solvers/graph_base.h>
 
+#include "mav_2d_coverage_planning/definitions.h"
 #include "mav_2d_coverage_planning/polygon.h"
-#include "mav_2d_coverage_planning/cost_functions/euclidean_cost_function.h"
 
 namespace mav_coverage_planning {
 namespace visibility_graph {
@@ -16,7 +16,7 @@ struct NodeProperty {
   NodeProperty(const Point_2& coordinates, const Polygon& visibility)
       : coordinates(coordinates), visibility(visibility) {}
   Point_2 coordinates;  // The 2D coordinates.
-  Polygon visibility;           // The visibile polygon from the vertex.
+  Polygon visibility;   // The visibile polygon from the vertex.
 };
 
 struct EdgeProperty {};
@@ -25,9 +25,9 @@ struct EdgeProperty {};
 // http://www.david-gouveia.com/portfolio/pathfinding-on-a-2d-polygonal-map/
 class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
  public:
-    // Creates an undirected, weighted visibility graph.
-  VisibilityGraph(const Polygon& polygon);
-  VisibilityGraph();
+  // Creates an undirected, weighted visibility graph.
+  VisibilityGraph(const Polygon& polygon,
+                  const SegmentCostFunctionType& cost_function);
 
   virtual bool create() override;
 
@@ -39,19 +39,17 @@ class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
              std::vector<Point_2>* waypoints) const;
   // Same as solve but provide a precomputed visibility graph for the polygon.
   // Note: Start and goal need to be contained in the polygon_.
-  bool solve(const Point_2& start,
-             const Polygon& start_visibility_polygon,
-             const Point_2& goal,
-             const Polygon& goal_visibility_polygon,
+  bool solve(const Point_2& start, const Polygon& start_visibility_polygon,
+             const Point_2& goal, const Polygon& goal_visibility_polygon,
              std::vector<Point_2>* waypoints) const;
 
   // Convenience function: addtionally adds original start and goal to shortest
   // path, if they were outside of polygon.
-  bool solveWithOutsideStartAndGoal(const Point_2& start,
-                                    const Point_2& goal,
+  bool solveWithOutsideStartAndGoal(const Point_2& start, const Point_2& goal,
                                     std::vector<Point_2>* waypoints) const;
   // Given a solution, get the concatenated 2D waypoints.
-  bool getWaypoints(const Solution& solution, std::vector<Point_2>* waypoints) const;
+  bool getWaypoints(const Solution& solution,
+                    std::vector<Point_2>* waypoints) const;
 
   inline Polygon getPolygon() const { return polygon_; }
 
@@ -65,10 +63,8 @@ class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
   virtual bool calculateHeuristic(size_t goal,
                                   Heuristic* heuristic) const override;
 
-  // The polygon.
   Polygon polygon_;
-  // The cost function.
-  EuclideanCostFunction cost_function_;
+  SegmentCostFunctionType cost_function_;
 };
 
 }  // namespace visibility_graph

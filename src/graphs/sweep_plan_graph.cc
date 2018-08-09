@@ -12,7 +12,7 @@ const std::string kPrefix = kOutputPrefix + "sweep_plan_graph]: ";
 bool NodeProperty::isNonOptimal(
     const visibility_graph::VisibilityGraph& visibility_graph,
     const std::vector<NodeProperty>& node_properties,
-    const CostFunction& cost_function) const {
+    const EuclideanCostFunction& cost_function) const {
   if (waypoints.empty()) {
     ROS_WARN_STREAM(kPrefix << "Node does not have waypoints.");
     return false;
@@ -24,7 +24,7 @@ bool NodeProperty::isNonOptimal(
       continue;
     }
     if (node_property.cluster == cluster) {
-      StdVector2d path_front_front, path_back_back;
+      std::vector<Point_2> path_front_front, path_back_back;
       if (!visibility_graph.solve(
               waypoints.front(), visibility_polygons.front(),
               node_property.waypoints.front(),
@@ -51,7 +51,7 @@ bool SweepPlanGraph::create() {
   // Create sweep plans for each cluster.
   for (size_t cluster = 0; cluster < polygon_clusters_.size(); ++cluster) {
     // Compute all cluster sweeps.
-    std::vector<StdVector2d> cluster_sweeps;
+    std::vector<std::vector<Point_2>> cluster_sweeps;
     if (!computeLineSweepPlans(polygon_clusters_[cluster], &cluster_sweeps)) {
       ROS_ERROR_STREAM(kPrefix << "Cannot create all sweep plans for cluster "
                                << cluster);
@@ -96,7 +96,7 @@ bool SweepPlanGraph::create() {
 }
 
 bool SweepPlanGraph::computeLineSweepPlans(
-    const Polygon& polygon, std::vector<StdVector2d>* cluster_sweeps) const {
+    const Polygon& polygon, std::vector<std::vector<Point_2>>* cluster_sweeps) const {
   CHECK_NOTNULL(cluster_sweeps);
   cluster_sweeps->clear();
   cluster_sweeps->resize(2 * polygon.getNumVertices());
@@ -172,7 +172,7 @@ bool SweepPlanGraph::getClusters(
   return true;
 }
 
-bool SweepPlanGraph::createNodeProperty(size_t cluster, StdVector2d* waypoints,
+bool SweepPlanGraph::createNodeProperty(size_t cluster, std::vector<Point_2>* waypoints,
                                         NodeProperty* node) const {
   CHECK_NOTNULL(waypoints);
   CHECK_NOTNULL(node);
@@ -241,7 +241,7 @@ bool SweepPlanGraph::computeEdge(const EdgeId& edge_id,
     return false;
   }
 
-  StdVector2d shortest_path;
+  std::vector<Point_2> shortest_path;
   if (!visibility_graph_.solve(from_node_property->waypoints.back(),
                                from_node_property->visibility_polygons.back(),
                                to_node_property->waypoints.front(),
@@ -288,9 +288,9 @@ bool SweepPlanGraph::isConnected(const EdgeId& edge_id) const {
                   goal_idx_);  // No direct connection between start and goal.
 }
 
-bool SweepPlanGraph::solve(const Eigen::Vector2d& start,
-                           const Eigen::Vector2d& goal,
-                           StdVector2d* waypoints) const {
+bool SweepPlanGraph::solve(const Point_2& start,
+                           const Point_2& goal,
+                           std::vector<Point_2>* waypoints) const {
   CHECK_NOTNULL(waypoints);
   waypoints->clear();
 
@@ -359,7 +359,7 @@ bool SweepPlanGraph::solve(const Eigen::Vector2d& start,
 }
 
 bool SweepPlanGraph::getWaypoints(const Solution& solution,
-                                  StdVector2d* waypoints) const {
+                                  std::vector<Point_2>* waypoints) const {
   CHECK_NOTNULL(waypoints);
   waypoints->clear();
 
@@ -392,7 +392,7 @@ bool SweepPlanGraph::getWaypoints(const Solution& solution,
 }
 
 bool SweepPlanGraph::computeStartAndGoalVisibility(
-    const Polygon& polygon, StdVector2d* sweep,
+    const Polygon& polygon, std::vector<Point_2>* sweep,
     std::vector<Polygon>* visibility_polygons) const {
   CHECK_NOTNULL(sweep);
   CHECK_NOTNULL(visibility_polygons);
@@ -417,7 +417,7 @@ bool SweepPlanGraph::computeStartAndGoalVisibility(
 }
 
 bool SweepPlanGraph::computeVisibility(const Polygon& polygon,
-                                       Eigen::Vector2d* vertex,
+                                       Point_2* vertex,
                                        Polygon* visibility_polygon) const {
   CHECK_NOTNULL(vertex);
   CHECK_NOTNULL(visibility_polygon);
