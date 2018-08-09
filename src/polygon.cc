@@ -9,6 +9,7 @@
 #include <CGAL/Partition_is_valid_traits_2.h>
 #include <CGAL/Partition_traits_2.h>
 #include <CGAL/Polygon_2_algorithms.h>
+#include <CGAL/Triangle_2.h>
 #include <CGAL/Triangular_expansion_visibility_2.h>
 #include <CGAL/connect_holes.h>
 #include <CGAL/create_offset_polygons_from_polygon_with_holes_2.h>
@@ -454,9 +455,14 @@ bool Polygon::computeVisibilityPolygon(const Point_2& query_point,
                                        Polygon* visibility_polygon) const {
   CHECK_NOTNULL(visibility_polygon);
 
+  // Preconditions.
   if (!pointInPolygon(query_point)) {
     LOG(ERROR) << "Query point " << query_point
                << " outside of polygon. Cannot create visibility polygon.";
+    return false;
+  }
+  if (!is_strictly_simple_) {
+    LOG(ERROR) << "Polygon not strictly simple.";
     return false;
   }
 
@@ -526,7 +532,8 @@ bool Polygon::computeVisibilityPolygon(const Point_2& query_point,
                   &pl_result))) {
     // Located on halfedge.
     // Find halfedge that has polygon interior as face.
-    VisibilityArrangement::Halfedge_const_handle he = (*e)->face() == main_face ? (*e) : (*e)->twin();
+    VisibilityArrangement::Halfedge_const_handle he =
+        (*e)->face() == main_face ? (*e) : (*e)->twin();
     fh = tev.compute_visibility(query_point, he, visibility_arr);
   } else {
     LOG(ERROR) << "Cannot locate query point on arrangement.";
@@ -551,6 +558,49 @@ bool Polygon::computeVisibilityPolygon(const Point_2& query_point,
   } while (++curr != fh->outer_ccb());
 
   *visibility_polygon = Polygon(vis_poly_2);
+
+  return true;
+}
+
+bool Polygon::getConcaveOuterBoundaryVertices(
+    std::vector<VertexConstCirculator>* concave_vertices) const {
+  CHECK_NOTNULL(concave_vertices);
+  concave_vertices->clear();
+
+  VertexConstCirculator vit = polygon_.outer_boundary().vertices_circulator();
+  do {
+    K::Triangle_2 triangle(*std::prev(vit), *vit, *std::next(vit));
+    CGAL::Orientation orientation = triangle.orientation();
+    if (orientation == CGAL::CLOCKWISE) {
+      concave_vertices->push_back(vit);
+    } else if (orientation == CGAL::COLLINEAR) {  // Precondition.
+      LOG(ERROR) << "Polygon is not simplfied.";
+      return false;
+    }
+  } while (++vit != polygon_.outer_boundary().vertices_circulator());
+
+  return true;
+}
+
+bool Polygon::getConvexHoleVertices(
+    std::vector<VertexConstCirculator>* convex_vertices) const {
+  CHECK_NOTNULL(convex_vertices);
+  convex_vertices->clear();
+
+  for (PolygonWithHoles::Hole_const_iterator hit = polygon_.holes_begin();
+       hit != polygon_.holes_end(); ++hit) {
+    VertexConstCirculator vit = hit->vertices_circulator();
+    do {
+      K::Triangle_2 triangle(*std::prev(vit), *vit, *std::next(vit));
+      CGAL::Orientation orientation = triangle.orientation();
+      if (orientation == CGAL::CLOCKWISE) {
+        convex_vertices->push_back(vit);
+      } else if (orientation == CGAL::COLLINEAR) {  // Precondition.
+        LOG(ERROR) << "Polygon hole is not simplfied.";
+        return false;
+      }
+    } while (++vit != hit->vertices_circulator());
+  }
 
   return true;
 }

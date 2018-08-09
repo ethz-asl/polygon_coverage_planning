@@ -210,7 +210,6 @@ TEST(PolygonTest, computeVisibilityPolygon) {
   EXPECT_EQ(Point_2(0.5, 1.25), *vit++);
   // EXPECT_EQ(Point_2(0.2, 2), *vit++); Skip inexact.
 
-
   // Query on hole halfedge.
   query = Point_2(0.75, 1.25);
   EXPECT_TRUE(rectangle_in_rectangle.computeVisibilityPolygon(

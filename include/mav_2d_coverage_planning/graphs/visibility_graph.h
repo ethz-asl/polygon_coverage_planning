@@ -13,7 +13,7 @@ namespace visibility_graph {
 
 struct NodeProperty {
   NodeProperty() : coordinates(Eigen::Vector2d::Zero()) {}
-  NodeProperty(const Eigen::Vector2d& coordinates, const Polygon& visibility)
+  NodeProperty(const Point_2& coordinates, const Polygon& visibility)
       : coordinates(coordinates), visibility(visibility) {}
   Eigen::Vector2d coordinates;  // The 2D coordinates.
   Polygon visibility;           // The visibile polygon from the vertex.

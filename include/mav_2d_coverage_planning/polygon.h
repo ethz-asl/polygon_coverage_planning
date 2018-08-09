@@ -63,10 +63,10 @@ class Polygon {
   bool computeConvexDecompositionFromPolygonWithHoles(
       std::vector<Polygon>* convex_polygons);
 
-  // Compute the visibility polygon given a point inside the polygon.
-  // Francisc Bungiu, Michael Hemmer, John Hershberger, Kan Huang, and Alexander
-  // Kröller. Efficient computation of visibility polygons. CoRR, abs/1403.3905,
-  // 2014.
+  // Compute the visibility polygon given a point inside a strictly simple
+  // polygon. Francisc Bungiu, Michael Hemmer, John Hershberger, Kan Huang, and
+  // Alexander Kröller. Efficient computation of visibility polygons. CoRR,
+  // abs/1403.3905, 2014.
   bool computeVisibilityPolygon(const Point_2& query_point,
                                 Polygon* visibility_polygon) const;
 
@@ -75,6 +75,13 @@ class Polygon {
   // Helper to check whether a point is inside or on the boundary of the
   // polygon.
   bool pointInPolygon(const Point_2& p) const;
+
+  // Get all concave outer boundary vertices.
+  bool getConcaveOuterBoundaryVertices(
+      std::vector<VertexConstCirculator>* concave_vertices) const;
+  // Get all convex hole vertices.
+  bool getConvexHoleVertices(
+      std::vector<VertexConstCirculator>* convex_vertices) const;
 
   void print() const;
   FT computeArea() const;
