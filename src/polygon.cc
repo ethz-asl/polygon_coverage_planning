@@ -17,7 +17,7 @@
 #include <glog/logging.h>
 #include <boost/make_shared.hpp>
 
-namespace mav_coverage_planner {
+namespace mav_coverage_planning {
 
 Polygon::Polygon() {}
 
@@ -562,10 +562,9 @@ bool Polygon::computeVisibilityPolygon(const Point_2& query_point,
   return true;
 }
 
-bool Polygon::getConcaveOuterBoundaryVertices(
+bool Polygon::appendConcaveOuterBoundaryVertices(
     std::vector<VertexConstCirculator>* concave_vertices) const {
   CHECK_NOTNULL(concave_vertices);
-  concave_vertices->clear();
 
   VertexConstCirculator vit = polygon_.outer_boundary().vertices_circulator();
   do {
@@ -582,10 +581,9 @@ bool Polygon::getConcaveOuterBoundaryVertices(
   return true;
 }
 
-bool Polygon::getConvexHoleVertices(
+bool Polygon::appendConvexHoleVertices(
     std::vector<VertexConstCirculator>* convex_vertices) const {
   CHECK_NOTNULL(convex_vertices);
-  convex_vertices->clear();
 
   for (PolygonWithHoles::Hole_const_iterator hit = polygon_.holes_begin();
        hit != polygon_.holes_end(); ++hit) {
@@ -605,4 +603,61 @@ bool Polygon::getConvexHoleVertices(
   return true;
 }
 
-}  // namespace mav_coverage_planner
+Point_2 Polygon::projectOnPolygon2(const Polygon_2& poly, const Point_2& p,
+                                   FT* squared_distance) const {
+  CHECK_NOTNULL(squared_distance);
+
+  // Find the closest edge.
+  std::vector<std::pair<FT, EdgeConstIterator>> edge_distances(poly.size());
+  std::vector<std::pair<FT, EdgeConstIterator>>::iterator dit =
+      edge_distances.begin();
+  for (EdgeConstIterator eit = poly.edges_begin(); eit != poly.edges_end();
+       eit++, dit++) {
+    dit->first = CGAL::squared_distance(*eit, p);
+    dit->second = eit;
+  }
+
+  std::vector<std::pair<FT, EdgeConstIterator>>::iterator closest_pair =
+      std::min_element(edge_distances.begin(), edge_distances.end(),
+                       [](const std::pair<FT, EdgeConstIterator>& lhs,
+                          const std::pair<FT, EdgeConstIterator>& rhs) {
+                         return lhs.first < rhs.first;
+                       });
+
+  EdgeConstIterator closest_edge = closest_pair->second;
+  *squared_distance = closest_pair->first;
+
+  // Project p on supporting line of closest edge.
+  Point_2 projection = closest_edge->supporting_line().projection(p);
+  // Check if p is on edge. If not snap it to source or target.
+  if (!closest_edge->has_on(p)) {
+    FT d_source = CGAL::squared_distance(p, closest_edge->source());
+    FT d_target = CGAL::squared_distance(p, closest_edge->target());
+    projection =
+        d_source < d_target ? closest_edge->source() : closest_edge->target();
+  }
+
+  return projection;
+}
+
+Point_2 Polygon::projectPointOnHull(const Point_2& p) const {
+  // Project point on outer boundary.
+  FT min_distance;
+  Point_2 projection =
+      projectOnPolygon2(polygon_.outer_boundary(), p, &min_distance);
+
+  // Project on holes.
+  for (PolygonWithHoles::Hole_const_iterator hit = polygon_.holes_begin();
+       hit != polygon_.holes_end(); ++hit) {
+    FT temp_distance;
+    Point_2 temp_projection = projectOnPolygon2(*hit, p, &temp_distance);
+    if (temp_distance < min_distance) {
+      min_distance = temp_distance;
+      projection = temp_projection;
+    }
+  }
+
+  return projection;
+}
+
+}  // namespace mav_coverage_planning

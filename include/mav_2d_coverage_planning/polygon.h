@@ -19,7 +19,7 @@ typedef Polygon_2::Edge_const_iterator EdgeConstIterator;
 typedef Polygon_2::Edge_const_circulator EdgeConstCirculator;
 typedef CGAL::Polygon_with_holes_2<K> PolygonWithHoles;
 
-namespace mav_coverage_planner {
+namespace mav_coverage_planning {
 class Polygon {
  public:
   Polygon();
@@ -76,12 +76,14 @@ class Polygon {
   // polygon.
   bool pointInPolygon(const Point_2& p) const;
 
-  // Get all concave outer boundary vertices.
-  bool getConcaveOuterBoundaryVertices(
+  // Appends all concave outer boundary vertices.
+  bool appendConcaveOuterBoundaryVertices(
       std::vector<VertexConstCirculator>* concave_vertices) const;
-  // Get all convex hole vertices.
-  bool getConvexHoleVertices(
+  // Appends all convex hole vertices.
+  bool appendConvexHoleVertices(
       std::vector<VertexConstCirculator>* convex_vertices) const;
+  // Project a point on the polygon boundary.
+  Point_2 projectPointOnHull(const Point_2& p) const;
 
   void print() const;
   FT computeArea() const;
@@ -95,6 +97,10 @@ class Polygon {
   // https://doc.cgal.org/latest/Straight_skeleton_2/index.html
   bool checkStrictlySimple() const;
   bool checkConvexity() const;
+
+  // Project a point on a polygon.
+  Point_2 projectOnPolygon2(const Polygon_2& poly, const Point_2& p,
+                            FT* squared_distance) const;
 
   // Sort boundary to be counter-clockwise and holes to be clockwise.
   void sortCC();
@@ -112,6 +118,6 @@ class Polygon {
   bool is_strictly_simple_;
   bool is_convex_;
 };
-}  // namespace mav_coverage_planner
+}  // namespace mav_coverage_planning
 
 #endif  // MAV_2D_COVERAGE_PLANNING_POLYGON_H_
