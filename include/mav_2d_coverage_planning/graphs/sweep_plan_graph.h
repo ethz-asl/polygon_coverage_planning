@@ -1,14 +1,11 @@
 #ifndef MAV_2D_COVERAGE_PLANNING_GRAPHS_SWEEP_PLAN_GRAPH_H_
 #define MAV_2D_COVERAGE_PLANNING_GRAPHS_SWEEP_PLAN_GRAPH_H_
 
-#include "mav_coverage_planning/graph/graph_base.h"
+#include "mav_coverage_graph_solvers/graph_base.h"
 
+#include "mav_2d_coverage_planning/definitions.h"
 #include "mav_2d_coverage_planning/graphs/visibility_graph.h"
 #include "mav_2d_coverage_planning/polygon.h"
-
-#include "mav_2d_coverage_planning/cost_functions/euclidean_cost_function.h"
-
-// TODO(rikba): Make cost function template.
 
 namespace mav_coverage_planning {
 namespace sweep_plan_graph {
@@ -16,14 +13,14 @@ namespace sweep_plan_graph {
 struct NodeProperty {
   NodeProperty() : cost(-1.0), cluster(0) {}
   NodeProperty(const std::vector<Point_2>& waypoints,
-               const EuclideanCostFunction& cost_function, size_t cluster,
+               const PathCostFunctionType& cost_function, size_t cluster,
                const std::vector<Polygon>& visibility_polygons)
       : waypoints(waypoints),
-        cost(cost_function.computeCost(waypoints)),
+        cost(cost_function(waypoints)),
         cluster(cluster),
         visibility_polygons(visibility_polygons) {}
   NodeProperty(const Point_2& waypoint,
-               const EuclideanCostFunction& cost_function, size_t cluster,
+               const PathCostFunctionType& cost_function, size_t cluster,
                const Polygon& visibility_polygon)
       : NodeProperty(std::vector<Point_2>({waypoint}), cost_function, cluster,
                      std::vector<Polygon>({visibility_polygon})) {}
@@ -37,16 +34,15 @@ struct NodeProperty {
   // in node_properties.
   bool isNonOptimal(const visibility_graph::VisibilityGraph& visibility_graph,
                     const std::vector<NodeProperty>& node_properties,
-                    const EuclideanCostFunction& cost_function) const;
+                    const PathCostFunctionType& cost_function) const;
 };
 
 // Internal edge property storage, i.e., shortest path.
 struct EdgeProperty {
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
   EdgeProperty() : cost(-1.0) {}
   EdgeProperty(const std::vector<Point_2>& waypoints,
-               const EuclideanCostFunction& cost_function)
-      : waypoints(waypoints), cost(cost_function.computeCost(waypoints)) {}
+               const PathCostFunctionType& cost_function)
+      : waypoints(waypoints), cost(cost_function(waypoints)) {}
   std::vector<Point_2> waypoints;  // The waypoints defining the edge.
   double cost;                     // The shortest path length.
 };
@@ -55,11 +51,13 @@ struct EdgeProperty {
 // interconnections (edges). It is a dense, asymmetric, bidirectional graph.
 class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
  public:
-    SweepPlanGraph(const Polygon& polygon,
+  SweepPlanGraph(const Polygon& polygon,
+                 const PathCostFunctionType& cost_function,
+                 const SegmentCostFunctionType& seg_cost_function,
                  const std::vector<Polygon>& polygon_clusters,
                  double sweep_distance)
       : GraphBase(),
-        visibility_graph_(polygon),
+        visibility_graph_(polygon, seg_cost_function),
         cost_function_(cost_function),
         polygon_clusters_(polygon_clusters),
         sweep_distance_(sweep_distance) {
@@ -70,10 +68,6 @@ class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
   // Compute the sweep paths for each given cluster and create the adjacency
   // graph out of these.
   virtual bool create() override;
-
-  inline EuclideanCostFunction getEuclideanCostFunction() const {
-    return cost_function_;
-  }
 
   // Solve the GTSP using GK MA.
   bool solve(const Point_2& start, const Point_2& goal,
@@ -126,7 +120,7 @@ class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
 
   visibility_graph::VisibilityGraph
       visibility_graph_;                   // The visibility to compute edges.
-  EuclideanCostFunction cost_function_;    // The user defined cost function.
+  PathCostFunctionType cost_function_;     // The user defined cost function.
   std::vector<Polygon> polygon_clusters_;  // The polygon clusters.
   double sweep_distance_;                  // The distance between the sweeps.
 };

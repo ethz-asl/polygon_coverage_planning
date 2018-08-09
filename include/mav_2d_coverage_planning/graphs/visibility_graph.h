@@ -28,6 +28,8 @@ class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
   // Creates an undirected, weighted visibility graph.
   VisibilityGraph(const Polygon& polygon,
                   const SegmentCostFunctionType& cost_function);
+                  
+  VisibilityGraph() : GraphBase() {}
 
   virtual bool create() override;
 

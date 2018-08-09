@@ -177,23 +177,32 @@ bool Polygon::checkValidOffset(
   return true;
 }
 
-void Polygon::print() const {
-  std::cout << "Polygon_with_holes having " << polygon_.number_of_holes()
-            << " holes" << std::endl;
-
-  printPolygon(polygon_.outer_boundary());
-
-  for (PolygonWithHoles::Hole_const_iterator hi = polygon_.holes_begin();
-       hi != polygon_.holes_end(); ++hi)
-    printPolygon(*hi);
-}
-
-void Polygon::printPolygon(const Polygon_2& poly) const {
-  std::cout << "Polygon with " << poly.size() << " vertices" << std::endl;
+std::stringstream Polygon::printPolygon(const Polygon_2& poly) const {
+  std::stringstream stream;
+  stream << "Polygon with " << poly.size() << " vertices"
+                      << std::endl;
   for (Polygon_2::Vertex_const_iterator vi = poly.vertices_begin();
        vi != poly.vertices_end(); ++vi) {
-    std::cout << "(" << vi->x() << "," << vi->y() << ")" << std::endl;
+    stream << "(" << vi->x() << "," << vi->y() << ")" << std::endl;
   }
+
+  return stream;
+}
+
+std::ostream& operator<<(std::ostream& stream, const Polygon& p) {
+  stream << std::endl
+         << "Polygon_with_holes having " << p.polygon_.number_of_holes()
+         << " holes" << std::endl;
+  stream << "Vertices: " << std::endl;
+  stream << p.printPolygon(p.polygon_.outer_boundary()).str();
+
+  size_t i = 0;
+  for (PolygonWithHoles::Hole_const_iterator hi = p.polygon_.holes_begin();
+       hi != p.polygon_.holes_end(); ++hi) {
+    stream << "Hole [" << i++ << "]" << std::endl;
+    stream << p.printPolygon(*hi).str();
+  }
+  return stream;
 }
 
 FT Polygon::computeArea() const {

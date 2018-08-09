@@ -2,6 +2,9 @@
 #define MAV_2D_COVERAGE_PLANNING_POLYGON_H_
 
 #include <vector>
+#include <iostream>
+#include <sstream>
+
 #include "mav_2d_coverage_planning/definitions.h"
 
 namespace mav_coverage_planning {
@@ -70,8 +73,9 @@ class Polygon {
   // Project a point on the polygon boundary.
   Point_2 projectPointOnHull(const Point_2& p) const;
 
-  void print() const;
   FT computeArea() const;
+
+  friend std::ostream& operator<<(std::ostream& stream, const Polygon& p);
 
  private:
   bool checkValidOffset(
@@ -94,7 +98,7 @@ class Polygon {
   void simplifyPolygon(Polygon_2* polygon);
   void simplify();
 
-  void printPolygon(const Polygon_2& poly) const;
+  std::stringstream printPolygon(const Polygon_2& poly) const;
 
   // Data.
   // Counter-clockwise boundary, clockwise holes.
@@ -103,6 +107,7 @@ class Polygon {
   bool is_strictly_simple_;
   bool is_convex_;
 };
+
 }  // namespace mav_coverage_planning
 
 #endif  // MAV_2D_COVERAGE_PLANNING_POLYGON_H_
