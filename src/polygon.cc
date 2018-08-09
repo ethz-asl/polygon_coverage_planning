@@ -506,13 +506,10 @@ bool Polygon::computeVisibilityPolygon(const Point_2& query_point,
   VisibilityArrangement visibility_arr;
   if ((f = boost::get<VisibilityArrangement::Face_const_handle>(&pl_result))) {
     // Located in face.
-    std::cout << "On face." << std::endl;
     fh = tev.compute_visibility(query_point, *f, visibility_arr);
   } else if ((v = boost::get<VisibilityArrangement::Vertex_const_handle>(
                   &pl_result))) {
     // Located on vertex.
-    std::cout << "On vertex." << std::endl;
-
     // Search the incident halfedge that contains the polygon face.
     VisibilityArrangement::Halfedge_const_handle he = poly.halfedges_begin();
     while ((he->target()->point() != (*v)->point()) ||
@@ -528,10 +525,9 @@ bool Polygon::computeVisibilityPolygon(const Point_2& query_point,
   } else if ((e = boost::get<VisibilityArrangement::Halfedge_const_handle>(
                   &pl_result))) {
     // Located on halfedge.
-    std::cout << "On he." << std::endl;
-    std::cout << (*e)->source()->point() << std::endl;
-    std::cout << (*e)->target()->point() << std::endl;
-    fh = tev.compute_visibility(query_point, *e, visibility_arr);
+    // Find halfedge that has polygon interior as face.
+    VisibilityArrangement::Halfedge_const_handle he = (*e)->face() == main_face ? (*e) : (*e)->twin();
+    fh = tev.compute_visibility(query_point, he, visibility_arr);
   } else {
     LOG(ERROR) << "Cannot locate query point on arrangement.";
     return false;
@@ -548,7 +544,6 @@ bool Polygon::computeVisibilityPolygon(const Point_2& query_point,
   }
 
   // Convert to polygon.
-  std::cout << "Convert." << std::endl;
   VisibilityArrangement::Ccb_halfedge_circulator curr = fh->outer_ccb();
   Polygon_2 vis_poly_2;
   do {
