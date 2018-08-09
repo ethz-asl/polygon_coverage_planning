@@ -1,17 +1,16 @@
-#include "mav_coverage_planning/graph/visibility_graph.h"
+#ifndef MAV_2D_COVERAGE_PLANNING_GRAPHS_VISIBILITY_GRAPH_IMPL_H_
+#define MAV_2D_COVERAGE_PLANNING_GRAPHS_VISIBILITY_GRAPH_IMPL_H_
+
+#include "mav_2d_coverage_planning/graphs/visibility_graph.h"
 
 #include <glog/logging.h>
-#include <ros/ros.h>
-
-#include "mav_coverage_planning/math.h"
 
 namespace mav_coverage_planning {
 namespace visibility_graph {
 
-const std::string kPrefix = kOutputPrefix + "visibility_graph]: ";
-
-VisibilityGraph::VisibilityGraph(const Polygon& polygon,
-                                 const CostFunction& cost_function)
+template <class CostFunction>
+VisibilityGraph::VisibilityGraph<CostFunction>(const Polygon& polygon,
+                                 const typename CostFunction& cost_function)
     : GraphBase(), polygon_(polygon), cost_function_(cost_function) {
   // Build visibility graph.
   is_created_ = polygon_.isValid() && polygon_.isSimple() &&
@@ -241,3 +240,5 @@ void VisibilityGraph::selectVertices(StdVector2d* graph_vertices) const {
 
 }  // namespace visibility_graph
 }  // namespace mav_coverage_planning
+
+#endif // MAV_2D_COVERAGE_PLANNING_GRAPHS_VISIBILITY_GRAPH_IMPL_H_

@@ -3,11 +3,13 @@
 #include <algorithm>
 #include <limits>
 
+#include <CGAL/Arr_naive_point_location.h>
 #include <CGAL/Boolean_set_operations_2.h>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Partition_is_valid_traits_2.h>
 #include <CGAL/Partition_traits_2.h>
 #include <CGAL/Polygon_2_algorithms.h>
+#include <CGAL/Triangular_expansion_visibility_2.h>
 #include <CGAL/connect_holes.h>
 #include <CGAL/create_offset_polygons_from_polygon_with_holes_2.h>
 #include <CGAL/partition_2.h>
@@ -444,6 +446,87 @@ bool Polygon::pointInPolygon(const Point_2& p) const {
                                   K());
     if (result == CGAL::ON_BOUNDED_SIDE) return false;
   }
+
+  return true;
+}
+
+bool Polygon::computeVisibilityPolygon(const Point_2& query_point,
+                                       Polygon* visibility_polygon) const {
+  CHECK_NOTNULL(visibility_polygon);
+
+  if (!pointInPolygon(query_point)) {
+    LOG(ERROR) << "Query point " << query_point
+               << " outside of polygon. Cannot create visibility polygon.";
+    return false;
+  }
+
+  // Create 2D arrangement.
+  typedef CGAL::Arr_segment_traits_2<K> VisibilityTraits;
+  typedef CGAL::Arrangement_2<VisibilityTraits> VisibilityArrangement;
+  VisibilityArrangement poly;
+  CGAL::insert(poly, polygon_.outer_boundary().edges_begin(),
+               polygon_.outer_boundary().edges_end());
+  for (PolygonWithHoles::Hole_const_iterator hit = polygon_.holes_begin();
+       hit != polygon_.holes_end(); ++hit)
+    CGAL::insert(poly, hit->edges_begin(), hit->edges_end());
+
+  // Create Triangular Expansion Visibility object.
+  typedef CGAL::Triangular_expansion_visibility_2<VisibilityArrangement> TEV;
+  TEV tev(poly);
+
+  // We need to determine the halfedge or face to which the query point
+  // corresponds.
+  typedef CGAL::Arr_naive_point_location<VisibilityArrangement> NaivePL;
+  typedef CGAL::Arr_point_location_result<VisibilityArrangement>::Type PLResult;
+  NaivePL pl(poly);
+  PLResult pl_result = pl.locate(query_point);
+
+  VisibilityArrangement::Vertex_const_handle* v = nullptr;
+  VisibilityArrangement::Halfedge_const_handle* e = nullptr;
+  VisibilityArrangement::Face_const_handle* f = nullptr;
+
+  typedef VisibilityArrangement::Face_handle VisibilityFaceHandle;
+  VisibilityFaceHandle fh;
+  VisibilityArrangement visibility_arr;
+  if ((f = boost::get<VisibilityArrangement::Face_const_handle>(&pl_result))) {
+    // Located in face.
+    std::cout << "On face." << std::endl;
+    fh = tev.compute_visibility(query_point, *f, visibility_arr);
+  } else if ((v = boost::get<VisibilityArrangement::Vertex_const_handle>(
+                  &pl_result))) {
+    // Located on vertex.
+    std::cout << "On vertex." << std::endl;
+    fh = tev.compute_visibility(query_point, (*v)->incident_halfedges(),
+                                visibility_arr);
+  } else if ((e = boost::get<VisibilityArrangement::Halfedge_const_handle>(
+                  &pl_result))) {
+    // Located on halfedge.
+    std::cout << "On he." << std::endl;
+    fh = tev.compute_visibility(query_point, *e, visibility_arr);
+  } else {
+    LOG(ERROR) << "Cannot locate query point on arrangement.";
+    return false;
+  }
+
+  // Result assertion.
+  if (fh->is_fictitious()) {
+    LOG(ERROR) << "Visibility polygon is fictitious.";
+    return false;
+  }
+  if (fh->is_unbounded()) {
+    LOG(ERROR) << "Visibility polygon is unbounded.";
+    return false;
+  }
+
+  // Convert to polygon.
+  std::cout << "Convert." << std::endl;
+  VisibilityArrangement::Ccb_halfedge_circulator curr = fh->outer_ccb();
+  Polygon_2 vis_poly_2;
+  do {
+    vis_poly_2.push_back(curr->source()->point());
+  } while (++curr != fh->outer_ccb());
+
+  *visibility_polygon = Polygon(vis_poly_2);
 
   return true;
 }

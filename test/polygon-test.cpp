@@ -98,7 +98,7 @@ TEST(PolygonTest, ConvexDecomposition) {
   EXPECT_EQ(4, convex_polygons.size());
 }
 
-TEST(PolygonTest, pointInPolygon) {
+TEST(PolygonTest, pointInOnPolygon) {
   Polygon rect_in_rect = createRectangleInRectangle();
 
   // Point on vertex.
@@ -142,6 +142,82 @@ TEST(PolygonTest, computeLineSweepPlan) {
   EXPECT_GE(waypoints.size(), 4);
   for (const Point_2& p : waypoints)
     EXPECT_TRUE(diamond.pointInPolygon(p));
+}
+
+TEST(PolygonTest, computeVisibilityPolygon) {
+  Polygon rectangle_in_rectangle = createRectangleInRectangle();
+  Polygon visibility_polygon;
+
+  // Query on polygon vertex.
+  Point_2 query(0.0, 0.0);
+  EXPECT_TRUE(rectangle_in_rectangle.computeVisibilityPolygon(
+      query, &visibility_polygon));
+  // Result manually checked.
+  VertexConstIterator vit =
+      visibility_polygon.getPolygon().outer_boundary().vertices_begin();
+  EXPECT_EQ(9, visibility_polygon.getPolygon().outer_boundary().size());
+  EXPECT_EQ(Point_2(0.0, 2.0), *vit++);
+  EXPECT_EQ(Point_2(0.0, 0.0), *vit++);
+  EXPECT_EQ(Point_2(2.0, 0.0), *vit++);
+  EXPECT_EQ(Point_2(2.0, 2.0), *vit++);
+  vit++; // Skip inexact point. (1.6,2)
+  EXPECT_EQ(Point_2(1.0, 1.25), *vit++);
+  EXPECT_EQ(Point_2(0.5, 1.25), *vit++);
+  EXPECT_EQ(Point_2(0.5, 1.75), *vit++);
+  vit++; // Skip inexact point. (0.571429,2)
+
+  // Query on hole vertex.
+  query = Point_2(1.0, 1.25);
+  std::cout << "Query on hole vertex." << std::endl;
+  rectangle_in_rectangle.print();
+  EXPECT_TRUE(rectangle_in_rectangle.computeVisibilityPolygon(
+      query, &visibility_polygon));
+  visibility_polygon.print();
+
+  // Query in face.
+  query = Point_2(0.5, 0.5);
+  std::cout << "Query in face." << std::endl;
+  rectangle_in_rectangle.print();
+  EXPECT_TRUE(rectangle_in_rectangle.computeVisibilityPolygon(
+      query, &visibility_polygon));
+  visibility_polygon.print();
+
+  // Query on polygon halfedge.
+  query = Point_2(1.0, 0.0);
+  EXPECT_TRUE(rectangle_in_rectangle.computeVisibilityPolygon(
+      query, &visibility_polygon));
+  visibility_polygon.print();
+
+  // Query on hole halfedge.
+  query = Point_2(0.75, 1.25);
+  EXPECT_TRUE(rectangle_in_rectangle.computeVisibilityPolygon(
+      query, &visibility_polygon));
+  visibility_polygon.print();
+
+  // Query outside.
+  query = Point_2(100.0, 100.0);
+  EXPECT_FALSE(rectangle_in_rectangle.computeVisibilityPolygon(
+      query, &visibility_polygon));
+  //
+  // expected_visibility_polygon = {
+  //     Eigen::Vector2d(1.5, 0.5), Eigen::Vector2d(0.5, 0.5),
+  //     Eigen::Vector2d(0.5, 1.5), Eigen::Vector2d(0.5, 2.0),
+  //     Eigen::Vector2d(0.0, 2.0), Eigen::Vector2d(0.0, 0.0),
+  //     Eigen::Vector2d(2.0, 0.0), Eigen::Vector2d(2.0, 0.5)};
+  // removeRedundantVertices(&expected_visibility_polygon);
+  //
+  // EXPECT_EQ(expected_visibility_polygon.size(),
+  //           visibility_polygon.getNumVertices());
+  // for (size_t i = 0; i < visibility_polygon.getNumVertices(); i++) {
+  //   EXPECT_TRUE(EIGEN_MATRIX_EQUAL_DOUBLE(expected_visibility_polygon[i],
+  //                                         visibility_polygon.getVertices()[i]))
+  //       << "Expected: " << expected_visibility_polygon[i].transpose()
+  //       << " Actual: " << visibility_polygon.getVertices()[i].transpose();
+  // }
+  //
+  // query << -10.0, -10.0;
+  // EXPECT_FALSE(
+  //     poly_with_holes.computeVisibilityPolygon(query, &visibility_polygon));
 }
 
 int main(int argc, char** argv) {

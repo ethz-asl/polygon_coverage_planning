@@ -1,14 +1,12 @@
-#ifndef MAV_COVERAGE_PLANNING_GRAPH_VISIBILITY_GRAPH_H_
-#define MAV_COVERAGE_PLANNING_GRAPH_VISIBILITY_GRAPH_H_
+#ifndef MAV_2D_COVERAGE_PLANNING_GRAPHS_VISIBILITY_GRAPH_H_
+#define MAV_2D_COVERAGE_PLANNING_GRAPHS_VISIBILITY_GRAPH_H_
 
 #include <map>
 
+#include <mav_coverage_graph_solvers/graph_base.h>
 #include <Eigen/Core>
 
-#include "mav_coverage_planning/common.h"
-#include "mav_coverage_planning/cost_function.h"
-#include "mav_coverage_planning/graph/graph_base.h"
-#include "mav_coverage_planning/polygon.h"
+#include "mav_2d_coverage_planning/polygon.h"
 
 namespace mav_coverage_planning {
 namespace visibility_graph {
@@ -25,12 +23,14 @@ struct EdgeProperty {};
 
 // Points-of-visibility pathfinding.
 // http://www.david-gouveia.com/portfolio/pathfinding-on-a-2d-polygonal-map/
+template <class CostFunction>
 class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
  public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
   // Creates an undirected, weighted visibility graph.
-  VisibilityGraph(const Polygon& polygon, const CostFunction& cost_function);
+  VisibilityGraph(const Polygon& polygon,
+                  const typename CostFunction& cost_function);
   VisibilityGraph();
 
   virtual bool create() override;
@@ -46,7 +46,8 @@ class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
   bool solve(const Eigen::Vector2d& start,
              const Polygon& start_visibility_polygon,
              const Eigen::Vector2d& goal,
-             const Polygon& goal_visibility_polygon, StdVector2d* waypoints) const;
+             const Polygon& goal_visibility_polygon,
+             StdVector2d* waypoints) const;
 
   // Convenience function: addtionally adds original start and goal to shortest
   // path, if they were outside of polygon.
@@ -74,9 +75,11 @@ class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
   // The polygon.
   Polygon polygon_;
   // The cost function.
-  CostFunction cost_function_;
+  typename CostFunction cost_function_;
 };
 }  // namespace visibility_graph
 }  // namespace mav_coverage_planning
 
-#endif /* MAV_COVERAGE_PLANNING_GRAPH_VISIBILITY_GRAPH_H_ */
+#include "mav_2d_coverage_planning/graphs/impl/visibility_graph_impl.h"
+
+#endif /* MAV_2D_COVERAGE_PLANNING_GRAPHS_VISIBILITY_GRAPH_H_ */
