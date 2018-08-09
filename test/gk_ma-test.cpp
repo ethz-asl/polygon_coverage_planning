@@ -1,18 +1,18 @@
-#include <vector>
 #include <limits>
 #include <random>
+#include <vector>
 
-#include <eigen-checks/gtest.h>
+#include <gtest/gtest.h>
 #include <ros/package.h>
 
-#include "mav_coverage_planning/gk_ma.h"
+#include "mav_coverage_graph_solvers/gk_ma.h"
 
 using namespace mav_coverage_planning;
 using namespace gk_ma;
 
-const std::string kPackageName = "mav_coverage_planning";
+const std::string kPackageName = "mav_coverage_graph_solvers";
 
-TEST(GkMa, DISABLED_LoadFromFile) {
+TEST(GkMa, LoadFromFile) {
   GkMa& instance = GkMa::getInstance();
 
   // Package directory.
@@ -20,14 +20,11 @@ TEST(GkMa, DISABLED_LoadFromFile) {
   // Catkin directory.
   instances_path = instances_path.substr(0, instances_path.find("/src/"));
   // Instances directory.
-  instances_path += "/build/" + kPackageName + "/gtsp_instances-prefix/src/gtsp_instances/";
+  instances_path +=
+      "/build/" + kPackageName + "/gtsp_instances-prefix/src/gtsp_instances/";
 
-  std::vector<std::string> instance_names = {
-    "4br17.gtsp",
-    "11berlin52.gtsp",
-    "40d198.gtsp",
-    "65rbg323.gtsp"
-  };
+  std::vector<std::string> instance_names = {"4br17.gtsp", "11berlin52.gtsp",
+                                             "40d198.gtsp", "65rbg323.gtsp"};
   for (const std::string& instance_name : instance_names) {
     std::string file = instances_path + instance_name;
     instance.setSolver(file, true);
@@ -36,7 +33,7 @@ TEST(GkMa, DISABLED_LoadFromFile) {
   }
 }
 
-TEST(GkMa, DISABLED_LoadFromTask) {
+TEST(GkMa, LoadFromTask) {
   GkMa& instance = GkMa::getInstance();
 
   std::srand(123456);

@@ -1,5 +1,5 @@
-#ifndef MAV_COVERAGE_PLANNING_GRAPH_BOOLEAN_LATTICE_H_
-#define MAV_COVERAGE_PLANNING_GRAPH_BOOLEAN_LATTICE_H_
+#ifndef MAV_COVERAGE_GRAPH_SOLVERS_BOOLEAN_LATTICE_H_
+#define MAV_COVERAGE_GRAPH_SOLVERS_BOOLEAN_LATTICE_H_
 
 #include <set>
 
@@ -73,4 +73,4 @@ class BooleanLattice : public GraphBase<NodeProperty, EdgeProperty> {
 }  // namespace boolean_lattice
 }  // namespace mav_coverage_planning
 
-#endif  // MAV_COVERAGE_PLANNING_GRAPH_BOOLEAN_LATTICE_H_
+#endif  // MAV_COVERAGE_GRAPH_SOLVERS_BOOLEAN_LATTICE_H_

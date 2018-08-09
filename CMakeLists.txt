@@ -63,6 +63,12 @@ catkin_add_gtest(test_combinatorics
 target_link_libraries(test_combinatorics
                       ${PROJECT_NAME})
 
+catkin_add_gtest(test_gk_ma
+  test/gk_ma-test.cpp
+)
+target_link_libraries(test_gk_ma
+                      ${PROJECT_NAME})
+
 
 ##########
 # EXPORT #
