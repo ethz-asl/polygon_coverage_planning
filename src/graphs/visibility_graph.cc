@@ -5,9 +5,8 @@
 namespace mav_coverage_planning {
 namespace visibility_graph {
 
-VisibilityGraph::VisibilityGraph(const Polygon& polygon,
-                                 const EuclideanCostFunction& cost_function)
-    : GraphBase(), polygon_(polygon), cost_function_(cost_function) {
+VisibilityGraph::VisibilityGraph(const Polygon& polygon)
+    : GraphBase(), polygon_(polygon) {
   // Build visibility graph.
   is_created_ = create();
 }

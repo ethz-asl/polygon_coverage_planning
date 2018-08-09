@@ -26,8 +26,7 @@ struct EdgeProperty {};
 class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
  public:
     // Creates an undirected, weighted visibility graph.
-  VisibilityGraph(const Polygon& polygon,
-                  const EuclideanCostFunction& cost_function);
+  VisibilityGraph(const Polygon& polygon);
   VisibilityGraph();
 
   virtual bool create() override;
