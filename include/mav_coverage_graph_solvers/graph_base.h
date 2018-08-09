@@ -4,6 +4,7 @@
 #include <limits>
 #include <map>
 #include <vector>
+#include <cmath>
 
 // Utilities to create graphs.
 namespace mav_coverage_planning {
