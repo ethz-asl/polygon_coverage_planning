@@ -4,72 +4,12 @@
 #include <boost/make_shared.hpp>
 
 #include "mav_2d_coverage_planning/polygon.h"
+#include "mav_2d_coverage_planning/tests/test_helpers.h"
 
-using namespace mav_coverage_planner;
-
-double createRandomDouble(double min, double max) {
-  return (max - min) * (static_cast<double>(std::rand()) /
-                        static_cast<double>(RAND_MAX)) +
-         min;
-}
-
-Polygon createRectangleInRectangle() {
-  Polygon_2 outer;
-  outer.push_back(Point_2(0.0, 0.0));
-  outer.push_back(Point_2(2.0, 0.0));
-  outer.push_back(Point_2(2.0, 2.0));
-  outer.push_back(Point_2(0.0, 2.0));
-
-  Polygon_2 hole;
-  hole.push_back(Point_2(1.0, 1.25));
-  hole.push_back(Point_2(1.0, 1.75));
-  hole.push_back(Point_2(0.5, 1.75));
-  hole.push_back(Point_2(0.5, 1.25));
-
-  PolygonWithHoles poly_with_holes(outer);
-  poly_with_holes.add_hole(hole);
-  return Polygon(poly_with_holes);
-}
-
-Polygon createDiamond() {
-  Polygon_2 outer;
-  outer.push_back(Point_2(1.0, 0.0));
-  outer.push_back(Point_2(2.0, 1.0));
-  outer.push_back(Point_2(1.0, 2.0));
-  outer.push_back(Point_2(0.0, 1.0));
-
-  PolygonWithHoles poly(outer);
-  return poly;
-}
+using namespace mav_coverage_planning;
 
 TEST(PolygonTest, Offset) {
-  Polygon_2 outer;
-
-  outer.push_back(Point_2(0.0, 0.0));
-  outer.push_back(Point_2(10.0, 0.0));
-  outer.push_back(Point_2(10.0, 4.5));
-  outer.push_back(Point_2(12.0, 4.5));
-  outer.push_back(Point_2(12.0, 2.0));
-  outer.push_back(Point_2(16.0, 2.0));
-  outer.push_back(Point_2(16.0, 8.0));
-  outer.push_back(Point_2(12.0, 8.0));
-  outer.push_back(Point_2(12.0, 5.5));
-  outer.push_back(Point_2(10.0, 5.5));
-  outer.push_back(Point_2(10.0, 10.0));
-  outer.push_back(Point_2(0.0, 10.0));
-
-  Polygon_2 hole;
-
-  hole.push_back(Point_2(3.0, 3.0));
-  hole.push_back(Point_2(3.0, 7.0));
-  hole.push_back(Point_2(7.0, 7.0));
-  hole.push_back(Point_2(7.0, 3.0));
-
-  PolygonWithHoles poly_with_holes(outer);
-
-  poly_with_holes.add_hole(hole);
-
-  Polygon poly(poly_with_holes);
+  Polygon poly = createSophisticatedPolygon();
 
   for (size_t i = 0; i < 100; ++i) {
     FT max_offset = createRandomDouble(0.0, 10.0);
@@ -140,8 +80,7 @@ TEST(PolygonTest, computeLineSweepPlan) {
   EXPECT_TRUE(diamond.computeLineSweepPlan(kMaxSweepDistance, kStartVertexIdx,
                                            kCounterClockwise, &waypoints));
   EXPECT_GE(waypoints.size(), 4);
-  for (const Point_2& p : waypoints)
-    EXPECT_TRUE(diamond.pointInPolygon(p));
+  for (const Point_2& p : waypoints) EXPECT_TRUE(diamond.pointInPolygon(p));
 }
 
 TEST(PolygonTest, computeVisibilityPolygon) {
@@ -160,11 +99,11 @@ TEST(PolygonTest, computeVisibilityPolygon) {
   EXPECT_EQ(Point_2(0.0, 0.0), *vit++);
   EXPECT_EQ(Point_2(2.0, 0.0), *vit++);
   EXPECT_EQ(Point_2(2.0, 2.0), *vit++);
-  vit++; // Skip inexact point. (1.6,2)
+  vit++;  // Skip inexact point. (1.6,2)
   EXPECT_EQ(Point_2(1.0, 1.25), *vit++);
   EXPECT_EQ(Point_2(0.5, 1.25), *vit++);
   EXPECT_EQ(Point_2(0.5, 1.75), *vit++);
-  vit++; // Skip inexact point. (0.571429,2)
+  vit++;  // Skip inexact point. (0.571429,2)
 
   // Query on hole vertex.
   query = Point_2(1.0, 1.25);
@@ -226,6 +165,34 @@ TEST(PolygonTest, computeVisibilityPolygon) {
   query = Point_2(100.0, 100.0);
   EXPECT_FALSE(rectangle_in_rectangle.computeVisibilityPolygon(
       query, &visibility_polygon));
+}
+
+TEST(PolygonTest, projectPointOnHull) {
+  Polygon poly = createRectangleInRectangle();
+
+  // Point outside closest to vertex.
+  Point_2 p(-1.0, -1.0);
+  EXPECT_EQ(Point_2(0.0, 0.0), poly.projectPointOnHull(p));
+
+  // Point inside closest to bottom edge.
+  p = Point_2(0.1, 0.05);
+  EXPECT_EQ(Point_2(0.1, 0.0), poly.projectPointOnHull(p));
+
+  // Point inside hole closest to bottom edge.
+  p = Point_2(0.75, 1.3);
+  EXPECT_EQ(Point_2(0.75, 1.25), poly.projectPointOnHull(p));
+
+  // Point inside polygon closest to hole bottom edge.
+  p = Point_2(0.75, 1.2);
+  EXPECT_EQ(Point_2(0.75, 1.25), poly.projectPointOnHull(p));
+
+  // Point on edge.
+  p = Point_2(0.5, 0);
+  EXPECT_EQ(p, poly.projectPointOnHull(p));
+
+  // Point on vertex.
+  p = Point_2(0,0);
+  EXPECT_EQ(p, poly.projectPointOnHull(p));
 }
 
 int main(int argc, char** argv) {

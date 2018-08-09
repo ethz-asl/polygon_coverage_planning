@@ -630,7 +630,7 @@ Point_2 Polygon::projectOnPolygon2(const Polygon_2& poly, const Point_2& p,
   // Project p on supporting line of closest edge.
   Point_2 projection = closest_edge->supporting_line().projection(p);
   // Check if p is on edge. If not snap it to source or target.
-  if (!closest_edge->has_on(p)) {
+  if (!closest_edge->has_on(projection)) {
     FT d_source = CGAL::squared_distance(p, closest_edge->source());
     FT d_target = CGAL::squared_distance(p, closest_edge->target());
     projection =
