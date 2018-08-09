@@ -175,12 +175,19 @@ TEST(PolygonTest, computeVisibilityPolygon) {
   visibility_polygon.print();
 
   // Query in face.
-  query = Point_2(0.5, 0.5);
-  std::cout << "Query in face." << std::endl;
-  rectangle_in_rectangle.print();
+  query = Point_2(1.0, 0.5);
   EXPECT_TRUE(rectangle_in_rectangle.computeVisibilityPolygon(
       query, &visibility_polygon));
-  visibility_polygon.print();
+  // Result manually checked.
+  vit = visibility_polygon.getPolygon().outer_boundary().vertices_begin();
+  EXPECT_EQ(7, visibility_polygon.getPolygon().outer_boundary().size());
+  EXPECT_EQ(Point_2(1, 1.25), *vit++);
+  EXPECT_EQ(Point_2(0.5, 1.25), *vit++);
+  EXPECT_EQ(Point_2(0, 2), *vit++);
+  EXPECT_EQ(Point_2(0, 0), *vit++);
+  EXPECT_EQ(Point_2(2, 0), *vit++);
+  EXPECT_EQ(Point_2(2, 2), *vit++);
+  EXPECT_EQ(Point_2(1, 2), *vit++);
 
   // Query on polygon halfedge.
   query = Point_2(1.0, 0.0);
