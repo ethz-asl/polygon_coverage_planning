@@ -1,6 +1,3 @@
-#ifndef MAV_2D_COVERAGE_PLANNING_GRAPHS_VISIBILITY_GRAPH_IMPL_H_
-#define MAV_2D_COVERAGE_PLANNING_GRAPHS_VISIBILITY_GRAPH_IMPL_H_
-
 #include "mav_2d_coverage_planning/graphs/visibility_graph.h"
 
 #include <glog/logging.h>
@@ -8,13 +5,11 @@
 namespace mav_coverage_planning {
 namespace visibility_graph {
 
-template <class CostFunction>
-VisibilityGraph::VisibilityGraph<CostFunction>(const Polygon& polygon,
-                                 const typename CostFunction& cost_function)
+VisibilityGraph::VisibilityGraph(const Polygon& polygon,
+                                 const EuclideanCostFunction& cost_function)
     : GraphBase(), polygon_(polygon), cost_function_(cost_function) {
   // Build visibility graph.
-  is_created_ = polygon_.isValid() && polygon_.isSimple() &&
-                (!polygon_.hasHoles() || polygon_.hasSimpleHoles()) && create();
+  is_created_ = create();
 }
 
 VisibilityGraph::VisibilityGraph() : GraphBase() {}
@@ -22,32 +17,33 @@ VisibilityGraph::VisibilityGraph() : GraphBase() {}
 bool VisibilityGraph::create() {
   clear();
 
-  // Select vertices.
-  StdVector2d graph_vertices;
-  selectVertices(&graph_vertices);
+  // Select shortest path vertices.
+  std::vector<VertexConstCirculator> graph_vertices;
+  if (!polygon_.appendConcaveOuterBoundaryVertices(&graph_vertices))
+    return false;
+  if (!polygon_.appendConvexHoleVertices(&graph_vertices)) return false;
 
-  for (const Eigen::Vector2d& vertex : graph_vertices) {
+  for (const VertexConstCirculator& v : graph_vertices) {
     // Compute visibility polygon.
     Polygon visibility;
-    if (!polygon_.computeVisibilityPolygon(vertex, &visibility)) {
-      ROS_ERROR_STREAM(kPrefix << "Cannot compute visibility polygon.");
+    if (!polygon_.computeVisibilityPolygon(*v, &visibility)) {
+      LOG(ERROR) << "Cannot compute visibility polygon.";
       return false;
     }
-    if (!addNode(NodeProperty(vertex, visibility))) {
+    if (!addNode(NodeProperty(*v, visibility))) {
       return false;
     }
   }
 
-  ROS_DEBUG_STREAM(kPrefix << "Created visibility graph with " << graph_.size()
-                           << " nodes and " << edge_properties_.size()
-                           << " edges.");
-  is_created_ = true;
+  DLOG(INFO) << "Created visibility graph with " << graph_.size()
+             << " nodes and " << edge_properties_.size() << " edges.";
+
   return true;
 }
 
 bool VisibilityGraph::addEdges() {
   if (graph_.empty()) {
-    ROS_ERROR_STREAM(kPrefix << "Cannot add edges to an empty graph.");
+    LOG(ERROR) << "Cannot add edges to an empty graph.";
     return false;
   }
 
@@ -56,10 +52,10 @@ bool VisibilityGraph::addEdges() {
     const NodeProperty* new_node_property = getNodeProperty(new_id);
     const NodeProperty* adj_node_property = getNodeProperty(adj_id);
     if (adj_node_property == nullptr) {
-      ROS_ERROR_STREAM(kPrefix << "Cannot access potential neighbor.");
+      LOG(ERROR) << "Cannot access potential neighbor.";
       return false;
     }
-    if (new_node_property->visibility.checkPointInPolygon(
+    if (new_node_property->visibility.pointInPolygon(
             adj_node_property->coordinates)) {
       EdgeId forwards_edge_id(new_id, adj_id);
       EdgeId backwards_edge_id(adj_id, new_id);
@@ -75,19 +71,17 @@ bool VisibilityGraph::addEdges() {
   return true;
 }
 
-bool VisibilityGraph::solve(const Eigen::Vector2d& start,
-                            const Eigen::Vector2d& goal,
-                            StdVector2d* waypoints) const {
+bool VisibilityGraph::solve(const Point_2& start, const Point_2& goal,
+                            std::vector<Point_2>* waypoints) const {
   CHECK_NOTNULL(waypoints);
   waypoints->clear();
 
   // Make sure start and end are inside the polygon.
-  const Eigen::Vector2d start_new = polygon_.checkPointInPolygon(start)
-                                        ? start
-                                        : polygon_.projectPointOnHull(start);
-  const Eigen::Vector2d goal_new = polygon_.checkPointInPolygon(goal)
-                                       ? goal
-                                       : polygon_.projectPointOnHull(goal);
+  const Point_2 start_new = polygon_.pointInPolygon(start)
+                                ? start
+                                : polygon_.projectPointOnHull(start);
+  const Point_2 goal_new =
+      polygon_.pointInPolygon(goal) ? goal : polygon_.projectPointOnHull(goal);
 
   // Compute start and goal visibility polygon.
   Polygon start_visibility, goal_visibility;
@@ -101,20 +95,20 @@ bool VisibilityGraph::solve(const Eigen::Vector2d& start,
                waypoints);
 }
 
-bool VisibilityGraph::solve(const Eigen::Vector2d& start,
+bool VisibilityGraph::solve(const Point_2& start,
                             const Polygon& start_visibility_polygon,
-                            const Eigen::Vector2d& goal,
+                            const Point_2& goal,
                             const Polygon& goal_visibility_polygon,
-                            StdVector2d* waypoints) const {
+                            std::vector<Point_2>* waypoints) const {
   CHECK_NOTNULL(waypoints);
   waypoints->clear();
 
   if (!is_created_) {
-    ROS_ERROR_STREAM(kPrefix << "Visibility graph not initialized.");
+    LOG(ERROR) << "Visibility graph not initialized.";
     return false;
-  } else if (!polygon_.checkPointInPolygon(start) ||
-             !polygon_.checkPointInPolygon(goal)) {
-    ROS_ERROR_STREAM(kPrefix << "Start or goal is not in polygon.");
+  } else if (!polygon_.pointInPolygon(start) ||
+             !polygon_.pointInPolygon(goal)) {
+    LOG(ERROR) << "Start or goal is not in polygon.";
     return false;
   }
 
@@ -135,7 +129,7 @@ bool VisibilityGraph::solve(const Eigen::Vector2d& start,
   if (start_node_property == nullptr) {
     return false;
   }
-  if (start_node_property->visibility.checkPointInPolygon(goal)) {
+  if (start_node_property->visibility.pointInPolygon(goal)) {
     waypoints->push_back(start);
     waypoints->push_back(goal);
     return true;
@@ -144,9 +138,7 @@ bool VisibilityGraph::solve(const Eigen::Vector2d& start,
   // Find shortest way using A*.
   Solution solution;
   if (!temp_visibility_graph.solveAStar(start_idx, goal_idx, &solution)) {
-    ROS_ERROR_STREAM(
-        kPrefix
-        << "Could not find shortest path. Graph not strongly connected.");
+    LOG(ERROR) << "Could not find shortest path. Graph not strongly connected.";
     return false;
   }
 
@@ -155,13 +147,13 @@ bool VisibilityGraph::solve(const Eigen::Vector2d& start,
 }
 
 bool VisibilityGraph::getWaypoints(const Solution& solution,
-                                   StdVector2d* waypoints) const {
+                                   std::vector<Point_2>* waypoints) const {
   CHECK_NOTNULL(waypoints);
   waypoints->resize(solution.size());
   for (size_t i = 0; i < solution.size(); i++) {
     const NodeProperty* node_property = getNodeProperty(solution[i]);
     if (node_property == nullptr) {
-      ROS_ERROR_STREAM(kPrefix << "Cannot reconstruct solution.");
+      LOG(ERROR) << "Cannot reconstruct solution.";
       return false;
     }
     (*waypoints)[i] = node_property->coordinates;
@@ -176,17 +168,15 @@ bool VisibilityGraph::calculateHeuristic(size_t goal,
 
   const NodeProperty* goal_node_property = getNodeProperty(goal);
   if (goal_node_property == nullptr) {
-    ROS_ERROR_STREAM(
-        kPrefix << "Cannot find goal node property to calculate heuristic.");
+    LOG(ERROR) << "Cannot find goal node property to calculate heuristic.";
     return false;
   }
 
   for (size_t adj_id = 0; adj_id < graph_.size(); ++adj_id) {
     const NodeProperty* adj_node_property = getNodeProperty(adj_id);
     if (adj_node_property == nullptr) {
-      ROS_ERROR_STREAM(
-          kPrefix
-          << "Cannot access adjacent node property to calculate heuristic.");
+      LOG(ERROR)
+          << "Cannot access adjacent node property to calculate heuristic.";
       return false;
     }
     (*heuristic)[adj_id] = cost_function_.computeCost(
@@ -197,15 +187,15 @@ bool VisibilityGraph::calculateHeuristic(size_t goal,
 }
 
 bool VisibilityGraph::solveWithOutsideStartAndGoal(
-    const Eigen::Vector2d& start, const Eigen::Vector2d& goal,
-    StdVector2d* waypoints) const {
+    const Point_2& start, const Point_2& goal,
+    std::vector<Point_2>* waypoints) const {
   CHECK_NOTNULL(waypoints);
 
   if (solve(start, goal, waypoints)) {
-    if (!polygon_.checkPointInPolygon(start)) {
+    if (!polygon_.pointInPolygon(start)) {
       waypoints->insert(waypoints->begin(), start);
     }
-    if (!polygon_.checkPointInPolygon(goal)) {
+    if (!polygon_.pointInPolygon(goal)) {
       waypoints->push_back(goal);
     }
     return true;
@@ -214,31 +204,5 @@ bool VisibilityGraph::solveWithOutsideStartAndGoal(
   }
 }
 
-void VisibilityGraph::selectVertices(StdVector2d* graph_vertices) const {
-  CHECK_NOTNULL(graph_vertices);
-  graph_vertices->clear();
-
-  // Get all concave polygon vertices.
-  if (!polygon_.isConvex()) {
-    for (size_t i = 0; i < polygon_.getNumVertices(); i++) {
-      if (!checkVertexConvexity(polygon_.getVertices(), i,
-                                polygon_.isClockwise())) {
-        graph_vertices->push_back(polygon_.getVertices()[i]);
-      }
-    }
-  }
-
-  // Get all convex hole vertices.
-  for (const Polygon& hole : polygon_.getHoles()) {
-    for (size_t i = 0; i < hole.getNumVertices(); i++) {
-      if (checkVertexConvexity(hole.getVertices(), i, hole.isClockwise())) {
-        graph_vertices->push_back(hole.getVertices()[i]);
-      }
-    }
-  }
-}
-
 }  // namespace visibility_graph
 }  // namespace mav_coverage_planning
-
-#endif // MAV_2D_COVERAGE_PLANNING_GRAPHS_VISIBILITY_GRAPH_IMPL_H_
