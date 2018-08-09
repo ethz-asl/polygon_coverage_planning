@@ -15,6 +15,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 # LIBRARIES #
 #############
 cs_add_library(${PROJECT_NAME}
+  src/cost_functions/euclidean_cost_function.cc
   src/polygon.cc
 )
 target_link_libraries(${PROJECT_NAME} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES})
