@@ -168,11 +168,17 @@ TEST(PolygonTest, computeVisibilityPolygon) {
 
   // Query on hole vertex.
   query = Point_2(1.0, 1.25);
-  std::cout << "Query on hole vertex." << std::endl;
-  rectangle_in_rectangle.print();
   EXPECT_TRUE(rectangle_in_rectangle.computeVisibilityPolygon(
       query, &visibility_polygon));
-  visibility_polygon.print();
+  vit = visibility_polygon.getPolygon().outer_boundary().vertices_begin();
+  EXPECT_EQ(6, visibility_polygon.getPolygon().outer_boundary().size());
+  EXPECT_EQ(Point_2(1, 1.25), *vit++);
+  EXPECT_EQ(Point_2(0, 1.25), *vit++);
+  EXPECT_EQ(Point_2(0, 0), *vit++);
+  EXPECT_EQ(Point_2(2, 0), *vit++);
+  EXPECT_EQ(Point_2(2, 2), *vit++);
+  EXPECT_EQ(Point_2(1, 2), *vit++);
+
 
   // Query in face.
   query = Point_2(1.0, 0.5);
@@ -188,23 +194,24 @@ TEST(PolygonTest, computeVisibilityPolygon) {
   EXPECT_EQ(Point_2(2, 0), *vit++);
   EXPECT_EQ(Point_2(2, 2), *vit++);
   EXPECT_EQ(Point_2(1, 2), *vit++);
-
-  // Query on polygon halfedge.
-  query = Point_2(1.0, 0.0);
-  EXPECT_TRUE(rectangle_in_rectangle.computeVisibilityPolygon(
-      query, &visibility_polygon));
-  visibility_polygon.print();
-
-  // Query on hole halfedge.
-  query = Point_2(0.75, 1.25);
-  EXPECT_TRUE(rectangle_in_rectangle.computeVisibilityPolygon(
-      query, &visibility_polygon));
-  visibility_polygon.print();
-
-  // Query outside.
-  query = Point_2(100.0, 100.0);
-  EXPECT_FALSE(rectangle_in_rectangle.computeVisibilityPolygon(
-      query, &visibility_polygon));
+  //
+  // // Query on polygon halfedge.
+  // query = Point_2(1.0, 0.0);
+  // std::cout << "Query: " << query << std::endl;
+  // EXPECT_TRUE(rectangle_in_rectangle.computeVisibilityPolygon(
+  //     query, &visibility_polygon));
+  // visibility_polygon.print();
+  //
+  // // Query on hole halfedge.
+  // query = Point_2(0.75, 1.25);
+  // EXPECT_TRUE(rectangle_in_rectangle.computeVisibilityPolygon(
+  //     query, &visibility_polygon));
+  // visibility_polygon.print();
+  //
+  // // Query outside.
+  // query = Point_2(100.0, 100.0);
+  // EXPECT_FALSE(rectangle_in_rectangle.computeVisibilityPolygon(
+  //     query, &visibility_polygon));
   //
   // expected_visibility_polygon = {
   //     Eigen::Vector2d(1.5, 0.5), Eigen::Vector2d(0.5, 0.5),

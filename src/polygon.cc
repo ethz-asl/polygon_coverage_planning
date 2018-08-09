@@ -466,12 +466,28 @@ bool Polygon::computeVisibilityPolygon(const Point_2& query_point,
   VisibilityArrangement poly;
   CGAL::insert(poly, polygon_.outer_boundary().edges_begin(),
                polygon_.outer_boundary().edges_end());
+  // Store main face.
+  if (poly.number_of_unbounded_faces() != 1) {
+    LOG(ERROR) << "Polygon has unbounded curves.";
+    return false;
+  }
+  if (poly.number_of_faces() != 2) {
+    LOG(ERROR) << "More than one bounded face in polygon.";
+    return false;
+  }
+  VisibilityArrangement::Face_const_handle main_face = poly.faces_begin();
+  while (main_face->is_unbounded()) {
+    main_face++;
+  }
+
   for (PolygonWithHoles::Hole_const_iterator hit = polygon_.holes_begin();
        hit != polygon_.holes_end(); ++hit)
     CGAL::insert(poly, hit->edges_begin(), hit->edges_end());
 
   // Create Triangular Expansion Visibility object.
-  typedef CGAL::Triangular_expansion_visibility_2<VisibilityArrangement> TEV;
+  typedef CGAL::Triangular_expansion_visibility_2<VisibilityArrangement,
+                                                  CGAL::Tag_true>
+      TEV;
   TEV tev(poly);
 
   // We need to determine the halfedge or face to which the query point
@@ -496,12 +512,25 @@ bool Polygon::computeVisibilityPolygon(const Point_2& query_point,
                   &pl_result))) {
     // Located on vertex.
     std::cout << "On vertex." << std::endl;
-    fh = tev.compute_visibility(query_point, (*v)->incident_halfedges(),
-                                visibility_arr);
+
+    // Search the incident halfedge that contains the polygon face.
+    VisibilityArrangement::Halfedge_const_handle he = poly.halfedges_begin();
+    while ((he->target()->point() != (*v)->point()) ||
+           (he->face() != main_face)) {
+      he++;
+      if (he == poly.halfedges_end()) {
+        LOG(ERROR) << "Cannot find halfedge corresponding to vertex.";
+        return false;
+      }
+    }
+
+    fh = tev.compute_visibility(query_point, he, visibility_arr);
   } else if ((e = boost::get<VisibilityArrangement::Halfedge_const_handle>(
                   &pl_result))) {
     // Located on halfedge.
     std::cout << "On he." << std::endl;
+    std::cout << (*e)->source()->point() << std::endl;
+    std::cout << (*e)->target()->point() << std::endl;
     fh = tev.compute_visibility(query_point, *e, visibility_arr);
   } else {
     LOG(ERROR) << "Cannot locate query point on arrangement.";
