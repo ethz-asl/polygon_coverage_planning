@@ -1,8 +1,6 @@
-#include "mav_coverage_planning/shortest_path_ros.h"
+#include "mav_coverage_planning_ros/nodes/2d/shortest_path_ros.h"
 
 namespace mav_coverage_planning {
-
-const std::string kPrefix = kOutputPrefix + "shortest_path_ros]: ";
 
 ShortestPathRos::ShortestPathRos(const ros::NodeHandle& nh,
                                  const ros::NodeHandle& nh_private)

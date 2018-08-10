@@ -13,6 +13,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 #############
 cs_add_library(${PROJECT_NAME}
   src/nodes/2d/base_planner_2d.cc
+  src/nodes/2d/shortest_path_2d.cc
   src/conversions/ros_interface.cc
 )
 target_link_libraries(${PROJECT_NAME})
@@ -34,6 +35,11 @@ cs_add_executable(stripmap_planner_2d_exact_preprocessed_node
   src/nodes/2d/stripmap_planner_2d_exact_preprocessed_node.cc
 )
 target_link_libraries(stripmap_planner_2d_exact_preprocessed_node ${PROJECT_NAME})
+
+cs_add_executable(shortest_path_2d_node
+  src/nodes/2d/shortest_path_2d_node.cc
+)
+target_link_libraries(shortest_path_2d_node ${PROJECT_NAME})
 
 ##########
 # EXPORT #
