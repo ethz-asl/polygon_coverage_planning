@@ -1,16 +1,13 @@
 #include <glog/logging.h>
-#include <ros/ros.h>
 
-#include "mav_coverage_planning/graph/gtspp_product_graph.h"
+#include "mav_2d_coverage_planning/graphs/gtspp_product_graph.h"
 
 namespace mav_coverage_planning {
 namespace gtspp_product_graph {
 
-const std::string kPrefix = kOutputPrefix + "product_graph]: ";
-
 bool GtsppProductGraph::create() {
   if (sweep_plan_graph_ == nullptr || boolean_lattice_ == nullptr) {
-    ROS_ERROR_STREAM(kPrefix << "Sweep plan graph or boolean lattice not set.");
+    LOG(ERROR) << "Sweep plan graph or boolean lattice not set.";
     return false;
   }
 
@@ -26,9 +23,8 @@ bool GtsppProductGraph::create() {
     }
   }
 
-  ROS_INFO_STREAM(kPrefix << "Created GTSPP product graph with "
-                          << graph_.size() << " nodes and "
-                          << edge_properties_.size() << " edges.");
+  LOG(INFO) << "Created GTSPP product graph with " << graph_.size()
+            << " nodes and " << edge_properties_.size() << " edges.";
   is_created_ = true;
   return true;
 }
@@ -75,9 +71,8 @@ bool GtsppProductGraph::addGoalNode(const NodeProperty& node_property) {
 
 bool GtsppProductGraph::addGoalNode() { return addGoalNode(NodeProperty()); }
 
-bool GtsppProductGraph::solve(const Eigen::Vector2d& start,
-                              const Eigen::Vector2d& goal,
-                              StdVector2d* waypoints) const {
+bool GtsppProductGraph::solve(const Point_2& start, const Point_2& goal,
+                              std::vector<Point_2>* waypoints) const {
   if (!is_created_) {
     return false;
   }
@@ -115,16 +110,15 @@ bool GtsppProductGraph::solve(const Eigen::Vector2d& start,
   // Solve graph using Dijkstra.
   Solution solution;
   if (!temp_gtspp_product_graph.solveDijkstra(&solution)) {
-    ROS_ERROR_STREAM(kPrefix << "Dijkstra failed.");
+    LOG(ERROR) << "Dijkstra failed.";
     return false;
   }
 
   return temp_gtspp_product_graph.getWaypoints(solution, waypoints);
 }
 
-bool GtsppProductGraph::solveOnline(const Eigen::Vector2d& start,
-                                    const Eigen::Vector2d& goal,
-                                    StdVector2d* waypoints) const {
+bool GtsppProductGraph::solveOnline(const Point_2& start, const Point_2& goal,
+                                    std::vector<Point_2>* waypoints) const {
   CHECK_NOTNULL(waypoints);
   waypoints->clear();
 
@@ -165,7 +159,7 @@ bool GtsppProductGraph::solveOnline(const Eigen::Vector2d& start,
   if (!temp_gtspp_product_graph.createDijkstra(
           temp_gtspp_product_graph.getStartIdx(),
           temp_gtspp_product_graph.getGoalIdx(), &solution)) {
-    ROS_ERROR_STREAM(kPrefix << "Dijkstra failed.");
+    LOG(ERROR) << "Dijkstra failed.";
     return false;
   }
 
@@ -173,12 +167,12 @@ bool GtsppProductGraph::solveOnline(const Eigen::Vector2d& start,
 }
 
 bool GtsppProductGraph::getWaypoints(const Solution& solution,
-                                     StdVector2d* waypoints) const {
+                                     std::vector<Point_2>* waypoints) const {
   CHECK_NOTNULL(waypoints);
   waypoints->clear();
 
   if (sweep_plan_graph_ == nullptr) {
-    ROS_ERROR_STREAM(kPrefix << "Sweep plan graph not set.");
+    LOG(ERROR) << "Sweep plan graph not set.";
     return false;
   }
   // Translate product graph solution in sweep plan graph indices.
@@ -210,7 +204,7 @@ bool GtsppProductGraph::getWaypoints(const Solution& solution,
 bool GtsppProductGraph::addEdges() {
   // Find 'new' node properties.
   if (graph_.empty()) {
-    ROS_ERROR_STREAM(kPrefix << "Cannot add edges to an empty graph.");
+    LOG(ERROR) << "Cannot add edges to an empty graph.";
     return false;
   }
 

@@ -21,6 +21,7 @@ include_directories(${MONO_INCLUDE_DIRS})
 #############
 cs_add_library(${PROJECT_NAME}
   src/cost_functions/euclidean_cost_function.cc
+  src/graphs/gtspp_product_graph.cc
   src/graphs/sweep_plan_graph.cc
   src/graphs/visibility_graph.cc
   src/polygon.cc

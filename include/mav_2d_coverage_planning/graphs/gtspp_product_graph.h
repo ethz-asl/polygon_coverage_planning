@@ -1,11 +1,13 @@
-#ifndef MAV_COVERAGE_PLANNING_GRAPH_GTSPP_PRODUCT_GRAPH_H_
-#define MAV_COVERAGE_PLANNING_GRAPH_GTSPP_PRODUCT_GRAPH_H_
+#ifndef MAV_2D_COVERAGE_PLANNING_GRAPHS_GTSPP_PRODUCT_GRAPH_H_
+#define MAV_2D_COVERAGE_PLANNING_GRAPHS_GTSPP_PRODUCT_GRAPH_H_
 
 #include <limits>
+#include <vector>
 
-#include "mav_coverage_planning/graph/boolean_lattice.h"
-#include "mav_coverage_planning/graph/graph_base.h"
-#include "mav_coverage_planning/graph/sweep_plan_graph.h"
+#include "mav_2d_coverage_planning/definitions.h"
+#include "mav_2d_coverage_planning/graphs/sweep_plan_graph.h"
+#include "mav_coverage_graph_solvers/boolean_lattice.h"
+#include "mav_coverage_graph_solvers/graph_base.h"
 
 namespace mav_coverage_planning {
 namespace gtspp_product_graph {
@@ -67,13 +69,14 @@ class GtsppProductGraph : public GraphBase<NodeProperty, EdgeProperty> {
   }
 
   // Solve the graph with Dijsktra search.
-  bool solve(const Eigen::Vector2d& start, const Eigen::Vector2d& goal,
-             StdVector2d* waypoints) const;
+  bool solve(const Point_2& start, const Point_2& goal,
+             std::vector<Point_2>* waypoints) const;
   // Build the graph while performing Dijkstra search.
-  bool solveOnline(const Eigen::Vector2d& start, const Eigen::Vector2d& goal,
-                   StdVector2d* waypoints) const;
+  bool solveOnline(const Point_2& start, const Point_2& goal,
+                   std::vector<Point_2>* waypoints) const;
   // Given a solution, get the concatenated sweep plan graph waypoints.
-  bool getWaypoints(const Solution& solution, StdVector2d* waypoints) const;
+  bool getWaypoints(const Solution& solution,
+                    std::vector<Point_2>* waypoints) const;
 
  private:
   // Nodes are connected based on E1 or E2 criterion.
@@ -121,4 +124,4 @@ class GtsppProductGraph : public GraphBase<NodeProperty, EdgeProperty> {
 }  // namespace gtspp_product_graph
 }  // namespace mav_coverage_planning
 
-#endif  // MAV_COVERAGE_PLANNING_GRAPH_GTSPP_PRODUCT_GRAPH_H_
+#endif  // MAV_2D_COVERAGE_PLANNING_GRAPHS_GTSPP_PRODUCT_GRAPH_H_
