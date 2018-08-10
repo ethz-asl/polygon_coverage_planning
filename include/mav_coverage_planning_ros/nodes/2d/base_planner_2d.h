@@ -1,5 +1,5 @@
-#ifndef MAV_COVERAGE_PLANNING_BASE_PLANNER_H_
-#define MAV_COVERAGE_PLANNING_BASE_PLANNER_H_
+#ifndef MAV_COVERAGE_PLANNING_ROS_BASE_PLANNER_2D_H_
+#define MAV_COVERAGE_PLANNING_ROS_BASE_PLANNER_2D_H_
 
 #include <memory>
 
@@ -48,8 +48,7 @@ class BasePlanner2D {
       kTime           // Minimize flight time.
     } cost_function_type = kDistance;
 
-    inline std::string getCostFunctionTypeName(
-        ) {
+    inline std::string getCostFunctionTypeName() {
       switch (cost_function_type) {
         case CostFunctionType::kDistance:
           return "Euclidean distance";
@@ -79,6 +78,15 @@ class BasePlanner2D {
   virtual bool solvePlanner(const Point_2& start, const Point_2& goal) = 0;
   // Reset the planner when a new polygon is set.
   virtual bool resetPlanner() = 0;
+
+  // Node handles
+  ros::NodeHandle nh_;
+  ros::NodeHandle nh_private_;
+
+  Settings settings_;
+
+  // The solution waypoints for a given start and goal.
+  std::vector<Point_2> solution_;
 
  private:
   // Set a new polygon through a service call.
@@ -122,10 +130,6 @@ class BasePlanner2D {
   bool planningRequestStartPoseFromOdometry(
       planning_msgs::PlannerService::Request* req) const;
 
-  // Node handles
-  ros::NodeHandle nh_;
-  ros::NodeHandle nh_private_;
-
   // Publishers and Services
   ros::Publisher marker_pub_;
   ros::Publisher waypoint_list_pub_;
@@ -141,8 +145,6 @@ class BasePlanner2D {
   // Receives TF from local odometry frame to global planning frame.
   ros::Subscriber T_G_L_sub_;
 
-  // The solution waypoints for a given start and goal.
-  std::vector<Point_2> solution_;
   // Planner status
   bool planning_complete_;
 
@@ -151,9 +153,7 @@ class BasePlanner2D {
   bool odometry_in_global_frame_;
   mav_msgs::EigenOdometry odometry_;
   Transformation T_G_L_;
-
-  Settings settings_;
 };
 }  // namespace mav_coverage_planning
 
-#endif  // MAV_COVERAGE_PLANNING_BASE_PLANNER_H_
+#endif  // MAV_COVERAGE_PLANNING_ROS_BASE_PLANNER_2D_H_

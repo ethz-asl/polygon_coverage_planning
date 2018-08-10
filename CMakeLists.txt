@@ -17,6 +17,14 @@ cs_add_library(${PROJECT_NAME}
 )
 target_link_libraries(${PROJECT_NAME})
 
+############
+# Binaries #
+############
+cs_add_executable(stripmap_planner_2d_node
+  src/nodes/2d/stripmap_planner_2d_node.cc
+)
+target_link_libraries(stripmap_planner_2d_node ${PROJECT_NAME})
+
 ##########
 # EXPORT #
 ##########
