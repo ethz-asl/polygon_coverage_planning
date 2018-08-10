@@ -1,9 +1,10 @@
-#ifndef MAV_COVERAGE_PLANNING_BASE_PLANNING_ROS_H_
-#define MAV_COVERAGE_PLANNING_BASE_PLANNING_ROS_H_
+#ifndef MAV_COVERAGE_PLANNING_BASE_PLANNER_H_
+#define MAV_COVERAGE_PLANNING_BASE_PLANNER_H_
 
 #include <memory>
 
-#include <Eigen/Core>
+#include <mav_2d_coverage_planning/definitions.h>
+#include <mav_2d_coverage_planning/polygon.h>
 
 #include <planning_msgs/PlannerService.h>
 #include <planning_msgs/PolygonService.h>
@@ -16,25 +17,11 @@
 #include <minkindr_conversions/kindr_msg.h>
 #include <nav_msgs/Odometry.h>
 
-#include "mav_coverage_planning/common.h"
-#include "mav_coverage_planning/cost_function.h"
-#include "mav_coverage_planning/polygon.h"
-
 namespace mav_coverage_planning {
-
-// The default cost function type
-const CostFunction::Type kDefaultCostFunctionType =
-    CostFunction::Type::kVelocityRampTime;
-// The default maximum velocity
-constexpr double kDefaultMaximumVelocity = 2.0;
-// The default maximum acceleration
-constexpr double kDefaultMaximumAcceleration = 4.0;
 
 // The default control parameters
 constexpr bool kDefaultLatchTopic = true;
 const std::string kDefaultLocalFrameID = "odom";
-
-const std::string kDefaultOutputPrefix = kOutputPrefix + "base_planner_ros]: ";
 
 // Default publishing behaviour
 constexpr bool kDefaultPublishPlanPointsOnPlanningComplete = false;
@@ -43,12 +30,44 @@ constexpr bool kDefaultPublishVisualizationOnPlanningComplete = true;
 typedef kindr::minimal::QuatTransformation Transformation;
 
 // A basic ros wrapper for planner in a 2D polynomial environment.
-class BasePlannerRos {
+class BasePlanner2D {
  public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+  struct Settings {
+    Settings();
+    Polygon polygon;
+    SegmentCostFunctionType visibility_graph_cost_function;
+    PathCostFunctionType sweep_cost_function;
+    double altitude;
+    bool latch_topics;
+    std::string local_frame_id;
+    std::string global_frame_id;
+    bool publish_plan_on_planning_complete;
+    bool publish_visualization_on_planning_complete;
+    enum CostFunctionType {
+      kDistance = 0,  // Minimize distance.
+      kTime           // Minimize flight time.
+    } cost_function_type = kDistance;
+
+    inline std::string getCostFunctionTypeName(
+        ) {
+      switch (cost_function_type) {
+        case CostFunctionType::kDistance:
+          return "Euclidean distance";
+        case CostFunctionType::kTime:
+          return "Time";
+        default:
+          return "Unknown!";
+      }
+    }
+
+    inline bool checkCostFunctionTypeValid() {
+      return (cost_function_type == CostFunctionType::kDistance) ||
+             (cost_function_type == CostFunctionType::kTime);
+    }
+  };
 
   // Constructor
-  BasePlannerRos(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
+  BasePlanner2D(const ros::NodeHandle& nh, const ros::NodeHandle& nh_private);
 
   // Initial interactions with ROS
   void getParametersFromRos();
@@ -56,6 +75,12 @@ class BasePlannerRos {
   void advertiseTopics();
 
  protected:
+  // Call to the actual planner.
+  virtual bool solvePlanner(const Point_2& start, const Point_2& goal) = 0;
+  // Reset the planner when a new polygon is set.
+  virtual bool resetPlanner() = 0;
+
+ private:
   // Set a new polygon through a service call.
   bool setPolygonCallback(planning_msgs::PolygonService::Request& request,
                           planning_msgs::PolygonService::Response& response);
@@ -83,14 +108,7 @@ class BasePlannerRos {
 
   // Solve the planning problem. Stores status planning_complete_ and publishes
   // trajectory and visualization if enabled.
-  void solve(const Eigen::Vector2d& start, const Eigen::Vector2d& goal);
-  // Call to the actual planner.
-  // Note: Needs to be implemented!
-  virtual bool solvePlanner(const Eigen::Vector2d& start,
-                            const Eigen::Vector2d& goal);
-  // Reset the planner when a new polygon is set.
-  // Note: Needs to be implemented!
-  virtual bool resetPlanner();
+  void solve(const Point_2& start, const Point_2& goal);
 
   // Visualization
   bool publishVisualization();
@@ -124,7 +142,7 @@ class BasePlannerRos {
   ros::Subscriber T_G_L_sub_;
 
   // The solution waypoints for a given start and goal.
-  StdVector2d solution_;
+  std::vector<Point_2> solution_;
   // Planner status
   bool planning_complete_;
 
@@ -133,23 +151,9 @@ class BasePlannerRos {
   bool odometry_in_global_frame_;
   mav_msgs::EigenOdometry odometry_;
   Transformation T_G_L_;
-  std::string global_frame_id_;
-  std::string local_frame_id_;
 
-  // System Parameters
-  double altitude_;
-
-  Polygon polygon_;
-  CostFunction cost_function_;
-
-  // Control Parameters
-  bool latch_topic_;
-  std::string output_prefix_;
-
-  // Flags
-  bool publish_plan_points_on_planning_complete_;
-  bool publish_visualization_on_planning_complete_;
+  Settings settings_;
 };
 }  // namespace mav_coverage_planning
 
-#endif  // MAV_COVERAGE_PLANNING_BASE_PLANNING_ROS_H_
+#endif  // MAV_COVERAGE_PLANNING_BASE_PLANNER_H_

@@ -1,18 +1,18 @@
-#include "mav_coverage_planning/ros_interface.h"
+#include "mav_coverage_planning_ros/conversions/ros_interface.h"
 
-#include <limits>
 #include <algorithm>
+#include <limits>
 
 #include <geometry_msgs/Point.h>
 #include <glog/logging.h>
+#include <mav_2d_coverage_planning/definitions.h>
 #include <ros/ros.h>
+#include <Eigen/Core>
 
 namespace mav_coverage_planning {
 
-const std::string kPrefix = kOutputPrefix + "ros_interface]: ";
-
 void eigenTrajectoryPointVectorFromPath(
-    const StdVector2d& waypoints, double altitude,
+    const std::vector<Point_2>& waypoints, double altitude,
     mav_msgs::EigenTrajectoryPointVector* traj_points) {
   CHECK_NOTNULL(traj_points);
 
@@ -20,7 +20,8 @@ void eigenTrajectoryPointVectorFromPath(
   traj_points->resize(waypoints.size());
   for (size_t i = 0; i < waypoints.size(); i++) {
     (*traj_points)[i].position_W =
-        Eigen::Vector3d(waypoints[i].x(), waypoints[i].y(), altitude);
+        Eigen::Vector3d(CGAL::to_double(waypoints[i].x()),
+                        CGAL::to_double(waypoints[i].y()), altitude);
   }
 }
 
@@ -42,7 +43,8 @@ void poseArrayMsgFromEigenTrajectoryPointVector(
 }
 
 void poseArrayMsgFromPath(
-    const StdVector2d& waypoints, double altitude, const std::string& frame_id,
+    const std::vector<Point_2>& waypoints, double altitude,
+    const std::string& frame_id,
     geometry_msgs::PoseArray* trajectory_points_pose_array) {
   CHECK_NOTNULL(trajectory_points_pose_array);
 
@@ -53,7 +55,7 @@ void poseArrayMsgFromPath(
 }
 
 void msgMultiDofJointTrajectoryFromPath(
-    const StdVector2d& waypoints, double altitude,
+    const std::vector<Point_2>& waypoints, double altitude,
     trajectory_msgs::MultiDOFJointTrajectory* msg) {
   CHECK_NOTNULL(msg);
 
@@ -62,7 +64,7 @@ void msgMultiDofJointTrajectoryFromPath(
   mav_msgs::msgMultiDofJointTrajectoryFromEigen(eigen_traj, msg);
 }
 
-void createMarkers(const StdVector2d& vertices, double altitude,
+void createMarkers(const std::vector<Point_2>& vertices, double altitude,
                    const std::string& frame_id, const std::string& ns,
                    const mav_visualization::Color& points_color,
                    const mav_visualization::Color& lines_color,
@@ -94,8 +96,8 @@ void createMarkers(const StdVector2d& vertices, double altitude,
 
   for (size_t i = 0; i < vertices.size(); i++) {
     geometry_msgs::Point p;
-    p.x = vertices[i].x();
-    p.y = vertices[i].y();
+    p.x = CGAL::to_double(vertices[i].x());
+    p.y = CGAL::to_double(vertices[i].y());
     p.z = altitude;
 
     points->points.push_back(p);
@@ -114,18 +116,22 @@ void createPolygonMarkers(const Polygon& polygon, double altitude,
   // Polygon markers.
   visualization_msgs::Marker hull_points, hull_vertices;
   // Close hull.
-  StdVector2d hull = polygon.getVertices();
-  hull.push_back(polygon.getVertices().front());
+  std::vector<Point_2> hull =
+      polygon.getVertices(polygon.getPolygon().outer_boundary());
+  hull.push_back(hull.front());
   createMarkers(hull, altitude, frame_id, ns + "hull", polygon_color,
                 polygon_color, &hull_points, &hull_vertices);
   array->markers.push_back(hull_points);
   array->markers.push_back(hull_vertices);
 
   // Hole markers.
-  for (size_t i = 0; i < polygon.getNumHoles(); ++i) {
+  size_t i = 0;
+  for (PolygonWithHoles::Hole_const_iterator hi =
+           polygon.getPolygon().holes_begin();
+       hi != polygon.getPolygon().holes_end(); ++hi, ++i) {
     visualization_msgs::Marker hole_points, hole_vertices;
-    StdVector2d hole = polygon.getHoles()[i].getVertices();
-    hole.push_back(polygon.getHoles()[i].getVertices().front());
+    std::vector<Point_2> hole = polygon.getVertices(*hi);
+    hole.push_back(hole.front());
     createMarkers(hole, altitude, frame_id, ns + "hole_" + std::to_string(i),
                   hole_color, hole_color, &hole_points, &hole_vertices);
     array->markers.push_back(hole_points);
@@ -133,7 +139,7 @@ void createPolygonMarkers(const Polygon& polygon, double altitude,
   }
 }
 
-void createMarkers(const StdVector2d& vertices, double altitude,
+void createMarkers(const std::vector<Point_2>& vertices, double altitude,
                    visualization_msgs::Marker* points,
                    visualization_msgs::Marker* line_strip) {
   CHECK_NOTNULL(points);
@@ -143,9 +149,8 @@ void createMarkers(const StdVector2d& vertices, double altitude,
                 mav_visualization::Color::Green(), points, line_strip);
 }
 
-void createStartAndEndPointMarkers(const Eigen::Vector2d& start,
-                                   const Eigen::Vector2d& end, double altitude,
-                                   const std::string& frame_id,
+void createStartAndEndPointMarkers(const Point_2& start, const Point_2& end,
+                                   double altitude, const std::string& frame_id,
                                    const std::string& ns,
                                    visualization_msgs::Marker* start_point,
                                    visualization_msgs::Marker* end_point) {
@@ -158,12 +163,12 @@ void createStartAndEndPointMarkers(const Eigen::Vector2d& start,
   end_point->ns = ns + "_end";
   start_point->action = end_point->action = visualization_msgs::Marker::ADD;
 
-  start_point->pose.position.x = start.x();
-  start_point->pose.position.y = start.y();
+  start_point->pose.position.x = CGAL::to_double(start.x());
+  start_point->pose.position.y = CGAL::to_double(start.y());
   start_point->pose.position.z = altitude;
 
-  end_point->pose.position.x = end.x();
-  end_point->pose.position.y = end.y();
+  end_point->pose.position.x = CGAL::to_double(end.x());
+  end_point->pose.position.y = CGAL::to_double(end.y());
   end_point->pose.position.z = altitude;
 
   start_point->pose.orientation.w = end_point->pose.orientation.w = 1.0;
@@ -183,15 +188,15 @@ void createStartAndEndPointMarkers(const Eigen::Vector2d& start,
   end_point->color.a = 0.5;
 }
 
-void verticesFromPolygonMsg(const planning_msgs::Polygon2D& msg,
-                            StdVector2d* vertices) {
-  CHECK_NOTNULL(vertices);
+void polygon2FromPolygonMsg(const planning_msgs::Polygon2D& msg,
+                            Polygon_2* polygon) {
+  CHECK_NOTNULL(polygon);
 
-  vertices->resize(msg.points.size());
-  for (size_t i = 0; i < msg.points.size(); ++i) {
-    (*vertices)[i].x() = msg.points[i].x;
-    (*vertices)[i].y() = msg.points[i].y;
-  }
+  std::vector<Point_2> vertices(msg.points.size());
+  for (size_t i = 0; i < msg.points.size(); ++i)
+    vertices[i] = Point_2(msg.points[i].x, msg.points[i].y);
+
+  *polygon = Polygon_2(vertices.begin(), vertices.end());
 }
 
 bool polygonFromMsg(const planning_msgs::PolygonWithHolesStamped& msg,
@@ -203,27 +208,25 @@ bool polygonFromMsg(const planning_msgs::PolygonWithHolesStamped& msg,
   *frame = msg.header.frame_id;
   *altitude = msg.altitude;
 
-  StdVector2d hull;
-  verticesFromPolygonMsg(msg.polygon.hull, &hull);
+  Polygon_2 hull;
+  polygon2FromPolygonMsg(msg.polygon.hull, &hull);
+  PolygonWithHoles pwh(hull);
 
-  std::vector<StdVector2d> holes(msg.polygon.holes.size());
   for (size_t i = 0; i < msg.polygon.holes.size(); ++i) {
-    verticesFromPolygonMsg(msg.polygon.holes[i], &holes[i]);
+    Polygon_2 hole;
+    polygon2FromPolygonMsg(msg.polygon.holes[i], &hole);
+    pwh.add_hole(hole);
   }
 
-  *polygon = Polygon(hull, holes);
-  if (!polygon->isValid()) {
-    ROS_ERROR_STREAM(kPrefix << "Input polygon is not valid.");
+  *polygon = Polygon(pwh);
+  if (polygon->getPolygon().outer_boundary().size() < 3) {
+    ROS_ERROR_STREAM("Input polygon is not valid.");
     return false;
-  } else if (!polygon->isSimple()) {
-    ROS_ERROR_STREAM(kPrefix << "Input polygon is not simple.");
+  } else if (!polygon->isStrictlySimple()) {
+    ROS_ERROR_STREAM("Input polygon is not simple.");
     return false;
-  } else if (polygon->hasHoles() && !polygon->hasSimpleHoles()) {
-    ROS_ERROR_STREAM(kPrefix << "Input polygon has non-simple holes.");
-    return false;
-  } else {
-    return true;
   }
+  return true;
 }
 
 }  // namespace mav_coverage_planning

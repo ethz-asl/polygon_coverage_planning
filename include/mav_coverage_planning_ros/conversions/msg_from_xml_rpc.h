@@ -1,5 +1,5 @@
-#ifndef MAV_COVERAGE_PLANNING_MSG_FROM_XML_RPC_H
-#define MAV_COVERAGE_PLANNING_MSG_FROM_XML_RPC_H
+#ifndef MAV_COVERAGE_PLANNING_ROS_CONVERSIONS_MSG_FROM_XML_RPC_H
+#define MAV_COVERAGE_PLANNING_ROS_CONVERSIONS_MSG_FROM_XML_RPC_H
 
 #include <exception>
 #include <string>
@@ -335,4 +335,4 @@ inline bool PolygonWithHolesStampedMsgFromXmlRpc(
 
 }  // namespace mav_coverage_planning
 
-#endif  // MAV_COVERAGE_PLANNING_MSG_FROM_XML_RPC_H
+#endif  // MAV_COVERAGE_PLANNING_ROS_CONVERSIONS_MSG_FROM_XML_RPC_H

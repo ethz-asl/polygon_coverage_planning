@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>mav_coverage_planner_ros</name>
+  <name>mav_coverage_planning_ros</name>
   <version>0.0.0</version>
   <description>
     A ROS interface for MAV coverage planner.
@@ -12,7 +12,21 @@
 
   <buildtool_depend>catkin</buildtool_depend>
   <buildtool_depend>catkin_simple</buildtool_depend>
-  
+
   <depend>roscpp</depend>
+
+  <depend>planning_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>mav_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>visualization_msgs</depend>
+  <depend>mav_visualization</depend>
+  <depend>std_srvs</depend>
+
+  <depend>minkindr_conversions</depend>
+  <depend>eigen_conversions</depend>
+
+  <depend>mav_2d_coverage_planning</depend>
 
 </package>
