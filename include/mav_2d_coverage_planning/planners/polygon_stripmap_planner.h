@@ -1,5 +1,5 @@
-#ifndef MAV_2D_COVERAGE_PLANNING_POLYGON_PLANNER_H_
-#define MAV_2D_COVERAGE_PLANNING_POLYGON_PLANNER_H_
+#ifndef MAV_2D_COVERAGE_PLANNING_PLANNERS_POLYGON_STRIPMAP_PLANNER_H_
+#define MAV_2D_COVERAGE_PLANNING_PLANNERS_POLYGON_STRIPMAP_PLANNER_H_
 
 #include "mav_2d_coverage_planning/definitions.h"
 #include "mav_2d_coverage_planning/graphs/sweep_plan_graph.h"
@@ -50,6 +50,10 @@ class PolygonStripmapPlanner {
   virtual bool runSolver(const Point_2& start, const Point_2& goal,
                          std::vector<Point_2>* solution) const;
 
+  std::vector<Polygon> convex_decomposition_;
+  // The sweep plan graph with all possible waypoints its node connections.
+  sweep_plan_graph::SweepPlanGraph sweep_plan_graph_;
+
  private:
   // Check for valid user input.
   bool checkUserInput() const;
@@ -58,11 +62,9 @@ class PolygonStripmapPlanner {
 
   // Valid construction.
   bool is_initialized_;
-  // The sweep plan graph with all possible waypoints its node connections.
-  sweep_plan_graph::SweepPlanGraph sweep_plan_graph_;
   // User problem settings.
   Settings settings_;
 };
 
 }  // namespace mav_coverage_planning
-#endif  // MAV_2D_COVERAGE_PLANNING_POLYGON_PLANNER_H_
+#endif  // MAV_2D_COVERAGE_PLANNING_PLANNERS_POLYGON_STRIPMAP_PLANNER_H_

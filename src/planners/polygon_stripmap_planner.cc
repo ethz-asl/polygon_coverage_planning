@@ -19,15 +19,14 @@ bool PolygonStripmapPlanner::setup() {
   }
 
   // Create convex decomposition.
-  std::vector<Polygon> convex_polygons;
   if (is_initialized_) {
     if (!settings_.polygon.computeConvexDecompositionFromPolygonWithHoles(
-            &convex_polygons)) {
+            &convex_decomposition_)) {
       LOG(ERROR) << "Cannot compute convex decomposition.";
       is_initialized_ = false;
     } else {
       LOG(INFO) << "Successfully created convex partition with "
-                << convex_polygons.size() << " convex polygon(s).";
+                << convex_decomposition_.size() << " convex polygon(s).";
     }
   }
 
@@ -41,8 +40,8 @@ bool PolygonStripmapPlanner::setup() {
   LOG(INFO) << "Start creating sweep plan graph.";
   sweep_plan_graph_ = sweep_plan_graph::SweepPlanGraph(
       settings_.polygon, settings_.path_cost_function,
-      settings_.segment_cost_function, convex_polygons, max_lateral_distance,
-      max_offset_distance);
+      settings_.segment_cost_function, convex_decomposition_,
+      max_lateral_distance, max_offset_distance);
   if (is_initialized_) {
     if (!sweep_plan_graph_.isInitialized()) {
       LOG(ERROR) << "Cannot create sweep plan graph.";
@@ -94,6 +93,8 @@ bool PolygonStripmapPlanner::solve(const Point_2& start, const Point_2& goal,
 bool PolygonStripmapPlanner::runSolver(const Point_2& start,
                                        const Point_2& goal,
                                        std::vector<Point_2>* solution) const {
+  CHECK_NOTNULL(solution);
+
   LOG(INFO) << "Start solving GTSP using GK MA.";
   return sweep_plan_graph_.solve(start, goal, solution);
 }
