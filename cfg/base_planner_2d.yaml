@@ -1,0 +1,8 @@
+cost_function_type: 0 # [0: Euclidean Distance, 1: Time]
+
+latch_topics: true
+
+local_frame_id: 'odom'
+
+publish_plan_on_planning_complete: false
+publish_visualization_on_planning_complete: true
