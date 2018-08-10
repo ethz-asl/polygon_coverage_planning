@@ -35,6 +35,15 @@ Polygon::Polygon(const PolygonWithHoles& polygon)
   simplify();
 }
 
+const std::vector<Point_2>& Polygon::getVertices(const Polygon_2& p) const {
+  std::vector<Point_2> vec(p.size());
+  std::vector<Point_2>::iterator vecit;
+  for (VertexConstIterator vit = p.vertices_begin(); vit != p.vertices_end();
+       ++vit, ++vecit)
+    *vecit = *vit;
+  return vec;
+}
+
 bool Polygon::computeOffsetPolygon(FT max_offset,
                                    Polygon* offset_polygon) const {
   CHECK_NOTNULL(offset_polygon);

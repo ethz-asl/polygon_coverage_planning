@@ -59,6 +59,7 @@ class Polygon {
                                 Polygon* visibility_polygon) const;
 
   inline const PolygonWithHoles& getPolygon() const { return polygon_; }
+  const std::vector<Point_2>& getVertices(const Polygon_2& p) const;
 
   // Helper to check whether a point is inside or on the boundary of the
   // polygon.
