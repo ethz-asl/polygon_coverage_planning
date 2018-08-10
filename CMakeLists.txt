@@ -25,6 +25,16 @@ cs_add_executable(stripmap_planner_2d_node
 )
 target_link_libraries(stripmap_planner_2d_node ${PROJECT_NAME})
 
+cs_add_executable(stripmap_planner_2d_exact_node
+  src/nodes/2d/stripmap_planner_2d_exact_node.cc
+)
+target_link_libraries(stripmap_planner_2d_exact_node ${PROJECT_NAME})
+
+cs_add_executable(stripmap_planner_2d_exact_preprocessed_node
+  src/nodes/2d/stripmap_planner_2d_exact_preprocessed_node.cc
+)
+target_link_libraries(stripmap_planner_2d_exact_preprocessed_node ${PROJECT_NAME})
+
 ##########
 # EXPORT #
 ##########
