@@ -99,7 +99,7 @@ bool SweepPlanGraph::computeLineSweepPlans(
 
   // Shrink polygon.
   Polygon p;
-  if (!polygon.computeOffsetPolygon(sweep_distance_, &p)) {
+  if (!polygon.computeOffsetPolygon(offset_distance_, &p)) {
     LOG(WARNING) << "Cannot shrink polygon:" << polygon
                  << " with sweep distance: " << sweep_distance_;
   }

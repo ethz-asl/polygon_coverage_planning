@@ -24,6 +24,7 @@ cs_add_library(${PROJECT_NAME}
   src/graphs/gtspp_product_graph.cc
   src/graphs/sweep_plan_graph.cc
   src/graphs/visibility_graph.cc
+  src/planners/polygon_stripmap_planner.cc
   src/polygon.cc
 )
 target_link_libraries(${PROJECT_NAME} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES})

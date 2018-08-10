@@ -55,12 +55,13 @@ class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
                  const PathCostFunctionType& cost_function,
                  const SegmentCostFunctionType& seg_cost_function,
                  const std::vector<Polygon>& polygon_clusters,
-                 double sweep_distance)
+                 double sweep_distance, double offset_distance)
       : GraphBase(),
         visibility_graph_(polygon, seg_cost_function),
         cost_function_(cost_function),
         polygon_clusters_(polygon_clusters),
-        sweep_distance_(sweep_distance) {
+        sweep_distance_(sweep_distance),
+        offset_distance_(offset_distance) {
     is_created_ = create();  // Auto-create.
   }
   SweepPlanGraph() : GraphBase() {}
@@ -122,7 +123,8 @@ class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
       visibility_graph_;                   // The visibility to compute edges.
   PathCostFunctionType cost_function_;     // The user defined cost function.
   std::vector<Polygon> polygon_clusters_;  // The polygon clusters.
-  double sweep_distance_;                  // The distance between the sweeps.
+  double sweep_distance_;                  // The max. sweep distance.
+  double offset_distance_;                 // The max. polygon offset distance.
 };
 
 }  // namespace sweep_plan_graph

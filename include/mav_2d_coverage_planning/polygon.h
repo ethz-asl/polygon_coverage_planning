@@ -1,9 +1,9 @@
 #ifndef MAV_2D_COVERAGE_PLANNING_POLYGON_H_
 #define MAV_2D_COVERAGE_PLANNING_POLYGON_H_
 
-#include <vector>
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 #include "mav_2d_coverage_planning/definitions.h"
 
@@ -74,6 +74,8 @@ class Polygon {
   Point_2 projectPointOnHull(const Point_2& p) const;
 
   FT computeArea() const;
+
+  bool isStrictlySimple() const { return is_strictly_simple_; }
 
   friend std::ostream& operator<<(std::ostream& stream, const Polygon& p);
 
