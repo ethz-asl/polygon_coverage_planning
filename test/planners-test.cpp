@@ -11,31 +11,25 @@
 
 using namespace mav_coverage_planning;
 
-TEST(StripmapPlannerTest, ConvexPolygon) {
-  const double kCenterMin = -50.0;
-  const double kCenterMax = 50.0;
-  const double kPolygonDiameterMin = 1.0;
-  const double kPolygonDiameterMax = 100.0;
-  const double kAltitudeMin = 0.5;
-  const double kAltitudeMax = 30.0;
-  const double kFOVCameraRadMin = M_PI / 12.0;
-  const double kFOVCameraRadMax = M_PI - 0.1;
-  const double kMinViewOverlapMin = 0.0;
-  const double kMinViewOverlapMax = 0.99;
+const double kCenterMin = -50.0;
+const double kCenterMax = 50.0;
+const double kPolygonDiameterMin = 20.0;
+const double kPolygonDiameterMax = 100.0;
+const double kAltitudeMin = 0.5;
+const double kAltitudeMax = 30.0;
+const double kFOVCameraRadMin = M_PI / 12.0;
+const double kFOVCameraRadMax = M_PI - 0.1;
+const double kMinViewOverlapMin = 0.0;
+const double kMinViewOverlapMax = 0.99;
+const int kNumPolygons = 1e2;
+const size_t kSeed = 123456;
 
-  const int kNumPaths = 1.0e2;
-  std::srand(123456);
-  for (size_t i = 0; i < kNumPaths; i++) {
+// Given a set of polygons run all planners.
+void runPlanners(const std::vector<Polygon>& polygons) {
+  for (const Polygon& p : polygons) {
     // Create planner settings.
     PolygonStripmapPlanner::Settings settings;
-    double x_0 = createRandomDouble(kCenterMin, kCenterMax);
-    double y_0 = createRandomDouble(kCenterMin, kCenterMax);
-    double r =
-        createRandomDouble(kPolygonDiameterMin, kPolygonDiameterMax) / 2.0;
-    if (!createRandomConvexPolygon(x_0, y_0, r, &settings.polygon)) {
-      continue;
-    }
-    EXPECT_TRUE(settings.polygon.isConvex());
+    settings.polygon = p;
     EXPECT_EQ(0, settings.polygon.getPolygon().number_of_holes());
 
     settings.segment_cost_function =
@@ -55,7 +49,8 @@ TEST(StripmapPlannerTest, ConvexPolygon) {
     // Create planners.
     PolygonStripmapPlanner planner_gk_ma(settings);
     PolygonStripmapPlannerExact planner_exact(settings);
-    PolygonStripmapPlannerExactPreprocessed planner_exact_preprocessed(settings);
+    PolygonStripmapPlannerExactPreprocessed planner_exact_preprocessed(
+        settings);
 
     EXPECT_TRUE(planner_gk_ma.setup());
     EXPECT_TRUE(planner_exact.setup());
@@ -92,6 +87,40 @@ TEST(StripmapPlannerTest, ConvexPolygon) {
     EXPECT_GE(settings.path_cost_function(waypoints_gk_ma),
               settings.path_cost_function(waypoints_exact));
   }
+}
+
+TEST(StripmapPlannerTest, RandomConvexPolygon) {
+  std::srand(kSeed);
+  std::vector<Polygon> polygons(kNumPolygons);
+
+  for (size_t i = 0; i < kNumPolygons; i++) {
+    double x_0 = createRandomDouble(kCenterMin, kCenterMax);
+    double y_0 = createRandomDouble(kCenterMin, kCenterMax);
+    double r =
+        createRandomDouble(kPolygonDiameterMin, kPolygonDiameterMax) / 2.0;
+    if (!createRandomConvexPolygon(x_0, y_0, r, &polygons[i])) {
+      continue;
+    }
+    EXPECT_TRUE(polygons[i].isConvex());
+  }
+  runPlanners(polygons);
+}
+
+TEST(StripmapPlannerTest, RandomSimplePolygon) {
+  CGAL::Random random(kSeed);
+  std::srand(kSeed);
+  std::vector<Polygon> polygons(kNumPolygons);
+
+  for (size_t i = 0; i < kNumPolygons; i++) {
+    double r =
+        createRandomDouble(kPolygonDiameterMin, kPolygonDiameterMax) / 2.0;
+    const int kMaxPolySize = 10;
+    if (!createRandomSimplePolygon(r, random, kMaxPolySize, &polygons[i])) {
+      continue;
+    }
+    EXPECT_TRUE(polygons[i].isStrictlySimple());
+  }
+  runPlanners(polygons);
 }
 
 int main(int argc, char** argv) {

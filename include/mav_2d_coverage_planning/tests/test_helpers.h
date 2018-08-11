@@ -1,8 +1,13 @@
 #ifndef MAV_2D_COVERAGE_PLANNING_TESTS_TEST_HELPERS_H_
 #define MAV_2D_COVERAGE_PLANNING_TESTS_TEST_HELPERS_H_
 
-#include <cstdlib>
 #include <glog/logging.h>
+#include <cstdlib>
+
+#include <CGAL/Random.h>
+#include <CGAL/algorithm.h>
+#include <CGAL/point_generators_2.h>
+#include <CGAL/random_polygon_2.h>
 
 #include "mav_2d_coverage_planning/polygon.h"
 
@@ -110,6 +115,26 @@ bool createRandomConvexPolygon(double x0, double y0, double r,
 
   *convex_polygon = Polygon(v.begin(), v.end());
   return v.size() > 2;
+}
+
+bool createRandomSimplePolygon(double r, CGAL::Random& random,
+                               int max_poly_size, Polygon* simple_polygon) {
+  CHECK_NOTNULL(simple_polygon);
+
+  Polygon_2 polygon;
+  std::list<Point_2> point_set;
+  int size = random.get_int(4, max_poly_size);
+  // copy size points from the generator, eliminating duplicates, so the
+  // polygon will have <= size vertices
+  typedef CGAL::Creator_uniform_2<int, Point_2> Creator;
+  typedef CGAL::Random_points_in_square_2<Point_2, Creator> Point_generator;
+  CGAL::copy_n_unique(Point_generator(r, random), size,
+                      std::back_inserter(point_set));
+  CGAL::random_polygon_2(point_set.size(), std::back_inserter(polygon),
+                         point_set.begin());
+  *simple_polygon = Polygon(polygon);
+
+  return simple_polygon->getPolygon().outer_boundary().size() > 2;
 }
 
 }  // namespace mav_coverage_planning
