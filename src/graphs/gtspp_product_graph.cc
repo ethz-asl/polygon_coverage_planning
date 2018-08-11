@@ -11,7 +11,7 @@ bool GtsppProductGraph::create() {
     return false;
   }
 
-  reserve(boolean_lattice_->size() * sweep_plan_graph_->size());
+  graph_.reserve(boolean_lattice_->size() * sweep_plan_graph_->size());
 
   for (size_t lattice_id = 0; lattice_id < boolean_lattice_->size();
        ++lattice_id) {
@@ -25,6 +25,31 @@ bool GtsppProductGraph::create() {
 
   LOG(INFO) << "Created GTSPP product graph with " << graph_.size()
             << " nodes and " << edge_properties_.size() << " edges.";
+  is_created_ = true;
+  return true;
+}
+
+bool GtsppProductGraph::createOnline() {
+  if (sweep_plan_graph_ == nullptr || boolean_lattice_ == nullptr) {
+    LOG(ERROR) << "Sweep plan graph or boolean lattice not set.";
+    return false;
+  }
+
+  graph_.resize(boolean_lattice_->size() * sweep_plan_graph_->size());
+
+  for (size_t lattice_id = 0; lattice_id < boolean_lattice_->size();
+       ++lattice_id) {
+    for (size_t sweep_id = 0; sweep_id < sweep_plan_graph_->size();
+         ++sweep_id) {
+      // Add node without edges.
+      const size_t idx = lattice_id * sweep_plan_graph_->size() + sweep_id;
+      node_properties_.insert(
+          std::make_pair(idx, NodeProperty(sweep_id, lattice_id)));
+    }
+  }
+
+  LOG(INFO) << "Created GTSPP product graph with " << graph_.size()
+            << " nodes without edges.";
   is_created_ = true;
   return true;
 }
@@ -124,7 +149,6 @@ bool GtsppProductGraph::solveOnline(const Point_2& start, const Point_2& goal,
 
   // Create temporary graph structure.
   GtsppProductGraph temp_gtspp_product_graph = *this;
-  temp_gtspp_product_graph.GraphBase::clear();
   sweep_plan_graph::SweepPlanGraph temp_sweep_plan_graph = *sweep_plan_graph_;
   boolean_lattice::BooleanLattice temp_boolean_lattice = *boolean_lattice_;
 
@@ -156,9 +180,7 @@ bool GtsppProductGraph::solveOnline(const Point_2& start, const Point_2& goal,
 
   // Create graph while solving Dijkstra.
   Solution solution;
-  if (!temp_gtspp_product_graph.createDijkstra(
-          temp_gtspp_product_graph.getStartIdx(),
-          temp_gtspp_product_graph.getGoalIdx(), &solution)) {
+  if (!temp_gtspp_product_graph.createDijkstra(&solution)) {
     LOG(ERROR) << "Dijkstra failed.";
     return false;
   }
@@ -375,33 +397,31 @@ bool GtsppProductGraph::getBooleanLatticeEdgeCost(const EdgeId& edge_id,
   return boolean_lattice_->getEdgeCost(boolean_lattice_edge, cost);
 }
 
-bool GtsppProductGraph::createDijkstra(size_t start, size_t goal,
-                                       Solution* solution) {
+bool GtsppProductGraph::createDijkstra(Solution* solution) {
   CHECK_NOTNULL(solution);
   solution->clear();
-  if (!nodeExists(start) || !nodeExists(goal)) {
+  if (!nodeExists(start_idx_) || !nodeExists(goal_idx_)) {
     return false;
   }
   clearEdges();
 
   // https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
   // Initialization.
-  std::set<size_t> open_set = {start};  // Nodes to evaluate.
-  std::set<size_t> closed_set;          // Nodes already evaluated.
-  std::map<size_t, size_t> came_from;   // Get previous node on optimal path.
-  std::map<size_t, double> cost;        // Optimal cost from start.
+  std::set<size_t> open_set = {start_idx_};  // Nodes to evaluate.
+  std::set<size_t> closed_set;               // Nodes already evaluated.
+  std::map<size_t, size_t> came_from;  // Get previous node on optimal path.
+  std::map<size_t, double> cost;       // Optimal cost from start.
   for (size_t i = 0; i < graph_.size(); i++) {
     cost[i] = std::numeric_limits<double>::max();
   }
-  cost[start] = 0.0;
+  cost[start_idx_] = 0.0;
 
   while (!open_set.empty()) {
     // Pop vertex with lowest score from open set.
     size_t current = *std::min_element(
         open_set.begin(), open_set.end(),
         [&cost](size_t i, size_t j) { return cost[i] < cost[j]; });
-    if (getNodeProperty(current)->sweep_plan_graph_id ==
-        getNodeProperty(goal)->sweep_plan_graph_id) {  // Reached goal.
+    if (current == goal_idx_) {  // Reached goal.
       *solution = reconstructSolution(came_from, current);
       return true;
     }
@@ -409,73 +429,21 @@ bool GtsppProductGraph::createDijkstra(size_t start, size_t goal,
     closed_set.insert(current);
 
     // Create all neighbors.
-    const NodeProperty* from_node = getNodeProperty(current);
-    const boolean_lattice::NodeProperty* from_boolean_lattice_node =
-        getBooleanLatticeNodeProperty(current);
-    const sweep_plan_graph::NodeProperty* from_sweep_plan_graph_node =
-        getSweepPlanGraphNodeProperty(current);
-    if (from_node == nullptr || from_boolean_lattice_node == nullptr ||
-        from_sweep_plan_graph_node == nullptr) {
-      return false;
-    }
-
-    // E1 edges.
-    for (size_t to_sweep_id = 0; to_sweep_id < sweep_plan_graph_->size();
-         ++to_sweep_id) {
-      const sweep_plan_graph::NodeProperty* to_sweep_plan_graph_node =
-          sweep_plan_graph_->getNodeProperty(to_sweep_id);
-      if (to_sweep_plan_graph_node == nullptr) {
-        return false;
-      }
-      if (isE1(from_node->boolean_lattice_id, from_node->boolean_lattice_id,
-               from_node->sweep_plan_graph_id, to_sweep_id,
-               from_boolean_lattice_node->visited_clusters,
-               from_sweep_plan_graph_node->cluster,
-               to_sweep_plan_graph_node->cluster)) {
-        graph_.push_back(std::map<size_t, double>());  // Add node.
-        // Add node properties.
-        const size_t idx = graph_.size() - 1;
-        cost[idx] = std::numeric_limits<double>::max();
-        const NodeProperty node_property(to_sweep_id,
-                                         from_node->boolean_lattice_id);
-        node_properties_.insert(std::make_pair(idx, node_property));
-        // Add edge.
-        double cost = -1.0;
-        const EdgeProperty edge_property(EdgeProperty::Type::kE1);
-        const EdgeId edge(current, idx);
-        if (!getSweepPlanGraphEdgeCost(edge, &cost) ||
-            !addEdge(edge, edge_property, cost)) {
+    for (size_t adj_id = 0; adj_id < graph_.size(); ++adj_id) {
+      const EdgeId forwards_edge_id(current, adj_id);
+      // E1 edges.
+      if (isE1(forwards_edge_id)) {
+        double temp_cost = -1.0;
+        EdgeProperty edge_property(EdgeProperty::Type::kE1);
+        if (!getSweepPlanGraphEdgeCost(forwards_edge_id, &temp_cost) ||
+            !addEdge(forwards_edge_id, edge_property, temp_cost)) {
           return false;
         }
-      }
-    }
-
-    // E2 edges.
-    for (size_t to_boolean_id = 0; to_boolean_id < boolean_lattice_->size();
-         ++to_boolean_id) {
-      const boolean_lattice::NodeProperty* to_boolean_lattice_node =
-          boolean_lattice_->getNodeProperty(to_boolean_id);
-      if (to_boolean_lattice_node == nullptr) {
-        return false;
-      }
-      if (isE2(from_node->sweep_plan_graph_id, from_node->sweep_plan_graph_id,
-               from_node->boolean_lattice_id, to_boolean_id,
-               from_boolean_lattice_node->visited_clusters,
-               to_boolean_lattice_node->visited_clusters,
-               from_sweep_plan_graph_node->cluster)) {
-        graph_.push_back(std::map<size_t, double>());  // Add node.
-        // Add node properties.
-        const size_t idx = graph_.size() - 1;
-        cost[idx] = std::numeric_limits<double>::max();
-        const NodeProperty node_property(from_node->sweep_plan_graph_id,
-                                         to_boolean_id);
-        node_properties_.insert(std::make_pair(idx, node_property));
-        // Add edge.
-        double cost = -1.0;
-        const EdgeProperty edge_property(EdgeProperty::Type::kE2);
-        const EdgeId edge(current, idx);
-        if (!getBooleanLatticeEdgeCost(edge, &cost) ||
-            !addEdge(edge, edge_property, cost)) {
+      } else if (isE2(forwards_edge_id)) {
+        double temp_cost = -1.0;
+        EdgeProperty edge_property(EdgeProperty::Type::kE2);
+        if (!getBooleanLatticeEdgeCost(forwards_edge_id, &temp_cost) ||
+            !addEdge(forwards_edge_id, edge_property, temp_cost)) {
           return false;
         }
       }

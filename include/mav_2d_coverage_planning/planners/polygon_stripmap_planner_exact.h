@@ -14,7 +14,7 @@ class PolygonStripmapPlannerExact : public PolygonStripmapPlanner {
       : PolygonStripmapPlanner(settings) {}
 
  protected:
-  virtual bool preprocess() { return true; }  // No preprocessing.
+  virtual bool preprocess();
 
   // The product of sweep plan graph and boolean lattice.
   gtspp_product_graph::GtsppProductGraph gtspp_product_graph_;

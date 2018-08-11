@@ -49,6 +49,8 @@ class GtsppProductGraph : public GraphBase<NodeProperty, EdgeProperty> {
 
   // Compute the product graph given sweep plan graph and boolean lattice.
   virtual bool create() override;
+  // Allocate nodes but do not create edges.
+  bool createOnline();
   virtual void clear() override;
   // Add a start node.
   virtual bool addStartNode(const NodeProperty& node_property) override;
@@ -114,7 +116,7 @@ class GtsppProductGraph : public GraphBase<NodeProperty, EdgeProperty> {
   bool getBooleanLatticeEdgeCost(const EdgeId& edge_id, double* cost) const;
 
   // Create the graph while solving Dijkstra.
-  bool createDijkstra(size_t start, size_t goal, Solution* solution);
+  bool createDijkstra(Solution* solution);
 
   // Corresponding sweep plan graph.
   const sweep_plan_graph::SweepPlanGraph* sweep_plan_graph_;

@@ -20,6 +20,16 @@ bool PolygonStripmapPlannerExact::setupSolver() {
   return preprocess();
 }
 
+bool PolygonStripmapPlannerExact::preprocess() {
+  LOG(INFO) << "Preset product graph.";
+  if (!gtspp_product_graph_.createOnline()) {
+    LOG(ERROR) << "Could not create product graph.";
+    return false;
+  }
+  return true;
+}
+
+
 bool PolygonStripmapPlannerExact::runSolver(
     const Point_2& start, const Point_2& goal,
     std::vector<Point_2>* solution) const {
