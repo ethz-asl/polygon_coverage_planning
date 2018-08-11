@@ -23,6 +23,7 @@ const double kMinViewOverlapMin = 0.0;
 const double kMinViewOverlapMax = 0.99;
 const int kNumPolygons = 1e2;
 const size_t kSeed = 123456;
+const double kNear = 1e-3;
 
 // Given a set of polygons run all planners.
 void runPlanners(const std::vector<Polygon>& polygons) {
@@ -84,8 +85,8 @@ void runPlanners(const std::vector<Polygon>& polygons) {
 
     EXPECT_EQ(settings.path_cost_function(waypoints_exact),
               settings.path_cost_function(waypoints_exact_preprocessed));
-    EXPECT_GE(settings.path_cost_function(waypoints_gk_ma),
-              settings.path_cost_function(waypoints_exact));
+    EXPECT_NEAR(settings.path_cost_function(waypoints_gk_ma),
+                settings.path_cost_function(waypoints_exact), kNear);
   }
 }
 
