@@ -473,12 +473,6 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
           waypoints->push_back((*it)->target());
     }
 
-    // Add intermediate sweeps.
-    // if (i < num_sweeps - 1)
-
-    // else
-    //  while (++eit != prev_sweep) waypoints->push_back(eit->target());
-
     // Prepare for next sweep.
     sweep_mask = CGAL::transform(sweep_mask_trafo, sweep_mask);
     sweep_is_cc = !sweep_is_cc;
