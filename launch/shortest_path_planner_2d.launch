@@ -9,7 +9,7 @@
     <!-- Basic and control parameter -->
     <rosparam command="load" file="$(find mav_coverage_planning_ros)/cfg/base_planner_2d.yaml" />
     <!-- Polygon, altitude, and world frame ID -->
-    <rosparam command="load" file="$(find mav_coverage_planning_ros)/cfg/example_polygon.yaml" />
+    <rosparam command="load" file="$(find mav_coverage_planning_ros)/cfg/example_polygon_forest.yaml" />
   </node>
 
 </launch>

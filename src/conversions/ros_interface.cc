@@ -115,24 +115,21 @@ void createPolygonMarkers(const Polygon& polygon, double altitude,
 
   // Polygon markers.
   visualization_msgs::Marker hull_points, hull_vertices;
-  // Close hull.
-  std::vector<Point_2> hull =
-      polygon.getVertices(polygon.getPolygon().outer_boundary());
+  // Hull.
+  std::vector<Point_2> hull = polygon.getHullVertices();
   hull.push_back(hull.front());
   createMarkers(hull, altitude, frame_id, ns + "hull", polygon_color,
                 polygon_color, &hull_points, &hull_vertices);
   array->markers.push_back(hull_points);
   array->markers.push_back(hull_vertices);
 
-  // Hole markers.
+  // Hole markers:
+  std::vector<std::vector<Point_2>> holes = polygon.getHoleVertices();
   size_t i = 0;
-  for (PolygonWithHoles::Hole_const_iterator hi =
-           polygon.getPolygon().holes_begin();
-       hi != polygon.getPolygon().holes_end(); ++hi, ++i) {
+  for (std::vector<Point_2>& hole : holes) {
     visualization_msgs::Marker hole_points, hole_vertices;
-    std::vector<Point_2> hole = polygon.getVertices(*hi);
     hole.push_back(hole.front());
-    createMarkers(hole, altitude, frame_id, ns + "hole_" + std::to_string(i),
+    createMarkers(hole, altitude, frame_id, ns + "hole_" + std::to_string(i++),
                   hole_color, hole_color, &hole_points, &hole_vertices);
     array->markers.push_back(hole_points);
     array->markers.push_back(hole_vertices);
