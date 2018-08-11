@@ -2,6 +2,7 @@
 #define MAV_2D_COVERAGE_PLANNING_TESTS_TEST_HELPERS_H_
 
 #include <cstdlib>
+#include <glog/logging.h>
 
 #include "mav_2d_coverage_planning/polygon.h"
 
@@ -69,6 +70,48 @@ Polygon createSophisticatedPolygon() {
   poly_with_holes.add_hole(hole);
   return Polygon(poly_with_holes);
 }
+
+bool checkVerticesIdentical(const Point_2& a, const Point_2& b) {
+  return a == b;
+}
+
+void correctVertices(std::vector<Point_2>* vertices) {
+  CHECK_NOTNULL(vertices);
+  // Delete identical adjacent vertices.
+  std::vector<Point_2>::iterator it = std::adjacent_find(
+      vertices->begin(), vertices->end(), checkVerticesIdentical);
+  while (it != vertices->end()) {
+    vertices->erase(it);
+    it = std::adjacent_find(vertices->begin(), vertices->end(),
+                            checkVerticesIdentical);
+  }
+  // Check first and last:
+  if (checkVerticesIdentical(vertices->front(), vertices->back())) {
+    vertices->pop_back();
+  }
+}
+
+bool createRandomConvexPolygon(double x0, double y0, double r,
+                               Polygon* convex_polygon) {
+  CHECK_NOTNULL(convex_polygon);
+  // http://stackoverflow.com/questions/21690008/how-to-generate-random-vertices-to-form-a-convex-polygon-in-c
+  double a, x, y;
+  std::vector<Point_2> v;
+  for (a = 0.0; a > -2.0 * M_PI;)  // full circle
+  {
+    x = x0 + (r * cos(a));
+    y = y0 + (r * sin(a));
+    // random angle step [20 .. 169] degrees
+    a -= (20.0 + double((std::rand() % 150))) * M_PI / 180.0;
+
+    v.push_back(Point_2(x, y));
+  }
+  correctVertices(&v);
+
+  *convex_polygon = Polygon(v.begin(), v.end());
+  return v.size() > 2;
+}
+
 }  // namespace mav_coverage_planning
 
 #endif  // MAV_2D_COVERAGE_PLANNING_TESTS_TEST_HELPERS_H_

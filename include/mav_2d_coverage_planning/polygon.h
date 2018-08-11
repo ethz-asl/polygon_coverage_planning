@@ -59,11 +59,13 @@ class Polygon {
                                 Polygon* visibility_polygon) const;
 
   inline const PolygonWithHoles& getPolygon() const { return polygon_; }
-  const std::vector<Point_2>& getVertices(const Polygon_2& p) const;
+  std::vector<Point_2> getHullVertices() const;
+  std::vector<std::vector<Point_2>> getHoleVertices() const;
 
   // Helper to check whether a point is inside or on the boundary of the
   // polygon.
   bool pointInPolygon(const Point_2& p) const;
+  bool pointsInPolygon(const std::vector<Point_2>::iterator& begin, const std::vector<Point_2>::iterator& end) const;
 
   // Appends all concave outer boundary vertices.
   bool appendConcaveOuterBoundaryVertices(
@@ -77,6 +79,7 @@ class Polygon {
   FT computeArea() const;
 
   bool isStrictlySimple() const { return is_strictly_simple_; }
+  bool isConvex() const { return is_convex_; }
 
   friend std::ostream& operator<<(std::ostream& stream, const Polygon& p);
 

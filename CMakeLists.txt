@@ -37,14 +37,17 @@ target_link_libraries(${PROJECT_NAME} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARI
 catkin_add_gtest(test_polygon
   test/polygon-test.cpp
 )
-target_link_libraries(test_polygon
-                      ${PROJECT_NAME})
+target_link_libraries(test_polygon ${PROJECT_NAME})
 
 catkin_add_gtest(test_visibility_graph
   test/visibility_graph-test.cpp
 )
-target_link_libraries(test_visibility_graph
-                      ${PROJECT_NAME})
+target_link_libraries(test_visibility_graph ${PROJECT_NAME})
+
+catkin_add_gtest(test_planners
+  test/planners-test.cpp
+)
+target_link_libraries(test_planners ${PROJECT_NAME})
 
 ##########
 # EXPORT #

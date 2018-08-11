@@ -1,0 +1,101 @@
+#include <cstdlib>
+
+#include <gtest/gtest.h>
+
+#include "mav_2d_coverage_planning/cost_functions/euclidean_cost_function.h"
+#include "mav_2d_coverage_planning/planners/polygon_stripmap_planner.h"
+#include "mav_2d_coverage_planning/planners/polygon_stripmap_planner_exact.h"
+#include "mav_2d_coverage_planning/planners/polygon_stripmap_planner_exact_preprocessed.h"
+#include "mav_2d_coverage_planning/polygon.h"
+#include "mav_2d_coverage_planning/tests/test_helpers.h"
+
+using namespace mav_coverage_planning;
+
+TEST(StripmapPlannerTest, ConvexPolygon) {
+  const double kCenterMin = -50.0;
+  const double kCenterMax = 50.0;
+  const double kPolygonDiameterMin = 1.0;
+  const double kPolygonDiameterMax = 100.0;
+  const double kAltitudeMin = 0.5;
+  const double kAltitudeMax = 30.0;
+  const double kFOVCameraRadMin = M_PI / 12.0;
+  const double kFOVCameraRadMax = M_PI - 0.1;
+  const double kMinViewOverlapMin = 0.0;
+  const double kMinViewOverlapMax = 0.99;
+
+  const int kNumPaths = 1.0e0;
+  std::srand(123456);
+  for (size_t i = 0; i < kNumPaths; i++) {
+    // Create planner settings.
+    PolygonStripmapPlanner::Settings settings;
+    double x_0 = createRandomDouble(kCenterMin, kCenterMax);
+    double y_0 = createRandomDouble(kCenterMin, kCenterMax);
+    double r =
+        createRandomDouble(kPolygonDiameterMin, kPolygonDiameterMax) / 2.0;
+    if (!createRandomConvexPolygon(x_0, y_0, r, &settings.polygon)) {
+      std::cout << "Only 2 vertices polygon." << std::endl;
+      continue;
+    }
+    EXPECT_TRUE(settings.polygon.isConvex());
+    EXPECT_EQ(0, settings.polygon.getPolygon().number_of_holes());
+
+    settings.segment_cost_function =
+        std::bind(&computeEuclideanSegmentCost, std::placeholders::_1,
+                  std::placeholders::_2);
+    settings.path_cost_function =
+        std::bind(&computeEuclideanPathCost, std::placeholders::_1);
+    settings.altitude = createRandomDouble(kAltitudeMin, kAltitudeMax);
+    settings.lateral_fov =
+        createRandomDouble(kFOVCameraRadMin, kFOVCameraRadMax);
+    settings.longitudinal_fov =
+        createRandomDouble(kFOVCameraRadMin, kFOVCameraRadMax);
+    settings.min_view_overlap =
+        createRandomDouble(kMinViewOverlapMin, kMinViewOverlapMax);
+    EXPECT_TRUE(settings.check());
+
+    // Create planners.
+    PolygonStripmapPlanner planner_gk_ma(settings);
+    PolygonStripmapPlannerExact planner_exact(settings);
+    PolygonStripmapPlannerExactPreprocessed planner_exact_preprocessed(settings);
+
+    EXPECT_TRUE(planner_gk_ma.setup());
+    EXPECT_TRUE(planner_exact.setup());
+    EXPECT_TRUE(planner_exact_preprocessed.setup());
+    EXPECT_TRUE(planner_gk_ma.isInitialized());
+    EXPECT_TRUE(planner_exact.isInitialized());
+    EXPECT_TRUE(planner_exact_preprocessed.isInitialized());
+
+    std::vector<Point_2> waypoints_gk_ma, waypoints_exact,
+        waypoints_exact_preprocessed;
+    Point_2 start = Point_2(CGAL::ORIGIN);
+    Point_2 goal = Point_2(CGAL::ORIGIN);
+
+    EXPECT_TRUE(planner_gk_ma.solve(start, goal, &waypoints_gk_ma));
+    EXPECT_TRUE(planner_exact.solve(start, goal, &waypoints_exact));
+    EXPECT_TRUE(planner_exact_preprocessed.solve(
+        start, goal, &waypoints_exact_preprocessed));
+
+    EXPECT_LT(2, waypoints_gk_ma.size());
+    EXPECT_LT(2, waypoints_exact.size());
+    EXPECT_LT(2, waypoints_exact_preprocessed.size());
+
+    // Start and goal may lie outside of polygon.
+    EXPECT_TRUE(settings.polygon.pointsInPolygon(
+        std::next(waypoints_gk_ma.begin()), std::prev(waypoints_gk_ma.end())));
+    EXPECT_TRUE(settings.polygon.pointsInPolygon(
+        std::next(waypoints_exact.begin()), std::prev(waypoints_exact.end())));
+    EXPECT_TRUE(settings.polygon.pointsInPolygon(
+        std::next(waypoints_exact_preprocessed.begin()),
+        std::prev(waypoints_exact_preprocessed.end())));
+
+    EXPECT_EQ(settings.path_cost_function(waypoints_exact),
+              settings.path_cost_function(waypoints_exact_preprocessed));
+    EXPECT_GE(settings.path_cost_function(waypoints_gk_ma),
+              settings.path_cost_function(waypoints_exact));
+  }
+}
+
+int main(int argc, char** argv) {
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}

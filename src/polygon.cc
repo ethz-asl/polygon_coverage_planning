@@ -35,13 +35,27 @@ Polygon::Polygon(const PolygonWithHoles& polygon)
   simplify();
 }
 
-const std::vector<Point_2>& Polygon::getVertices(const Polygon_2& p) const {
-  std::vector<Point_2> vec(p.size());
-  std::vector<Point_2>::iterator vecit;
-  for (VertexConstIterator vit = p.vertices_begin(); vit != p.vertices_end();
-       ++vit, ++vecit)
+std::vector<Point_2> Polygon::getHullVertices() const {
+  std::vector<Point_2> vec(polygon_.outer_boundary().size());
+  std::vector<Point_2>::iterator vecit = vec.begin();
+  for (VertexConstIterator vit = polygon_.outer_boundary().vertices_begin();
+       vit != polygon_.outer_boundary().vertices_end(); ++vit, ++vecit)
     *vecit = *vit;
   return vec;
+}
+
+std::vector<std::vector<Point_2>> Polygon::getHoleVertices() const {
+  std::vector<std::vector<Point_2>> hole_vertices(polygon_.number_of_holes());
+  std::vector<std::vector<Point_2>>::iterator hvit = hole_vertices.begin();
+  for (PolygonWithHoles::Hole_const_iterator hi = polygon_.holes_begin();
+       hi != polygon_.holes_end(); ++hi, ++hvit) {
+    hvit->resize(hi->size());
+    std::vector<Point_2>::iterator it = hvit->begin();
+    for (VertexConstIterator vit = hi->vertices_begin();
+         vit != hi->vertices_end(); ++vit, ++it)
+      *it = *vit;
+  }
+  return hole_vertices;
 }
 
 bool Polygon::computeOffsetPolygon(FT max_offset,
@@ -226,17 +240,15 @@ FT Polygon::computeArea() const {
 }
 
 bool Polygon::checkStrictlySimple() const {
-  if (!polygon_.outer_boundary().is_simple()) return false;
   for (PolygonWithHoles::Hole_const_iterator hi = polygon_.holes_begin();
        hi != polygon_.holes_end(); ++hi)
     if (!hi->is_simple()) return false;
-  return true;
+  return polygon_.outer_boundary().is_simple();
 }
 
 bool Polygon::checkConvexity() const {
-  if (!polygon_.outer_boundary().is_convex()) return false;
   if (polygon_.number_of_holes() > 0) return false;
-  return true;
+  return polygon_.outer_boundary().is_convex();
 }
 
 void Polygon::sortCC() {
@@ -467,6 +479,13 @@ bool Polygon::pointInPolygon(const Point_2& p) const {
   }
 
   return true;
+}
+
+bool Polygon::pointsInPolygon(const std::vector<Point_2>::iterator& begin, const std::vector<Point_2>::iterator& end) const{
+    for (std::vector<Point_2>::iterator it = begin; it != end; ++it) {
+      if (!pointInPolygon(*it)) return false;
+    }
+    return true;
 }
 
 bool Polygon::computeVisibilityPolygon(const Point_2& query_point,
