@@ -202,8 +202,7 @@ bool Polygon::checkValidOffset(
 
 std::stringstream Polygon::printPolygon(const Polygon_2& poly) const {
   std::stringstream stream;
-  stream << "Polygon with " << poly.size() << " vertices"
-                      << std::endl;
+  stream << "Polygon with " << poly.size() << " vertices" << std::endl;
   for (Polygon_2::Vertex_const_iterator vi = poly.vertices_begin();
        vi != poly.vertices_end(); ++vi) {
     stream << "(" << vi->x() << "," << vi->y() << ")" << std::endl;
@@ -325,10 +324,6 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
   rotation = rotation.inverse();
   polygon = CGAL::transform(rotation, polygon);
 
-  // Initial waypoints.
-  waypoints->push_back(*polygon.vertices_begin());
-  waypoints->push_back(*std::next(polygon.vertices_begin()));
-
   // Compute sweep distance for equally spaced sweeps.
   double polygon_length = polygon.bbox().ymax() - polygon.bbox().ymin();
   int num_sweeps =
@@ -360,7 +355,8 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
     sweep_mask.reverse_orientation();
     sweep_is_cc = !sweep_is_cc;
   }
-  for (int i = 1; i < num_sweeps; ++i) {
+
+  for (int i = 0; i < num_sweeps - 1; ++i) {
     // Find intersection between sweep mask and polygon that includes the sweep
     // waypoints to be added.
     std::vector<PolygonWithHoles> intersections;
@@ -434,6 +430,8 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
     if (!has_bottom_sweep || !has_top_sweep) return false;
 
     // 3. Add waypoints from previous sweep to current sweep.
+    // Note: The first sweep is handled differently. Here the full polygon
+    // contour is followed starting from the next sweeps line.
     // Note: The last sweep is handled differently. Here the full polygon
     // contour is followed until reaching the previous sweep source again.
     EdgeConstCirculator prev_sweep = bottom_sweep;
@@ -441,11 +439,45 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
     if (!counter_clockwise) std::swap(prev_sweep, current_sweep);
 
     eit = prev_sweep;
+    // Add first bottom sweep.
+    const double kCoverageOffset = kMaskOffset + 1e-3;
+    if (i == 0) {
+      std::vector<EdgeConstCirculator> start_edges = {eit};
+      // Check if additional waypoints from previous edges need to be added to
+      // have full coverage.
+      while (!isCovered(current_sweep->target(), start_edges, sweep_distance,
+                        kCoverageOffset))
+        start_edges.push_back(std::prev(start_edges.back()));
+      for (std::vector<EdgeConstCirculator>::reverse_iterator it =
+               start_edges.rbegin();
+           it != start_edges.rend(); ++it)
+        waypoints->push_back((*it)->source());
+      waypoints->push_back(start_edges.front()->target());
+    }
+
     if (i < num_sweeps - 1)
       while (++eit != std::next(current_sweep))
         waypoints->push_back(eit->target());
-    else
-      while (++eit != prev_sweep) waypoints->push_back(eit->target());
+
+    // Add additional final edges if necessary.
+    if (i == num_sweeps - 2) {
+      std::vector<EdgeConstCirculator> last_edges = {current_sweep};
+      while (!isCovered(prev_sweep->source(), last_edges, sweep_distance,
+                        kCoverageOffset))
+        last_edges.push_back(std::next(last_edges.back()));
+
+      if (last_edges.size() > 1)
+        for (std::vector<EdgeConstCirculator>::iterator it =
+                 std::next(last_edges.begin());
+             it != last_edges.end(); ++it)
+          waypoints->push_back((*it)->target());
+    }
+
+    // Add intermediate sweeps.
+    // if (i < num_sweeps - 1)
+
+    // else
+    //  while (++eit != prev_sweep) waypoints->push_back(eit->target());
 
     // Prepare for next sweep.
     sweep_mask = CGAL::transform(sweep_mask_trafo, sweep_mask);
@@ -461,6 +493,20 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
   }
 
   return true;
+}
+
+bool Polygon::isCovered(const Point_2& p,
+                        const std::vector<EdgeConstCirculator>& edges,
+                        double sweep_distance, double margin) const {
+  if (edges.empty()) return false;
+
+  FT sqr_d_min = CGAL::squared_distance(p, *edges.front());
+  for (size_t i = 1; i < edges.size(); ++i) {
+    FT sqr_d = CGAL::squared_distance(p, *(edges[i]));
+    sqr_d_min = sqr_d < sqr_d_min ? sqr_d : sqr_d_min;
+  }
+
+  return std::sqrt(CGAL::to_double(sqr_d_min)) < sweep_distance + margin;
 }
 
 bool Polygon::pointInPolygon(const Point_2& p) const {
@@ -481,11 +527,12 @@ bool Polygon::pointInPolygon(const Point_2& p) const {
   return true;
 }
 
-bool Polygon::pointsInPolygon(const std::vector<Point_2>::iterator& begin, const std::vector<Point_2>::iterator& end) const{
-    for (std::vector<Point_2>::iterator it = begin; it != end; ++it) {
-      if (!pointInPolygon(*it)) return false;
-    }
-    return true;
+bool Polygon::pointsInPolygon(const std::vector<Point_2>::iterator& begin,
+                              const std::vector<Point_2>::iterator& end) const {
+  for (std::vector<Point_2>::iterator it = begin; it != end; ++it) {
+    if (!pointInPolygon(*it)) return false;
+  }
+  return true;
 }
 
 bool Polygon::computeVisibilityPolygon(const Point_2& query_point,

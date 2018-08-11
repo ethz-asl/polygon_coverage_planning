@@ -65,7 +65,8 @@ class Polygon {
   // Helper to check whether a point is inside or on the boundary of the
   // polygon.
   bool pointInPolygon(const Point_2& p) const;
-  bool pointsInPolygon(const std::vector<Point_2>::iterator& begin, const std::vector<Point_2>::iterator& end) const;
+  bool pointsInPolygon(const std::vector<Point_2>::iterator& begin,
+                       const std::vector<Point_2>::iterator& end) const;
 
   // Appends all concave outer boundary vertices.
   bool appendConcaveOuterBoundaryVertices(
@@ -103,6 +104,11 @@ class Polygon {
   // Merge consecutive collinear edges.
   void simplifyPolygon(Polygon_2* polygon);
   void simplify();
+
+  // Helper function to check for full coverage in convex polygon.
+  bool isCovered(const Point_2& p,
+                 const std::vector<EdgeConstCirculator>& edges,
+                 double sweep_distance, double margin) const;
 
   std::stringstream printPolygon(const Polygon_2& poly) const;
 
