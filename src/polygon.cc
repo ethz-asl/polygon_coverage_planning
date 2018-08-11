@@ -321,7 +321,7 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
   polygon = CGAL::transform(translation, polygon);
 
   CGAL::Aff_transformation_2<K> rotation(
-      CGAL::ROTATION, polygon.edges_begin()->direction(), 1, 1e16);
+      CGAL::ROTATION, polygon.edges_begin()->direction(), 1, 1e9);
   rotation = rotation.inverse();
   polygon = CGAL::transform(rotation, polygon);
 

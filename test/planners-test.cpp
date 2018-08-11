@@ -23,7 +23,7 @@ TEST(StripmapPlannerTest, ConvexPolygon) {
   const double kMinViewOverlapMin = 0.0;
   const double kMinViewOverlapMax = 0.99;
 
-  const int kNumPaths = 1.0e0;
+  const int kNumPaths = 1.0e2;
   std::srand(123456);
   for (size_t i = 0; i < kNumPaths; i++) {
     // Create planner settings.
@@ -33,7 +33,6 @@ TEST(StripmapPlannerTest, ConvexPolygon) {
     double r =
         createRandomDouble(kPolygonDiameterMin, kPolygonDiameterMax) / 2.0;
     if (!createRandomConvexPolygon(x_0, y_0, r, &settings.polygon)) {
-      std::cout << "Only 2 vertices polygon." << std::endl;
       continue;
     }
     EXPECT_TRUE(settings.polygon.isConvex());
@@ -97,5 +96,6 @@ TEST(StripmapPlannerTest, ConvexPolygon) {
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
+  google::InitGoogleLogging(argv[0]);
   return RUN_ALL_TESTS();
 }
