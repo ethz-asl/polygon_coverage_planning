@@ -99,9 +99,8 @@ TEST(StripmapPlannerTest, RandomConvexPolygon) {
     double y_0 = createRandomDouble(kCenterMin, kCenterMax);
     double r =
         createRandomDouble(kPolygonDiameterMin, kPolygonDiameterMax) / 2.0;
-    if (!createRandomConvexPolygon(x_0, y_0, r, &polygons[i])) {
-      continue;
-    }
+    polygons[i] = Polygon(createRandomConvexPolygon<Polygon_2, K>(x_0, y_0, r));
+    if (polygons[i].getPolygon().outer_boundary().size() <= 2) continue;
     EXPECT_TRUE(polygons[i].isConvex());
   }
   runPlanners(polygons);
@@ -116,9 +115,9 @@ TEST(StripmapPlannerTest, RandomSimplePolygon) {
     double r =
         createRandomDouble(kPolygonDiameterMin, kPolygonDiameterMax) / 2.0;
     const int kMaxPolySize = 10;
-    if (!createRandomSimplePolygon(r, random, kMaxPolySize, &polygons[i])) {
-      continue;
-    }
+    polygons[i] = Polygon(
+        createRandomSimplePolygon<Polygon_2, K>(r, random, kMaxPolySize));
+    if (polygons[i].getPolygon().outer_boundary().size() <= 2) continue;
     EXPECT_TRUE(polygons[i].isStrictlySimple());
   }
   runPlanners(polygons);

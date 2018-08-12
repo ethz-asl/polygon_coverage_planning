@@ -9,7 +9,7 @@
 using namespace mav_coverage_planning;
 
 TEST(PolygonTest, Offset) {
-  Polygon poly = createSophisticatedPolygon();
+  Polygon poly(createSophisticatedPolygon<Polygon_2, PolygonWithHoles>());
 
   for (size_t i = 0; i < 100; ++i) {
     FT max_offset = createRandomDouble(0.0, 10.0);
@@ -20,7 +20,8 @@ TEST(PolygonTest, Offset) {
 }
 
 TEST(PolygonTest, ConvertPolygonWithHolesToPolygonWithoutHoles) {
-  Polygon rectangle_in_rectangle = createRectangleInRectangle();
+  Polygon rectangle_in_rectangle(
+      createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
   Polygon poly_without_holes;
   EXPECT_TRUE(
       rectangle_in_rectangle.convertPolygonWithHolesToPolygonWithoutHoles(
@@ -30,7 +31,8 @@ TEST(PolygonTest, ConvertPolygonWithHolesToPolygonWithoutHoles) {
 }
 
 TEST(PolygonTest, ConvexDecomposition) {
-  Polygon rectangle_in_rectangle = createRectangleInRectangle();
+  Polygon rectangle_in_rectangle(
+      createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
   std::vector<Polygon> convex_polygons;
   EXPECT_TRUE(
       rectangle_in_rectangle.computeConvexDecompositionFromPolygonWithHoles(
@@ -39,7 +41,8 @@ TEST(PolygonTest, ConvexDecomposition) {
 }
 
 TEST(PolygonTest, pointInOnPolygon) {
-  Polygon rect_in_rect = createRectangleInRectangle();
+  Polygon rect_in_rect(
+      createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
 
   // Point on vertex.
   Point_2 p(0.0, 0.0);
@@ -75,7 +78,7 @@ TEST(PolygonTest, computeLineSweepPlan) {
   const double kStartVertexIdx = 0;
   const bool kCounterClockwise = true;
 
-  Polygon diamond = createDiamond();
+  Polygon diamond(createDiamond<Polygon_2>());
   std::vector<Point_2> waypoints;
   EXPECT_TRUE(diamond.computeLineSweepPlan(kMaxSweepDistance, kStartVertexIdx,
                                            kCounterClockwise, &waypoints));
@@ -84,7 +87,8 @@ TEST(PolygonTest, computeLineSweepPlan) {
 }
 
 TEST(PolygonTest, computeVisibilityPolygon) {
-  Polygon rectangle_in_rectangle = createRectangleInRectangle();
+  Polygon rectangle_in_rectangle(
+      createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
   Polygon visibility_polygon;
 
   // Query on polygon vertex.
@@ -168,7 +172,7 @@ TEST(PolygonTest, computeVisibilityPolygon) {
 }
 
 TEST(PolygonTest, projectPointOnHull) {
-  Polygon poly = createRectangleInRectangle();
+  Polygon poly(createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
 
   // Point outside closest to vertex.
   Point_2 p(-1.0, -1.0);
@@ -191,7 +195,7 @@ TEST(PolygonTest, projectPointOnHull) {
   EXPECT_EQ(p, poly.projectPointOnHull(p));
 
   // Point on vertex.
-  p = Point_2(0,0);
+  p = Point_2(0, 0);
   EXPECT_EQ(p, poly.projectPointOnHull(p));
 }
 

@@ -11,7 +11,7 @@ using namespace mav_coverage_planning;
 using namespace std::placeholders;
 
 TEST(VisibilityGraphTest, ShortestPath) {
-  Polygon p = createRectangleInRectangle();
+  Polygon p(createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
 
   Point_2 start(-1.0, 3.0);
   EXPECT_FALSE(p.pointInPolygon(start));
