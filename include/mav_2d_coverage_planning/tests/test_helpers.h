@@ -20,16 +20,16 @@ double createRandomDouble(double min, double max) {
 template <class Polygon, class PolygonWithHoles>
 PolygonWithHoles createRectangleInRectangle() {
   Polygon outer;
-  outer.push_back(Point_2(0.0, 0.0));
-  outer.push_back(Point_2(2.0, 0.0));
-  outer.push_back(Point_2(2.0, 2.0));
-  outer.push_back(Point_2(0.0, 2.0));
+  outer.push_back(typename Polygon::Point_2(0.0, 0.0));
+  outer.push_back(typename Polygon::Point_2(2.0, 0.0));
+  outer.push_back(typename Polygon::Point_2(2.0, 2.0));
+  outer.push_back(typename Polygon::Point_2(0.0, 2.0));
 
   Polygon hole;
-  hole.push_back(Point_2(1.0, 1.25));
-  hole.push_back(Point_2(1.0, 1.75));
-  hole.push_back(Point_2(0.5, 1.75));
-  hole.push_back(Point_2(0.5, 1.25));
+  hole.push_back(typename Polygon::Point_2(1.0, 1.25));
+  hole.push_back(typename Polygon::Point_2(1.0, 1.75));
+  hole.push_back(typename Polygon::Point_2(0.5, 1.75));
+  hole.push_back(typename Polygon::Point_2(0.5, 1.25));
 
   PolygonWithHoles poly_with_holes(outer);
   poly_with_holes.add_hole(hole);
@@ -39,10 +39,10 @@ PolygonWithHoles createRectangleInRectangle() {
 template <class Polygon>
 Polygon createDiamond() {
   Polygon diamond;
-  diamond.push_back(Point_2(1.0, 0.0));
-  diamond.push_back(Point_2(2.0, 1.0));
-  diamond.push_back(Point_2(1.0, 2.0));
-  diamond.push_back(Point_2(0.0, 1.0));
+  diamond.push_back(typename Polygon::Point_2(1.0, 0.0));
+  diamond.push_back(typename Polygon::Point_2(2.0, 1.0));
+  diamond.push_back(typename Polygon::Point_2(1.0, 2.0));
+  diamond.push_back(typename Polygon::Point_2(0.0, 1.0));
 
   return diamond;
 }
@@ -50,24 +50,24 @@ Polygon createDiamond() {
 template <class Polygon, class PolygonWithHoles>
 PolygonWithHoles createSophisticatedPolygon() {
   Polygon outer;
-  outer.push_back(Point_2(0.0, 0.0));
-  outer.push_back(Point_2(10.0, 0.0));
-  outer.push_back(Point_2(10.0, 4.5));
-  outer.push_back(Point_2(12.0, 4.5));
-  outer.push_back(Point_2(12.0, 2.0));
-  outer.push_back(Point_2(16.0, 2.0));
-  outer.push_back(Point_2(16.0, 8.0));
-  outer.push_back(Point_2(12.0, 8.0));
-  outer.push_back(Point_2(12.0, 5.5));
-  outer.push_back(Point_2(10.0, 5.5));
-  outer.push_back(Point_2(10.0, 10.0));
-  outer.push_back(Point_2(0.0, 10.0));
+  outer.push_back(typename Polygon::Point_2(0.0, 0.0));
+  outer.push_back(typename Polygon::Point_2(10.0, 0.0));
+  outer.push_back(typename Polygon::Point_2(10.0, 4.5));
+  outer.push_back(typename Polygon::Point_2(12.0, 4.5));
+  outer.push_back(typename Polygon::Point_2(12.0, 2.0));
+  outer.push_back(typename Polygon::Point_2(16.0, 2.0));
+  outer.push_back(typename Polygon::Point_2(16.0, 8.0));
+  outer.push_back(typename Polygon::Point_2(12.0, 8.0));
+  outer.push_back(typename Polygon::Point_2(12.0, 5.5));
+  outer.push_back(typename Polygon::Point_2(10.0, 5.5));
+  outer.push_back(typename Polygon::Point_2(10.0, 10.0));
+  outer.push_back(typename Polygon::Point_2(0.0, 10.0));
 
   Polygon hole;
-  hole.push_back(Point_2(3.0, 3.0));
-  hole.push_back(Point_2(3.0, 7.0));
-  hole.push_back(Point_2(7.0, 7.0));
-  hole.push_back(Point_2(7.0, 3.0));
+  hole.push_back(typename Polygon::Point_2(3.0, 3.0));
+  hole.push_back(typename Polygon::Point_2(3.0, 7.0));
+  hole.push_back(typename Polygon::Point_2(7.0, 7.0));
+  hole.push_back(typename Polygon::Point_2(7.0, 3.0));
 
   PolygonWithHoles poly_with_holes(outer);
   poly_with_holes.add_hole(hole);
@@ -121,7 +121,7 @@ template <class Polygon, class Kernel>
 Polygon createRandomSimplePolygon(double r, CGAL::Random& random,
                                   int max_poly_size) {
   typedef typename Kernel::Point_2 Point_2;
-  Polygon_2 polygon;
+  Polygon polygon;
   std::list<Point_2> point_set;
   int size = random.get_int(4, max_poly_size);
   // copy size points from the generator, eliminating duplicates, so the
