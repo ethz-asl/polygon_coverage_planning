@@ -1,4 +1,4 @@
-# A planning_msgs/PolygonWithHoles.msg to describe a polygon without holes.
+# A mav_planning_msgs/PolygonWithHoles.msg to describe a polygon without holes.
 polygon:
   header:
     seq: 0

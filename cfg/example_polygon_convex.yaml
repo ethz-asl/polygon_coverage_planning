@@ -1,4 +1,4 @@
-# A planning_msgs/PolygonWithHoles.msg to describe a convex polygon.
+# A mav_planning_msgs/PolygonWithHoles.msg to describe a convex polygon.
 polygon:
   header:
     seq: 0

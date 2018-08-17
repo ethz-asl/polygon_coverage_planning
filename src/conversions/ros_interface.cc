@@ -185,7 +185,7 @@ void createStartAndEndPointMarkers(const Point_2& start, const Point_2& end,
   end_point->color.a = 0.5;
 }
 
-void polygon2FromPolygonMsg(const planning_msgs::Polygon2D& msg,
+void polygon2FromPolygonMsg(const mav_planning_msgs::Polygon2D& msg,
                             Polygon_2* polygon) {
   CHECK_NOTNULL(polygon);
 
@@ -196,7 +196,7 @@ void polygon2FromPolygonMsg(const planning_msgs::Polygon2D& msg,
   *polygon = Polygon_2(vertices.begin(), vertices.end());
 }
 
-bool polygonFromMsg(const planning_msgs::PolygonWithHolesStamped& msg,
+bool polygonFromMsg(const mav_planning_msgs::PolygonWithHolesStamped& msg,
                     Polygon* polygon, double* altitude, std::string* frame) {
   CHECK_NOTNULL(polygon);
   CHECK_NOTNULL(altitude);

@@ -7,8 +7,8 @@
 #include <eigen_conversions/eigen_msg.h>
 #include <geometry_msgs/PoseArray.h>
 #include <mav_msgs/conversions.h>
-#include <planning_msgs/Polygon2D.h>
-#include <planning_msgs/PolygonWithHolesStamped.h>
+#include <mav_planning_msgs/Polygon2D.h>
+#include <mav_planning_msgs/PolygonWithHolesStamped.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 #include <visualization_msgs/Marker.h>
 
@@ -62,9 +62,9 @@ void createStartAndEndPointMarkers(const Point_2& start, const Point_2& end,
                                    visualization_msgs::Marker* start_point,
                                    visualization_msgs::Marker* end_point);
 
-void polygon2FromPolygonMsg(const planning_msgs::Polygon2D& msg,
+void polygon2FromPolygonMsg(const mav_planning_msgs::Polygon2D& msg,
                             Polygon_2* polygon);
-bool polygonFromMsg(const planning_msgs::PolygonWithHolesStamped& msg,
+bool polygonFromMsg(const mav_planning_msgs::PolygonWithHolesStamped& msg,
                     Polygon* polygon, double* altitude, std::string* frame);
 
 }  // namespace mav_coverage_planning

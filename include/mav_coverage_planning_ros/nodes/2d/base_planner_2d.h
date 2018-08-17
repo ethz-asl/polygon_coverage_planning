@@ -6,8 +6,8 @@
 #include <mav_2d_coverage_planning/definitions.h>
 #include <mav_2d_coverage_planning/polygon.h>
 
-#include <planning_msgs/PlannerService.h>
-#include <planning_msgs/PolygonService.h>
+#include <mav_planning_msgs/PlannerService.h>
+#include <mav_planning_msgs/PolygonService.h>
 #include <ros/ros.h>
 #include <std_srvs/Empty.h>
 
@@ -90,20 +90,21 @@ class BasePlanner2D {
 
  private:
   // Set a new polygon through a service call.
-  bool setPolygonCallback(planning_msgs::PolygonService::Request& request,
-                          planning_msgs::PolygonService::Response& response);
+  bool setPolygonCallback(
+      mav_planning_msgs::PolygonService::Request& request,
+      mav_planning_msgs::PolygonService::Response& response);
   // Solves the planning problem from start to goal.
-  bool planPathCallback(planning_msgs::PlannerService::Request& request,
-                        planning_msgs::PlannerService::Response& response);
+  bool planPathCallback(mav_planning_msgs::PlannerService::Request& request,
+                        mav_planning_msgs::PlannerService::Response& response);
   // Solves the planning graph with start and goal at current odometry.
   bool planPathFromAndToOdometryCallback(
-      planning_msgs::PlannerService::Request& request,
-      planning_msgs::PlannerService::Response& response);
+      mav_planning_msgs::PlannerService::Request& request,
+      mav_planning_msgs::PlannerService::Response& response);
   // Solves the planning graph with start at current odometry and goal set from
   // request.
   bool planPathFromOdometryToGoalCallback(
-      planning_msgs::PlannerService::Request& request,
-      planning_msgs::PlannerService::Response& response);
+      mav_planning_msgs::PlannerService::Request& request,
+      mav_planning_msgs::PlannerService::Response& response);
   bool publishAllCallback(std_srvs::Empty::Request& request,
                           std_srvs::Empty::Response& response);
   bool publishVisualizationCallback(std_srvs::Empty::Request& request,
@@ -128,7 +129,7 @@ class BasePlanner2D {
       const mav_msgs::EigenOdometry& odometry) const;
   // Helper function to set planning request start pose from current odometry.
   bool planningRequestStartPoseFromOdometry(
-      planning_msgs::PlannerService::Request* req) const;
+      mav_planning_msgs::PlannerService::Request* req) const;
 
   // Publishers and Services
   ros::Publisher marker_pub_;

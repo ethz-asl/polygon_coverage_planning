@@ -1,4 +1,4 @@
-# A planning_msgs/PolygonWithHoles.msg to describe a simple environment with
+# A mav_planning_msgs/PolygonWithHoles.msg to describe a simple environment with
 # 2 obstacles.
 polygon:
   header:

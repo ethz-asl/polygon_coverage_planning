@@ -120,7 +120,7 @@ void BasePlanner2D::getParametersFromRos() {
   XmlRpc::XmlRpcValue polygon_xml_rpc;
   const std::string polygon_param_name = "polygon";
   if (nh_private_.getParam(polygon_param_name, polygon_xml_rpc)) {
-    planning_msgs::PolygonWithHolesStamped poly_msg;
+    mav_planning_msgs::PolygonWithHolesStamped poly_msg;
     if (PolygonWithHolesStampedMsgFromXmlRpc(polygon_xml_rpc, &poly_msg)) {
       if (polygonFromMsg(poly_msg, &settings_.polygon, &settings_.altitude,
                          &settings_.global_frame_id)) {
@@ -286,8 +286,8 @@ bool BasePlanner2D::publishTrajectoryPoints() {
 }
 
 bool BasePlanner2D::setPolygonCallback(
-    planning_msgs::PolygonService::Request& request,
-    planning_msgs::PolygonService::Response& response) {
+    mav_planning_msgs::PolygonService::Request& request,
+    mav_planning_msgs::PolygonService::Response& response) {
   planning_complete_ = false;
 
   if (!polygonFromMsg(request.polygon, &settings_.polygon, &settings_.altitude,
@@ -301,8 +301,8 @@ bool BasePlanner2D::setPolygonCallback(
 }
 
 bool BasePlanner2D::planPathCallback(
-    planning_msgs::PlannerService::Request& request,
-    planning_msgs::PlannerService::Response& response) {
+    mav_planning_msgs::PlannerService::Request& request,
+    mav_planning_msgs::PlannerService::Response& response) {
   const Point_2 start(request.start_pose.pose.position.x,
                       request.start_pose.pose.position.y);
   const Point_2 goal(request.goal_pose.pose.position.x,
@@ -315,7 +315,7 @@ bool BasePlanner2D::planPathCallback(
 }
 
 bool BasePlanner2D::planningRequestStartPoseFromOdometry(
-    planning_msgs::PlannerService::Request* req) const {
+    mav_planning_msgs::PlannerService::Request* req) const {
   if (!odometry_set_) {
     ROS_ERROR_STREAM("Did not receive odometry.");
     return false;
@@ -329,8 +329,8 @@ bool BasePlanner2D::planningRequestStartPoseFromOdometry(
 }
 
 bool BasePlanner2D::planPathFromAndToOdometryCallback(
-    planning_msgs::PlannerService::Request& request,
-    planning_msgs::PlannerService::Response& response) {
+    mav_planning_msgs::PlannerService::Request& request,
+    mav_planning_msgs::PlannerService::Response& response) {
   // Convert odometry msg to planning request.
   if (planningRequestStartPoseFromOdometry(&request)) {
     request.goal_pose = request.start_pose;
@@ -342,8 +342,8 @@ bool BasePlanner2D::planPathFromAndToOdometryCallback(
 }
 
 bool BasePlanner2D::planPathFromOdometryToGoalCallback(
-    planning_msgs::PlannerService::Request& request,
-    planning_msgs::PlannerService::Response& response) {
+    mav_planning_msgs::PlannerService::Request& request,
+    mav_planning_msgs::PlannerService::Response& response) {
   // Convert odometry msg to planning request.
   if (planningRequestStartPoseFromOdometry(&request)) {
     planPathCallback(request, response);

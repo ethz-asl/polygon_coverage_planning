@@ -15,10 +15,10 @@
 #include <std_msgs/Time.h>
 #include <std_msgs/UInt32.h>
 
-#include <planning_msgs/Point2D.h>
-#include <planning_msgs/Polygon2D.h>
-#include <planning_msgs/PolygonWithHoles.h>
-#include <planning_msgs/PolygonWithHolesStamped.h>
+#include <mav_planning_msgs/Point2D.h>
+#include <mav_planning_msgs/Polygon2D.h>
+#include <mav_planning_msgs/PolygonWithHoles.h>
+#include <mav_planning_msgs/PolygonWithHolesStamped.h>
 
 namespace mav_coverage_planning {
 
@@ -184,7 +184,7 @@ inline bool headerMsgFromXmlRpc(XmlRpc::XmlRpcValue& xml_rpc,
 
 // Point2D from XML RPC.
 inline bool point2DMsgFromXmlRpc(XmlRpc::XmlRpcValue& xml_rpc,
-                                 planning_msgs::Point2D* msg) {
+                                 mav_planning_msgs::Point2D* msg) {
   CHECK_NOTNULL(msg);
 
   const std::string kXKey = "x";
@@ -213,7 +213,7 @@ inline bool point2DMsgFromXmlRpc(XmlRpc::XmlRpcValue& xml_rpc,
 
 // Polygon2D from XML RPC.
 inline bool polygon2DMsgFromXmlRpc(XmlRpc::XmlRpcValue& xml_rpc,
-                                   planning_msgs::Polygon2D* msg) {
+                                   mav_planning_msgs::Polygon2D* msg) {
   CHECK_NOTNULL(msg);
 
   const std::string kPointsKey = "points";
@@ -224,18 +224,18 @@ inline bool polygon2DMsgFromXmlRpc(XmlRpc::XmlRpcValue& xml_rpc,
         checkType(xml_rpc, kPointsKey, XmlRpc::XmlRpcValue::TypeArray)) {
       msg->points.resize(xml_rpc[kPointsKey].size());
       for (int i = 0; i < xml_rpc[kPointsKey].size(); ++i) {
-        planning_msgs::Point2D p;
+        mav_planning_msgs::Point2D p;
         if (!point2DMsgFromXmlRpc(xml_rpc[kPointsKey][i], &p)) {
           ROS_WARN_STREAM("Loading point " << i
                                            << " failed. Resetting to default.");
-          p = planning_msgs::Point2D();
+          p = mav_planning_msgs::Point2D();
         }
         msg->points[i] = p;
       }
     } else {
       ROS_WARN_STREAM("Missing or non-array "
                       << kPointsKey << " member. Resetting to default");
-      msg->points = std::vector<planning_msgs::Point2D>();
+      msg->points = std::vector<mav_planning_msgs::Point2D>();
     }
   } catch (const std::exception& e) {
     ROS_ERROR_STREAM("XML RPC client threw error: " << e.what());
@@ -246,7 +246,7 @@ inline bool polygon2DMsgFromXmlRpc(XmlRpc::XmlRpcValue& xml_rpc,
 
 // PolygonWithHoles from XML RPC.
 inline bool polygonWithHolesMsgFromXmlRpc(
-    XmlRpc::XmlRpcValue& xml_rpc, planning_msgs::PolygonWithHoles* msg) {
+    XmlRpc::XmlRpcValue& xml_rpc, mav_planning_msgs::PolygonWithHoles* msg) {
   CHECK_NOTNULL(msg);
 
   const std::string kHullKey = "hull";
@@ -259,7 +259,7 @@ inline bool polygonWithHolesMsgFromXmlRpc(
       ROS_WARN_STREAM(
           "Missing " << kHullKey
                      << " key or failed loading polygon. Resetting to default");
-      msg->hull = planning_msgs::Polygon2D();
+      msg->hull = mav_planning_msgs::Polygon2D();
     }
 
     // Get holes.
@@ -267,18 +267,18 @@ inline bool polygonWithHolesMsgFromXmlRpc(
         checkType(xml_rpc, kHolesKey, XmlRpc::XmlRpcValue::TypeArray)) {
       msg->holes.resize(xml_rpc[kHolesKey].size());
       for (int i = 0; i < xml_rpc[kHolesKey].size(); ++i) {
-        planning_msgs::Polygon2D p;
+        mav_planning_msgs::Polygon2D p;
         if (!polygon2DMsgFromXmlRpc(xml_rpc[kHolesKey][i], &p)) {
           ROS_WARN_STREAM("Loading hole " << i
                                           << " failed. Resetting to default.");
-          p = planning_msgs::Polygon2D();
+          p = mav_planning_msgs::Polygon2D();
         }
         msg->holes[i] = p;
       }
     } else {
       ROS_WARN_STREAM("Missing or non-array "
                       << kHolesKey << " member. Resetting to default");
-      msg->holes = std::vector<planning_msgs::Polygon2D>();
+      msg->holes = std::vector<mav_planning_msgs::Polygon2D>();
     }
 
   } catch (const std::exception& e) {
@@ -290,7 +290,8 @@ inline bool polygonWithHolesMsgFromXmlRpc(
 
 // PolygonWithHolesStamped from XML RPC.
 inline bool PolygonWithHolesStampedMsgFromXmlRpc(
-    XmlRpc::XmlRpcValue& xml_rpc, planning_msgs::PolygonWithHolesStamped* msg) {
+    XmlRpc::XmlRpcValue& xml_rpc,
+    mav_planning_msgs::PolygonWithHolesStamped* msg) {
   CHECK_NOTNULL(msg);
 
   const std::string kHeaderKey = "header";
@@ -315,7 +316,7 @@ inline bool PolygonWithHolesStampedMsgFromXmlRpc(
       ROS_WARN_STREAM("Missing " << kPolygonWithHolesKey
                                  << " member or loading polygon with holes "
                                     "failed. Resetting to default");
-      msg->polygon = planning_msgs::PolygonWithHoles();
+      msg->polygon = mav_planning_msgs::PolygonWithHoles();
     }
 
     // Get altitude from ground.

@@ -1,4 +1,4 @@
-# A planning_msgs/PolygonWithHoles.msg to describe a soccer field like
+# A mav_planning_msgs/PolygonWithHoles.msg to describe a soccer field like
 # environment with a hole in the middle.
 polygon:
   header:
