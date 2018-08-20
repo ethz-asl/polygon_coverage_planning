@@ -127,6 +127,34 @@ void BasePlanner::setCostFunction() {
   }
 }
 
+void BasePlanner::setPolygon() {
+  // Load the polygon from polygon message from parameter server.
+  // The altitude and the global frame ID are set from the same message.
+  XmlRpc::XmlRpcValue polygon_xml_rpc;
+  const std::string polygon_param_name = "polygon";
+  if (nh_private_.getParam(polygon_param_name, polygon_xml_rpc)) {
+    mav_planning_msgs::PolygonWithHolesStamped poly_msg;
+    if (PolygonWithHolesStampedMsgFromXmlRpc(polygon_xml_rpc, &poly_msg)) {
+      if (polygonFromMsg(poly_msg, &settings_.polygon, &settings_.altitude,
+                         &settings_.global_frame_id)) {
+        ROS_INFO_STREAM("Successfully loaded polygon.");
+        ROS_INFO_STREAM("Altiude: " << settings_.altitude << "m");
+        ROS_INFO_STREAM("Global frame: " << settings_.global_frame_id);
+        ROS_INFO_STREAM("Polygon:" << settings_.polygon);
+      }
+    } else {
+      ROS_WARN_STREAM("Failed reading polygon message from parameter server.");
+    }
+  } else {
+    ROS_WARN_STREAM(
+        "No polygon file specified to parameter "
+        "server (parameter \""
+        << polygon_param_name
+        << "\"). Expecting "
+           "polygon from service call.");
+  }
+}
+
 void BasePlanner::receiveOdometryCallback(const nav_msgs::Odometry& msg) {
   mav_msgs::eigenOdometryFromMsg(msg, &odometry_);
   odometry_set_ = true;

@@ -130,6 +130,7 @@ class BasePlanner {
   // Publishing the plan
   bool publishTrajectoryPoints();
 
+  // Set from parameters.
   void setCostFunction();
   void setPolygon();
 
