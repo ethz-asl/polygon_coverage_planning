@@ -12,11 +12,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 # LIBRARIES #
 #############
 cs_add_library(${PROJECT_NAME}
+  src/nodes/base_planner.cc
   src/nodes/2d/base_planner_2d.cc
   src/nodes/2d/shortest_path_2d.cc
   src/conversions/ros_interface.cc
 )
-target_link_libraries(${PROJECT_NAME})
 
 ############
 # Binaries #
