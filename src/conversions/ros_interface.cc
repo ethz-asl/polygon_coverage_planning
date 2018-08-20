@@ -6,6 +6,8 @@
 #include <geometry_msgs/Point.h>
 #include <glog/logging.h>
 #include <mav_2d_coverage_planning/definitions.h>
+#include <mav_msgs/eigen_mav_msgs.h>
+#include <mav_msgs/conversions.h>
 #include <ros/ros.h>
 #include <Eigen/Core>
 
@@ -151,6 +153,26 @@ void createStartAndEndPointMarkers(const Point_2& start, const Point_2& end,
                                    const std::string& ns,
                                    visualization_msgs::Marker* start_point,
                                    visualization_msgs::Marker* end_point) {
+  mav_msgs::EigenTrajectoryPoint eigen_start;
+  eigen_start.position_W.x() = CGAL::to_double(start.x());
+  eigen_start.position_W.y() = CGAL::to_double(start.x());
+  eigen_start.position_W.z() = altitude;
+
+  mav_msgs::EigenTrajectoryPoint eigen_end;
+  eigen_end.position_W.x() = CGAL::to_double(end.x());
+  eigen_end.position_W.y() = CGAL::to_double(end.x());
+  eigen_end.position_W.z() = altitude;
+
+  return createStartAndEndPointMarkers(eigen_start, eigen_end, frame_id, ns,
+                                       start_point, end_point);
+}
+
+void createStartAndEndPointMarkers(const mav_msgs::EigenTrajectoryPoint& start,
+                                   const mav_msgs::EigenTrajectoryPoint& end,
+                                   const std::string& frame_id,
+                                   const std::string& ns,
+                                   visualization_msgs::Marker* start_point,
+                                   visualization_msgs::Marker* end_point) {
   CHECK_NOTNULL(start_point);
   CHECK_NOTNULL(end_point);
 
@@ -160,13 +182,12 @@ void createStartAndEndPointMarkers(const Point_2& start, const Point_2& end,
   end_point->ns = ns + "_end";
   start_point->action = end_point->action = visualization_msgs::Marker::ADD;
 
-  start_point->pose.position.x = CGAL::to_double(start.x());
-  start_point->pose.position.y = CGAL::to_double(start.y());
-  start_point->pose.position.z = altitude;
+  geometry_msgs::PoseStamped start_stamped, end_stamped;
+  msgPoseStampedFromEigenTrajectoryPoint(start, &start_stamped);
+  msgPoseStampedFromEigenTrajectoryPoint(end, &end_stamped);
 
-  end_point->pose.position.x = CGAL::to_double(end.x());
-  end_point->pose.position.y = CGAL::to_double(end.y());
-  end_point->pose.position.z = altitude;
+  start_point->pose = start_stamped.pose;
+  end_point->pose = end_stamped.pose;
 
   start_point->pose.orientation.w = end_point->pose.orientation.w = 1.0;
 
