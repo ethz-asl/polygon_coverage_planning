@@ -7,7 +7,10 @@
 #include <CGAL/Random.h>
 #include <CGAL/algorithm.h>
 #include <CGAL/point_generators_2.h>
+#include <CGAL/point_generators_3.h>
 #include <CGAL/random_polygon_2.h>
+#include <mav_coverage_planning_comm/cgal_definitions.h>
+#include <CGAL/Kernel/global_functions.h>
 
 namespace mav_coverage_planning {
 
@@ -133,6 +136,19 @@ Polygon createRandomSimplePolygon(double r, CGAL::Random& random,
   CGAL::random_polygon_2(point_set.size(), std::back_inserter(polygon),
                          point_set.begin());
   return polygon;
+}
+
+// Sample 3 random points in cube with side length 2a and generate plane.
+template <class Kernel>
+typename Kernel::Plane_3 createRandomPlane(double a, CGAL::Random& random) {
+  typedef typename Kernel::Point_3 Point_3;
+  typedef CGAL::Creator_uniform_3<int, Point_3> Creator;
+  typedef CGAL::Random_points_in_cube_3<Point_3, Creator> PointGenerator;
+  Point_3 p0 = *PointGenerator(a, random), p1 = p0, p2 = p0;
+  while (p0 == p1) p1 = *PointGenerator(a, random);
+  while (CGAL::collinear(p0, p1, p2)) p2 = *PointGenerator(a, random);
+
+  return Plane_3(p0, p1, p2);
 }
 
 }  // namespace mav_coverage_planning
