@@ -5,9 +5,8 @@
 namespace mav_coverage_planning {
 namespace visibility_graph {
 
-VisibilityGraph::VisibilityGraph(const Polygon& polygon,
-                                 const SegmentCostFunctionType& cost_function)
-    : GraphBase(), polygon_(polygon), cost_function_(cost_function) {
+VisibilityGraph::VisibilityGraph(const Polygon& polygon)
+    : GraphBase(), polygon_(polygon) {
   // Build visibility graph.
   is_created_ = create();
 }
@@ -58,8 +57,8 @@ bool VisibilityGraph::addEdges() {
       EdgeId forwards_edge_id(new_id, adj_id);
       EdgeId backwards_edge_id(adj_id, new_id);
       const double cost =
-          cost_function_(new_node_property->coordinates,
-                         adj_node_property->coordinates);  // Symmetric cost.
+          computeCost(new_node_property->coordinates,
+                      adj_node_property->coordinates);  // Symmetric cost.
       if (!addEdge(forwards_edge_id, EdgeProperty(), cost) ||
           !addEdge(backwards_edge_id, EdgeProperty(), cost)) {
         return false;
@@ -177,8 +176,8 @@ bool VisibilityGraph::calculateHeuristic(size_t goal,
           << "Cannot access adjacent node property to calculate heuristic.";
       return false;
     }
-    (*heuristic)[adj_id] = cost_function_(adj_node_property->coordinates,
-                                          goal_node_property->coordinates);
+    (*heuristic)[adj_id] = computeCost(adj_node_property->coordinates,
+                                       goal_node_property->coordinates);
   }
 
   return true;
@@ -200,6 +199,11 @@ bool VisibilityGraph::solveWithOutsideStartAndGoal(
   } else {
     return false;
   }
+}
+
+double VisibilityGraph::computeCost(const Point_2& from,
+                                    const Point_2& to) const {
+  return std::sqrt(CGAL::to_double(Segment_2(from, to).squared_length()));
 }
 
 }  // namespace visibility_graph

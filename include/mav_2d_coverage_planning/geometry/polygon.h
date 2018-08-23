@@ -1,11 +1,12 @@
-#ifndef MAV_2D_COVERAGE_PLANNING_POLYGON_H_
-#define MAV_2D_COVERAGE_PLANNING_POLYGON_H_
+#ifndef MAV_2D_COVERAGE_PLANNING_GEOMETRY_POLYGON_H_
+#define MAV_2D_COVERAGE_PLANNING_GEOMETRY_POLYGON_H_
 
 #include <iostream>
 #include <sstream>
 #include <vector>
+#include <set>
 
-#include "mav_2d_coverage_planning/definitions.h"
+#include <mav_coverage_planning_comm/cgal_definitions.h>
 
 namespace mav_coverage_planning {
 class Polygon {
@@ -122,4 +123,4 @@ class Polygon {
 
 }  // namespace mav_coverage_planning
 
-#endif  // MAV_2D_COVERAGE_PLANNING_POLYGON_H_
+#endif  // MAV_2D_COVERAGE_PLANNING_GEOMETRY_POLYGON_H_

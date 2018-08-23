@@ -6,7 +6,7 @@
 #include "mav_2d_coverage_planning/planners/polygon_stripmap_planner.h"
 #include "mav_2d_coverage_planning/planners/polygon_stripmap_planner_exact.h"
 #include "mav_2d_coverage_planning/planners/polygon_stripmap_planner_exact_preprocessed.h"
-#include "mav_2d_coverage_planning/polygon.h"
+#include "mav_2d_coverage_planning/geometry/polygon.h"
 #include "mav_2d_coverage_planning/tests/test_helpers.h"
 
 using namespace mav_coverage_planning;

@@ -1,4 +1,4 @@
-#include "mav_2d_coverage_planning/polygon.h"
+#include "mav_2d_coverage_planning/geometry/polygon.h"
 
 #include <algorithm>
 #include <limits>

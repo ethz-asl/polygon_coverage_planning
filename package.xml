@@ -14,7 +14,8 @@
   <buildtool_depend>catkin_simple</buildtool_depend>
 
   <depend>cgal_catkin</depend>
-  <depend>mav_coverage_graph_solvers</depend>
   <depend>glog_catkin</depend>
+  <depend>mav_coverage_graph_solvers</depend>
+  <depend>mav_coverage_planning_comm</depend>
 
 </package>

@@ -3,7 +3,7 @@
 #include <gtest/gtest.h>
 #include <boost/make_shared.hpp>
 
-#include "mav_2d_coverage_planning/polygon.h"
+#include "mav_2d_coverage_planning/geometry/polygon.h"
 #include "mav_2d_coverage_planning/tests/test_helpers.h"
 
 using namespace mav_coverage_planning;

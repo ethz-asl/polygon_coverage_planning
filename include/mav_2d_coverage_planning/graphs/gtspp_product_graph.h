@@ -4,7 +4,7 @@
 #include <limits>
 #include <vector>
 
-#include "mav_2d_coverage_planning/definitions.h"
+#include <mav_coverage_planning_comm/cgal_definitions.h>
 #include "mav_2d_coverage_planning/graphs/sweep_plan_graph.h"
 #include "mav_coverage_graph_solvers/boolean_lattice.h"
 #include "mav_coverage_graph_solvers/graph_base.h"

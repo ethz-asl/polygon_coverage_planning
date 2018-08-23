@@ -5,8 +5,8 @@
 
 #include <mav_coverage_graph_solvers/graph_base.h>
 
-#include "mav_2d_coverage_planning/definitions.h"
-#include "mav_2d_coverage_planning/polygon.h"
+#include <mav_coverage_planning_comm/cgal_definitions.h>
+#include "mav_2d_coverage_planning/geometry/polygon.h"
 
 namespace mav_coverage_planning {
 namespace visibility_graph {
@@ -26,9 +26,8 @@ struct EdgeProperty {};
 class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
  public:
   // Creates an undirected, weighted visibility graph.
-  VisibilityGraph(const Polygon& polygon,
-                  const SegmentCostFunctionType& cost_function);
-                  
+  VisibilityGraph(const Polygon& polygon);
+
   VisibilityGraph() : GraphBase() {}
 
   virtual bool create() override;
@@ -65,8 +64,10 @@ class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
   virtual bool calculateHeuristic(size_t goal,
                                   Heuristic* heuristic) const override;
 
+// Given two waypoints, compute its euclidean distance.
+  double computeCost(const Point_2& from, const Point_2& to) const;
+
   Polygon polygon_;
-  SegmentCostFunctionType cost_function_;
 };
 
 }  // namespace visibility_graph
