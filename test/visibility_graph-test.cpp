@@ -2,7 +2,7 @@
 
 #include <gtest/gtest.h>
 
-#include "mav_2d_coverage_planning/cost_functions/euclidean_cost_function.h"
+#include "mav_2d_coverage_planning/cost_functions/path_cost_functions.h"
 #include "mav_2d_coverage_planning/geometry/polygon.h"
 #include "mav_2d_coverage_planning/graphs/visibility_graph.h"
 #include "mav_2d_coverage_planning/tests/test_helpers.h"

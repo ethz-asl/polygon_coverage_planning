@@ -64,9 +64,6 @@ class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
   virtual bool calculateHeuristic(size_t goal,
                                   Heuristic* heuristic) const override;
 
-// Given two waypoints, compute its euclidean distance.
-  double computeCost(const Point_2& from, const Point_2& to) const;
-
   Polygon polygon_;
 };
 

@@ -4,7 +4,7 @@
 #include <mav_coverage_graph_solvers/graph_base.h>
 #include <mav_coverage_planning_comm/cgal_definitions.h>
 
-#include "mav_2d_coverage_planning/cost_functions/euclidean_cost_function.h"
+#include "mav_2d_coverage_planning/cost_functions/path_cost_functions.h"
 #include "mav_2d_coverage_planning/geometry/polygon.h"
 #include "mav_2d_coverage_planning/graphs/visibility_graph.h"
 
@@ -54,7 +54,6 @@ class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
  public:
   SweepPlanGraph(const Polygon& polygon,
                  const PathCostFunctionType& cost_function,
-                 const SegmentCostFunctionType& seg_cost_function,
                  const std::vector<Polygon>& polygon_clusters,
                  double sweep_distance, double offset_distance)
       : GraphBase(),

@@ -1,4 +1,4 @@
-#include "mav_2d_coverage_planning/cost_functions/euclidean_cost_function.h"
+#include "mav_2d_coverage_planning/cost_functions/path_cost_functions.h"
 
 #include <cmath>
 

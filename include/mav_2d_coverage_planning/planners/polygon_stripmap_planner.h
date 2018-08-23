@@ -2,8 +2,9 @@
 #define MAV_2D_COVERAGE_PLANNING_PLANNERS_POLYGON_STRIPMAP_PLANNER_H_
 
 #include <mav_coverage_planning_comm/cgal_definitions.h>
-#include "mav_2d_coverage_planning/graphs/sweep_plan_graph.h"
+#include "mav_2d_coverage_planning/cost_functions/path_cost_functions.h"
 #include "mav_2d_coverage_planning/geometry/polygon.h"
+#include "mav_2d_coverage_planning/graphs/sweep_plan_graph.h"
 
 namespace mav_coverage_planning {
 
@@ -12,7 +13,6 @@ class PolygonStripmapPlanner {
   struct Settings {
     Polygon polygon;
     PathCostFunctionType path_cost_function;
-    SegmentCostFunctionType segment_cost_function;
     double altitude;
     double lateral_fov;
     double longitudinal_fov;
