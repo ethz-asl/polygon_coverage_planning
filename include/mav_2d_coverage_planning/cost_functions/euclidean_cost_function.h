@@ -2,9 +2,16 @@
 #define MAV_2D_COVERAGE_PLANNING_COST_FUNCTIONS_EUCLIDEAN_COST_FUNCTION_H_
 
 #include <vector>
-#include "mav_2d_coverage_planning/definitions.h"
+#include <functional>
+
+#include <mav_coverage_planning_comm/cgal_definitions.h>
 
 namespace mav_coverage_planning {
+
+typedef std::function<double(const std::vector<Point_2>& path)>
+    PathCostFunctionType;
+typedef std::function<double(const Point_2& a, const Point_2& b)>
+    SegmentCostFunctionType;
 
 // Given a vector of waypoints, compute its euclidean distances.
 double computeEuclideanPathCost(const std::vector<Point_2>& path);

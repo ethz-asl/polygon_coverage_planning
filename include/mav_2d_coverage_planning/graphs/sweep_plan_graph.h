@@ -1,11 +1,12 @@
 #ifndef MAV_2D_COVERAGE_PLANNING_GRAPHS_SWEEP_PLAN_GRAPH_H_
 #define MAV_2D_COVERAGE_PLANNING_GRAPHS_SWEEP_PLAN_GRAPH_H_
 
-#include "mav_coverage_graph_solvers/graph_base.h"
+#include <mav_coverage_graph_solvers/graph_base.h>
+#include <mav_coverage_planning_comm/cgal_definitions.h>
 
-#include "mav_2d_coverage_planning/definitions.h"
+#include "mav_2d_coverage_planning/cost_functions/euclidean_cost_function.h"
+#include "mav_2d_coverage_planning/geometry/polygon.h"
 #include "mav_2d_coverage_planning/graphs/visibility_graph.h"
-#include "mav_2d_coverage_planning/polygon.h"
 
 namespace mav_coverage_planning {
 namespace sweep_plan_graph {
@@ -57,7 +58,7 @@ class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
                  const std::vector<Polygon>& polygon_clusters,
                  double sweep_distance, double offset_distance)
       : GraphBase(),
-        visibility_graph_(polygon, seg_cost_function),
+        visibility_graph_(polygon),
         cost_function_(cost_function),
         polygon_clusters_(polygon_clusters),
         sweep_distance_(sweep_distance),

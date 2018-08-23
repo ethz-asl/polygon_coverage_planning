@@ -1,9 +1,9 @@
 #ifndef MAV_2D_COVERAGE_PLANNING_PLANNERS_POLYGON_STRIPMAP_PLANNER_H_
 #define MAV_2D_COVERAGE_PLANNING_PLANNERS_POLYGON_STRIPMAP_PLANNER_H_
 
-#include "mav_2d_coverage_planning/definitions.h"
+#include <mav_coverage_planning_comm/cgal_definitions.h>
 #include "mav_2d_coverage_planning/graphs/sweep_plan_graph.h"
-#include "mav_2d_coverage_planning/polygon.h"
+#include "mav_2d_coverage_planning/geometry/polygon.h"
 
 namespace mav_coverage_planning {
 

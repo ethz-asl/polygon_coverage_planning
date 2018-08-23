@@ -3,8 +3,8 @@
 #include <gtest/gtest.h>
 
 #include "mav_2d_coverage_planning/cost_functions/euclidean_cost_function.h"
-#include "mav_2d_coverage_planning/graphs/visibility_graph.h"
 #include "mav_2d_coverage_planning/geometry/polygon.h"
+#include "mav_2d_coverage_planning/graphs/visibility_graph.h"
 #include "mav_2d_coverage_planning/tests/test_helpers.h"
 
 using namespace mav_coverage_planning;
@@ -18,8 +18,7 @@ TEST(VisibilityGraphTest, ShortestPath) {
   Point_2 goal(3.0, -1.0);
   EXPECT_FALSE(p.pointInPolygon(goal));
 
-  visibility_graph::VisibilityGraph graph(
-      p, std::bind(&computeEuclideanSegmentCost, _1, _2));
+  visibility_graph::VisibilityGraph graph(p);
   std::vector<Point_2> path;
   EXPECT_TRUE(graph.solve(start, goal, &path));
 
