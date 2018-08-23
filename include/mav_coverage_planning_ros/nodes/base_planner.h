@@ -11,9 +11,10 @@
 #include <mav_2d_coverage_planning/geometry/polygon.h>
 #include <mav_3d_coverage_planning/polyhedron.h>
 #include <mav_coverage_planning_comm/trajectory_cost_functions.h>
+#include <mav_coverage_planning_comm/trajectory_definitions.h>
 #include <mav_msgs/eigen_mav_msgs.h>
-#include <mav_trajectory_generation/trajectory.h>
 #include <mav_planning_msgs/PolygonService.h>
+#include <mav_trajectory_generation/trajectory.h>
 
 // Stuff to receive MAV odometry:
 #include <geometry_msgs/TransformStamped.h>
@@ -89,10 +90,10 @@ class BasePlanner {
   mav_trajectory_generation::Trajectory trajectory_;
 
  private:
-   // Set a new polygon through a service call.
-   bool setPolygonCallback(
-       mav_planning_msgs::PolygonService::Request& request,
-       mav_planning_msgs::PolygonService::Response& response);
+  // Set a new polygon through a service call.
+  bool setPolygonCallback(
+      mav_planning_msgs::PolygonService::Request& request,
+      mav_planning_msgs::PolygonService::Response& response);
   // Base initial interactions with ROS
   void getBaseParametersFromRos();
   void subscribeToBaseTopics();

@@ -3,8 +3,9 @@
 
 #include <memory>
 
-#include <mav_2d_coverage_planning/definitions.h>
+#include <mav_2d_coverage_planning/cost_functions/path_cost_functions.h>
 #include <mav_2d_coverage_planning/geometry/polygon.h>
+#include <mav_coverage_planning_comm/cgal_definitions.h>
 
 #include <mav_planning_msgs/PlannerService.h>
 #include <mav_planning_msgs/PolygonService.h>
@@ -35,7 +36,6 @@ class BasePlanner2D {
   struct Settings {
     Settings();
     Polygon polygon;
-    SegmentCostFunctionType visibility_graph_cost_function;
     PathCostFunctionType sweep_cost_function;
     double altitude;
     bool latch_topics;

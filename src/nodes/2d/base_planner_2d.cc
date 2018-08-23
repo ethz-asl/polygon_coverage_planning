@@ -2,7 +2,7 @@
 
 #include <functional>
 
-#include <mav_2d_coverage_planning/cost_functions/euclidean_cost_function.h>
+#include <mav_2d_coverage_planning/cost_functions/path_cost_functions.h>
 #include <mav_coverage_planning_ros/conversions/msg_from_xml_rpc.h>
 #include <mav_coverage_planning_ros/conversions/ros_interface.h>
 
@@ -14,10 +14,7 @@ namespace mav_coverage_planning {
 constexpr double kThrottleRate = 1.0 / 10.0;
 
 BasePlanner2D::Settings::Settings()
-    : visibility_graph_cost_function(std::bind(&computeEuclideanSegmentCost,
-                                               std::placeholders::_1,
-                                               std::placeholders::_2)),
-      sweep_cost_function(
+    : sweep_cost_function(
           std::bind(&computeEuclideanPathCost, std::placeholders::_1)),
       altitude(-1.0),
       latch_topics(true),
@@ -99,9 +96,6 @@ void BasePlanner2D::getParametersFromRos() {
 
   switch (settings_.cost_function_type) {
     case Settings::CostFunctionType::kDistance: {
-      settings_.visibility_graph_cost_function =
-          std::bind(&computeEuclideanSegmentCost, std::placeholders::_1,
-                    std::placeholders::_2);
       settings_.sweep_cost_function =
           std::bind(&computeEuclideanPathCost, std::placeholders::_1);
       break;

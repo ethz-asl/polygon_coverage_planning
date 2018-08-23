@@ -5,7 +5,7 @@
 
 #include <geometry_msgs/Point.h>
 #include <glog/logging.h>
-#include <mav_2d_coverage_planning/definitions.h>
+#include <mav_coverage_planning_comm/cgal_definitions.h>
 #include <mav_msgs/eigen_mav_msgs.h>
 #include <mav_msgs/conversions.h>
 #include <ros/ros.h>
