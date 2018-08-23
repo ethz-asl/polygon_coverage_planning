@@ -155,12 +155,12 @@ void createStartAndEndPointMarkers(const Point_2& start, const Point_2& end,
                                    visualization_msgs::Marker* end_point) {
   mav_msgs::EigenTrajectoryPoint eigen_start;
   eigen_start.position_W.x() = CGAL::to_double(start.x());
-  eigen_start.position_W.y() = CGAL::to_double(start.x());
+  eigen_start.position_W.y() = CGAL::to_double(start.y());
   eigen_start.position_W.z() = altitude;
 
   mav_msgs::EigenTrajectoryPoint eigen_end;
   eigen_end.position_W.x() = CGAL::to_double(end.x());
-  eigen_end.position_W.y() = CGAL::to_double(end.x());
+  eigen_end.position_W.y() = CGAL::to_double(end.y());
   eigen_end.position_W.z() = altitude;
 
   return createStartAndEndPointMarkers(eigen_start, eigen_end, frame_id, ns,
