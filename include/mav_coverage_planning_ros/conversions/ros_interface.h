@@ -16,7 +16,7 @@
 #include <mav_visualization/helpers.h>
 
 #include <mav_2d_coverage_planning/definitions.h>
-#include <mav_2d_coverage_planning/polygon.h>
+#include <mav_2d_coverage_planning/geometry/polygon.h>
 
 namespace mav_coverage_planning {
 

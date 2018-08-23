@@ -4,7 +4,7 @@
 #include <memory>
 
 #include <mav_2d_coverage_planning/definitions.h>
-#include <mav_2d_coverage_planning/polygon.h>
+#include <mav_2d_coverage_planning/geometry/polygon.h>
 
 #include <mav_planning_msgs/PlannerService.h>
 #include <mav_planning_msgs/PolygonService.h>
