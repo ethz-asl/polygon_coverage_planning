@@ -104,7 +104,7 @@ bool Polygon::computeConvexDecomposition(
   if (polygon_.number_of_holes() > 0) return false;
   if (!is_strictly_simple_) return false;
   if (is_convex_) {
-    *convex_polygons = {this};
+    *convex_polygons = {*this};
     return true;
   }
 
