@@ -41,6 +41,11 @@ cs_add_executable(shortest_path_2d_node
 )
 target_link_libraries(shortest_path_2d_node ${PROJECT_NAME})
 
+cs_add_executable(stripmap_planner_3d_node
+  src/nodes/3d/stripmap_planner_3d_node.cc
+)
+target_link_libraries(stripmap_planner_3d_node ${PROJECT_NAME})
+
 ##########
 # EXPORT #
 ##########

@@ -165,10 +165,16 @@ void BasePlanner::setPolyhedronFromGridmap() {
     ROS_WARN("Gridmap bag filename not set.");
     return;
   }
+  ROS_INFO_STREAM("Opening file: " << gridmap_bag);
 
-  if (!loadMeshFromGridMapBag<Polyhedron_3, K>(
-          gridmap_bag, "/grid_map", "elevation", &settings_.raw_polyhedron))
+  Polyhedron_3 elevation_map;
+  if (!loadMeshFromGridMapBag<Polyhedron_3, K>(gridmap_bag, "/grid_map",
+                                               "elevation", &elevation_map)) {
     ROS_WARN("Failed to load grid map.");
+    return;
+  }
+
+  settings_.raw_polyhedron = Polyhedron(elevation_map);
 }
 
 void BasePlanner::receiveOdometryCallback(const nav_msgs::Odometry& msg) {
@@ -227,13 +233,7 @@ void BasePlanner::solve(const mav_msgs::EigenTrajectoryPoint& start,
   }
 }
 
-bool BasePlanner::publishVisualization() {
-  if (!planning_complete_) {
-    ROS_WARN_STREAM(
-        "Cannot send visualization message because plan "
-        "hasn't been made yet.");
-    return false;
-  }
+void BasePlanner::publishVisualization() {
   ROS_INFO_STREAM("Sending visualization messages.");
 
   // Creating the marker array
@@ -278,7 +278,7 @@ bool BasePlanner::publishVisualization() {
 
   // The polyhedron to cover.
   visualization_msgs::MarkerArray mesh;
-  if (!createPolyhedronMarkerArray(settings_.raw_polyhedron,
+  if (!createPolyhedronMarkerArray(settings_.raw_polyhedron.getPolyhedron(),
                                    settings_.global_frame_id, &mesh)) {
     ROS_WARN("Failed to generate polyhedron mesh markers.");
   } else {
@@ -288,9 +288,6 @@ bool BasePlanner::publishVisualization() {
 
   // Publishing
   marker_pub_.publish(markers);
-
-  // Success
-  return true;
 }
 
 bool BasePlanner::publishTrajectoryPoints() {
@@ -390,13 +387,14 @@ bool BasePlanner::planPathFromOdometryToGoalCallback(
 bool BasePlanner::publishAllCallback(std_srvs::Empty::Request& request,
                                      std_srvs::Empty::Response& response) {
   bool success_publish_trajectory = publishTrajectoryPoints();
-  bool success_publish_visualization = publishVisualization();
-  return (success_publish_trajectory && success_publish_visualization);
+  publishVisualization();
+  return (success_publish_trajectory);
 }
 
 bool BasePlanner::publishVisualizationCallback(
     std_srvs::Empty::Request& request, std_srvs::Empty::Response& response) {
-  return publishVisualization();
+  publishVisualization();
+  return true;
 }
 
 bool BasePlanner::publishTrajectoryPointsCallback(

@@ -39,7 +39,7 @@ class BasePlanner {
   struct BaseSettings {
     BaseSettings();
     TrajectoryCostFunctionType trajectory_cost_function;
-    Polyhedron_3 raw_polyhedron;
+    Polyhedron raw_polyhedron;
     double altitude;
     Polygon polygon;
     Polyhedron polyhedron;
@@ -76,9 +76,11 @@ class BasePlanner {
  protected:
   // Call to the actual planner.
   virtual bool solvePlanner(const mav_msgs::EigenTrajectoryPoint& start,
-                            const mav_msgs::EigenTrajectoryPoint& goal) = 0;
+                            const mav_msgs::EigenTrajectoryPoint& goal) {
+    return true;
+  }
   // Reset the planner when a new world is set.
-  virtual bool resetPlanner() = 0;
+  virtual bool resetPlanner() { return true; }
 
   // Node handles
   ros::NodeHandle nh_;
@@ -128,7 +130,7 @@ class BasePlanner {
              const mav_msgs::EigenTrajectoryPoint& goal);
 
   // Visualization
-  bool publishVisualization();
+  void publishVisualization();
   // Publishing the plan
   bool publishTrajectoryPoints();
 
