@@ -103,6 +103,10 @@ bool Polygon::computeConvexDecomposition(
   // Precondition.
   if (polygon_.number_of_holes() > 0) return false;
   if (!is_strictly_simple_) return false;
+  if (is_convex_) {
+    *convex_polygons = {this};
+    return true;
+  }
 
   // Convex decomposition.
   typedef CGAL::Partition_traits_2<K> PartitionTraits;
@@ -218,6 +222,20 @@ bool Polygon::computeConvexDecompositionFromPolygonWithHoles(
     return false;
 
   if (!polygon_without_holes.computeConvexDecomposition(convex_polygons))
+    return false;
+
+  return true;
+}
+
+bool Polygon::computeYMonotoneDecompositionFromPolygonWithHoles(
+    std::vector<Polygon>* y_monotone_polygons) {
+  CHECK_NOTNULL(y_monotone_polygons);
+
+  Polygon polygon_without_holes;
+  if (!convertPolygonWithHolesToPolygonWithoutHoles(&polygon_without_holes))
+    return false;
+
+  if (!polygon_without_holes.computeYMonotoneDecomposition(y_monotone_polygons))
     return false;
 
   return true;

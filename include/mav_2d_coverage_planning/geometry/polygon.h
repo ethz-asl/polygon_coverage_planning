@@ -59,6 +59,12 @@ class Polygon {
   bool computeConvexDecompositionFromPolygonWithHoles(
       std::vector<Polygon>* convex_polygons);
 
+  // Convenience function that first calls
+  // convertPolygonWithHolesToPolygonWithoutHoles, then
+  // computeYMonotoneDecomposition.
+  bool computeYMonotoneDecompositionFromPolygonWithHoles(
+      std::vector<Polygon>* y_monotone_polygons);
+
   // Compute the visibility polygon given a point inside a strictly simple
   // polygon. Francisc Bungiu, Michael Hemmer, John Hershberger, Kan Huang, and
   // Alexander Kröller. Efficient computation of visibility polygons. CoRR,

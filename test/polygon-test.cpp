@@ -40,6 +40,16 @@ TEST(PolygonTest, ConvexDecomposition) {
   EXPECT_EQ(4, convex_polygons.size());
 }
 
+TEST(PolygonTest, YMonotoneDecomposition) {
+  Polygon rectangle_in_rectangle(
+      createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
+  std::vector<Polygon> y_monotone_polygons;
+  EXPECT_TRUE(
+      rectangle_in_rectangle.computeYMonotoneDecompositionFromPolygonWithHoles(
+          &y_monotone_polygons));
+  EXPECT_EQ(4, y_monotone_polygons.size());
+}
+
 TEST(PolygonTest, pointInOnPolygon) {
   Polygon rect_in_rect(
       createRectangleInRectangle<Polygon_2, PolygonWithHoles>());

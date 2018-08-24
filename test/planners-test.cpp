@@ -33,9 +33,6 @@ void runPlanners(const std::vector<Polygon>& polygons) {
     settings.polygon = p;
     EXPECT_EQ(0, settings.polygon.getPolygon().number_of_holes());
 
-    settings.segment_cost_function =
-        std::bind(&computeEuclideanSegmentCost, std::placeholders::_1,
-                  std::placeholders::_2);
     settings.path_cost_function =
         std::bind(&computeEuclideanPathCost, std::placeholders::_1);
     settings.altitude = createRandomDouble(kAltitudeMin, kAltitudeMax);
