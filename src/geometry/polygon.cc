@@ -139,6 +139,50 @@ bool Polygon::computeConvexDecomposition(
   return true;
 }
 
+bool Polygon::computeYMonotoneDecomposition(
+    std::vector<Polygon>* y_monotone_polygons) const {
+  CHECK_NOTNULL(y_monotone_polygons);
+
+  // Precondition.
+  if (polygon_.number_of_holes() > 0) return false;
+  if (!is_strictly_simple_) return false;
+
+  // y-monotone decomposition.
+  typedef CGAL::Partition_traits_2<K> PartitionTraits;
+  typedef PartitionTraits::Polygon_2 PartitionPolygon;
+  std::vector<PartitionPolygon> partition_polygons;
+  CGAL::optimal_convex_partition_2(polygon_.outer_boundary().vertices_begin(),
+                                   polygon_.outer_boundary().vertices_end(),
+                                   std::back_inserter(partition_polygons),
+                                   PartitionTraits());
+
+  // Validity check.
+  typedef CGAL::Is_y_monotone_2<PartitionTraits> IsYMonotone2;
+  typedef CGAL::Partition_is_valid_traits_2<PartitionTraits, IsYMonotone2>
+      PartitionValidityTraits;
+  if (!CGAL::partition_is_valid_2(
+          polygon_.outer_boundary().vertices_begin(),
+          polygon_.outer_boundary().vertices_end(), partition_polygons.begin(),
+          partition_polygons.end(), PartitionValidityTraits())) {
+    // Partition is overlapping, union area != original area or non y-monotone.
+    return false;
+  }
+
+  // Copy polygon.
+  y_monotone_polygons->clear();
+  y_monotone_polygons->reserve(partition_polygons.size());
+  for (const PartitionPolygon& p : partition_polygons) {
+    // TODO(rikba): Some unnecessary move from list to vector because I don't
+    // know how to handle these partition traits.
+    std::vector<Point_2> vertices = {
+        std::make_move_iterator(p.vertices_begin()),
+        std::make_move_iterator(p.vertices_end())};
+    y_monotone_polygons->emplace_back(vertices.begin(), vertices.end());
+  }
+
+  return true;
+}
+
 bool Polygon::convertPolygonWithHolesToPolygonWithoutHoles(
     Polygon* polygon_without_holes) const {
   CHECK_NOTNULL(polygon_without_holes);

@@ -39,6 +39,13 @@ class Polygon {
   // Comput. Res., pages 235–259. JAI Press, Greenwich, Conn., 1983.
   bool computeConvexDecomposition(std::vector<Polygon>* convex_polygons) const;
 
+  // Given a simple polygon without holes, compute its y-monotone decomposition.
+  // Mark de Berg, Marc van Kreveld, Mark Overmars, and Otfried Schwarzkopf.
+  // Computational Geometry: Algorithms and Applications. Springer-Verlag,
+  // Berlin, 1997, p. 49ff.
+  bool computeYMonotoneDecomposition(
+      std::vector<Polygon>* y_monotone_polygons) const;
+
   // Given a strictly simple polygon with holes, compute its simple equivalent
   // without holes. Note: New edges are added to the polygon.
   // Uses
