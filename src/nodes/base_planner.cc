@@ -5,19 +5,20 @@
 #include "mav_coverage_planning_ros/conversions/msg_from_xml_rpc.h"
 #include "mav_coverage_planning_ros/conversions/ros_interface.h"
 
-#include <mav_coverage_planning_comm/trajectory_cost_functions.h>
-#include <mav_trajectory_generation_ros/ros_visualization.h>
 #include <geometry_msgs/PoseArray.h>
-#include <visualization_msgs/MarkerArray.h>
+#include <mav_3d_coverage_mesh_conversion/grid_map/conversion.h>
+#include <mav_coverage_planning_comm/trajectory_cost_functions.h>
 #include <mav_trajectory_generation/trajectory_sampling.h>
+#include <mav_trajectory_generation_ros/ros_visualization.h>
+#include <visualization_msgs/MarkerArray.h>
 
 namespace mav_coverage_planning {
 
 constexpr double kThrottleRate = 1.0 / 10.0;
 
 BasePlanner::BaseSettings::BaseSettings()
-    : trajectory_cost_function(std::bind(&computeTrajectoryTime,
-                                               std::placeholders::_1)),
+    : trajectory_cost_function(
+          std::bind(&computeTrajectoryTime, std::placeholders::_1)),
       altitude(-1.0),
       latch_topics(true),
       local_frame_id("odom"),
@@ -26,7 +27,7 @@ BasePlanner::BaseSettings::BaseSettings()
       publish_visualization_on_planning_complete(true) {}
 
 BasePlanner::BasePlanner(const ros::NodeHandle& nh,
-                             const ros::NodeHandle& nh_private)
+                         const ros::NodeHandle& nh_private)
     : nh_(nh),
       nh_private_(nh_private),
       planning_complete_(false),
@@ -39,8 +40,8 @@ BasePlanner::BasePlanner(const ros::NodeHandle& nh,
 }
 
 void BasePlanner::subscribeToBaseTopics() {
-  odometry_sub_ = nh_.subscribe("odometry", 1,
-                                &BasePlanner::receiveOdometryCallback, this);
+  odometry_sub_ =
+      nh_.subscribe("odometry", 1, &BasePlanner::receiveOdometryCallback, this);
   T_G_L_sub_ =
       nh_.subscribe("T_G_L", 1, &BasePlanner::receiveTransformCallback, this);
 }
@@ -80,6 +81,8 @@ void BasePlanner::getBaseParametersFromRos() {
 
   // Cost function
   setCostFunction();
+  setPolygon();
+  setPolyhedronFromGridmap();
 
   nh_private_.getParam("altitude", settings_.altitude);
 
@@ -155,6 +158,19 @@ void BasePlanner::setPolygon() {
   }
 }
 
+void BasePlanner::setPolyhedronFromGridmap() {
+  ROS_INFO("Load DSM grid map.");
+  std::string gridmap_bag;
+  if (!nh_private_.getParam("gridmap_bag", gridmap_bag)) {
+    ROS_WARN("Gridmap bag filename not set.");
+    return;
+  }
+
+  if (!loadMeshFromGridMapBag<Polyhedron_3, K>(
+          gridmap_bag, "/grid_map", "elevation", &settings_.raw_polyhedron))
+    ROS_WARN("Failed to load grid map.");
+}
+
 void BasePlanner::receiveOdometryCallback(const nav_msgs::Odometry& msg) {
   mav_msgs::eigenOdometryFromMsg(msg, &odometry_);
   odometry_set_ = true;
@@ -185,7 +201,7 @@ void BasePlanner::receiveTransformCallback(
 }
 
 void BasePlanner::solve(const mav_msgs::EigenTrajectoryPoint& start,
-           const mav_msgs::EigenTrajectoryPoint& goal) {
+                        const mav_msgs::EigenTrajectoryPoint& goal) {
   ROS_INFO_STREAM("Start solving.");
   if ((planning_complete_ = solvePlanner(start, goal))) {
     ROS_INFO_STREAM("Finished plan."
@@ -223,29 +239,33 @@ bool BasePlanner::publishVisualization() {
   // Creating the marker array
   visualization_msgs::MarkerArray markers;
 
-  // The waypoints:
-  visualization_msgs::MarkerArray vertices;
-  mav_trajectory_generation::drawVerticesFromTrajectory(
-      trajectory_, settings_.global_frame_id, &vertices);
-  markers.markers.insert(markers.markers.end(), vertices.markers.begin(),
-                         vertices.markers.end());
+  // The solution.
+  if (planning_complete_) {
+    // The waypoints:
+    visualization_msgs::MarkerArray vertices;
+    mav_trajectory_generation::drawVerticesFromTrajectory(
+        trajectory_, settings_.global_frame_id, &vertices);
+    markers.markers.insert(markers.markers.end(), vertices.markers.begin(),
+                           vertices.markers.end());
 
-  // The trajectory:
-  visualization_msgs::MarkerArray trajectory_markers;
-  const double kMarkerDistance = 0.0;
-  mav_trajectory_generation::drawMavTrajectory(
-      trajectory_, kMarkerDistance, settings_.global_frame_id, &trajectory_markers);
-  markers.markers.insert(markers.markers.end(),
-                         trajectory_markers.markers.begin(),
-                         trajectory_markers.markers.end());
+    // The trajectory:
+    visualization_msgs::MarkerArray trajectory_markers;
+    const double kMarkerDistance = 0.0;
+    mav_trajectory_generation::drawMavTrajectory(trajectory_, kMarkerDistance,
+                                                 settings_.global_frame_id,
+                                                 &trajectory_markers);
+    markers.markers.insert(markers.markers.end(),
+                           trajectory_markers.markers.begin(),
+                           trajectory_markers.markers.end());
 
-  // Start and end points
-  visualization_msgs::Marker start_point, end_point;
-  createStartAndEndPointMarkers(waypoints_.front(), waypoints_.back(),
-                                settings_.global_frame_id, "start_and_goal",
-                                &start_point, &end_point);
-  markers.markers.push_back(start_point);
-  markers.markers.push_back(end_point);
+    // Start and end points
+    visualization_msgs::Marker start_point, end_point;
+    createStartAndEndPointMarkers(waypoints_.front(), waypoints_.back(),
+                                  settings_.global_frame_id, "start_and_goal",
+                                  &start_point, &end_point);
+    markers.markers.push_back(start_point);
+    markers.markers.push_back(end_point);
+  }
 
   // The polygon to cover:
   visualization_msgs::MarkerArray polygon;
@@ -256,20 +276,14 @@ bool BasePlanner::publishVisualization() {
   markers.markers.insert(markers.markers.end(), polygon.markers.begin(),
                          polygon.markers.end());
 
-  // The decomposed polygons.
-  std::vector<Polygon> convex_decomposition;
-  settings_.polygon.computeConvexDecompositionFromPolygonWithHoles(
-      &convex_decomposition);
-  for (size_t i = 0; i < convex_decomposition.size(); ++i) {
-    visualization_msgs::MarkerArray convex_polygon_markers;
-    std::string name = "convex_polygon_" + std::to_string(i);
-    createPolygonMarkers(
-        convex_decomposition[i], settings_.altitude, settings_.global_frame_id,
-        name, mav_visualization::Color::Red(), mav_visualization::Color::Red(),
-        &convex_polygon_markers);
-    markers.markers.insert(markers.markers.end(),
-                           convex_polygon_markers.markers.begin(),
-                           convex_polygon_markers.markers.end());
+  // The polyhedron to cover.
+  visualization_msgs::MarkerArray mesh;
+  if (!createPolyhedronMarkerArray(settings_.raw_polyhedron,
+                                   settings_.global_frame_id, &mesh)) {
+    ROS_WARN("Failed to generate polyhedron mesh markers.");
+  } else {
+    markers.markers.insert(markers.markers.end(), mesh.markers.begin(),
+                           mesh.markers.end());
   }
 
   // Publishing
@@ -374,7 +388,7 @@ bool BasePlanner::planPathFromOdometryToGoalCallback(
 }
 
 bool BasePlanner::publishAllCallback(std_srvs::Empty::Request& request,
-                                       std_srvs::Empty::Response& response) {
+                                     std_srvs::Empty::Response& response) {
   bool success_publish_trajectory = publishTrajectoryPoints();
   bool success_publish_visualization = publishVisualization();
   return (success_publish_trajectory && success_publish_visualization);

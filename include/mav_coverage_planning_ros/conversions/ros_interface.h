@@ -69,6 +69,10 @@ void createStartAndEndPointMarkers(const mav_msgs::EigenTrajectoryPoint& start,
                                    visualization_msgs::Marker* start_point,
                                    visualization_msgs::Marker* end_point);
 
+bool createPolyhedronMarkerArray(const Polyhedron_3& polyhedron,
+                                 const std::string& frame_id,
+                                 visualization_msgs::MarkerArray* markers);
+
 void polygon2FromPolygonMsg(const mav_planning_msgs::Polygon2D& msg,
                             Polygon_2* polygon);
 bool polygonFromMsg(const mav_planning_msgs::PolygonWithHolesStamped& msg,

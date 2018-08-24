@@ -39,6 +39,7 @@ class BasePlanner {
   struct BaseSettings {
     BaseSettings();
     TrajectoryCostFunctionType trajectory_cost_function;
+    Polyhedron_3 raw_polyhedron;
     double altitude;
     Polygon polygon;
     Polyhedron polyhedron;
@@ -134,6 +135,7 @@ class BasePlanner {
   // Set from parameters.
   void setCostFunction();
   void setPolygon();
+  void setPolyhedronFromGridmap();
 
   // Helper function to convert odometry to global odometry.
   mav_msgs::EigenOdometry globalOdometryFromOdometry(
