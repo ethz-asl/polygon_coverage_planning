@@ -79,6 +79,9 @@ void BasePlanner2D::getParametersFromRos() {
   }
 
   // Cost function
+  nh_private_.param("v_max", settings_.v_max, kDefaultVMax);
+  nh_private_.param("a_max", settings_.a_max, kDefaultAMax);
+
   int cost_function_type_int = static_cast<int>(settings_.cost_function_type);
   if (!nh_private_.getParam("cost_function_type", cost_function_type_int)) {
     ROS_WARN_STREAM("No cost_function_type specified. Using default value of: "
@@ -100,7 +103,12 @@ void BasePlanner2D::getParametersFromRos() {
           std::bind(&computeEuclideanPathCost, std::placeholders::_1);
       break;
     }
-    case Settings::CostFunctionType::kTime:
+    case Settings::CostFunctionType::kTime: {
+      settings_.sweep_cost_function =
+          std::bind(&computeVelocityRampPathCost, std::placeholders::_1,
+                    settings_.v_max, settings_.a_max);
+      break;
+    }
     default: {
       ROS_WARN_STREAM("Cost function type: "
                       << settings_.getCostFunctionTypeName()
@@ -183,8 +191,12 @@ void BasePlanner2D::solve(const Point_2& start, const Point_2& goal) {
                     << "Start point: " << start << std::endl
                     << "Goal point: " << goal << std::endl
                     << "Altitude: " << settings_.altitude << " [m]" << std::endl
-                    << "Path length: "
-                    << settings_.sweep_cost_function(solution_) << " [m]");
+                    << "Path length: " << computeEuclideanPathCost(solution_)
+                    << " [m]" << std::endl
+                    << "Path time: "
+                    << computeVelocityRampPathCost(solution_, settings_.v_max,
+                                                   settings_.a_max)
+                    << " [s]");
     // Publishing the plan if requested
     if (settings_.publish_plan_on_planning_complete) {
       publishTrajectoryPoints();

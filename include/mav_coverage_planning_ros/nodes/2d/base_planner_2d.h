@@ -28,6 +28,9 @@ const std::string kDefaultLocalFrameID = "odom";
 constexpr bool kDefaultPublishPlanPointsOnPlanningComplete = false;
 constexpr bool kDefaultPublishVisualizationOnPlanningComplete = true;
 
+constexpr double kDefaultAMax = 1.0;
+constexpr double kDefaultVMax = 1.0;
+
 typedef kindr::minimal::QuatTransformation Transformation;
 
 // A basic ros wrapper for planner in a 2D polynomial environment.
@@ -47,6 +50,8 @@ class BasePlanner2D {
       kDistance = 0,  // Minimize distance.
       kTime           // Minimize flight time.
     } cost_function_type = kDistance;
+    double v_max;
+    double a_max;
 
     inline std::string getCostFunctionTypeName() {
       switch (cost_function_type) {
