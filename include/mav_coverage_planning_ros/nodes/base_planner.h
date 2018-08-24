@@ -42,7 +42,7 @@ class BasePlanner {
     Polyhedron raw_polyhedron;
     double altitude;
     Polygon polygon;
-    Polyhedron polyhedron;
+    Polyhedron clipped_polyhedron;
     bool latch_topics;
     std::string local_frame_id;
     std::string global_frame_id;
@@ -138,6 +138,7 @@ class BasePlanner {
   void setCostFunction();
   void setPolygon();
   void setPolyhedronFromGridmap();
+  void clipPolyhedron();
 
   // Helper function to convert odometry to global odometry.
   mav_msgs::EigenOdometry globalOdometryFromOdometry(
@@ -148,6 +149,8 @@ class BasePlanner {
 
   // Publishers and Services
   ros::Publisher marker_pub_;
+  ros::Publisher raw_polyhedron_pub_;
+  ros::Publisher clipped_polyhedron_pub_;
   ros::Publisher waypoint_list_pub_;
   ros::ServiceServer plan_path_srv_;
   ros::ServiceServer plan_path_from_and_to_odometry_srv_;

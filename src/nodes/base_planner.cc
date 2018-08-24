@@ -50,6 +50,11 @@ void BasePlanner::advertiseBaseTopics() {
   // Advertising the visualization and planning messages
   marker_pub_ = nh_private_.advertise<visualization_msgs::MarkerArray>(
       "path_markers", 1, settings_.latch_topics);
+  raw_polyhedron_pub_ = nh_private_.advertise<visualization_msgs::MarkerArray>(
+      "raw_polyhedron_markers", 1, settings_.latch_topics);
+  clipped_polyhedron_pub_ =
+      nh_private_.advertise<visualization_msgs::MarkerArray>(
+          "clipped_polyhedron_markers", 1, settings_.latch_topics);
   waypoint_list_pub_ = nh_.advertise<geometry_msgs::PoseArray>(
       "waypoint_list", 1, settings_.latch_topics);
   // Services for generating the plan.
@@ -83,6 +88,7 @@ void BasePlanner::getBaseParametersFromRos() {
   setCostFunction();
   setPolygon();
   setPolyhedronFromGridmap();
+  clipPolyhedron();
 
   nh_private_.getParam("altitude", settings_.altitude);
 
@@ -175,6 +181,14 @@ void BasePlanner::setPolyhedronFromGridmap() {
   }
 
   settings_.raw_polyhedron = Polyhedron(elevation_map);
+}
+
+void BasePlanner::clipPolyhedron() {
+  ROS_INFO("Clipping polyhedron.");
+
+  if (!settings_.raw_polyhedron.clip(settings_.polygon,
+                                     &settings_.clipped_polyhedron))
+    ROS_WARN("Failed clipping.");
 }
 
 void BasePlanner::receiveOdometryCallback(const nav_msgs::Odometry& msg) {
@@ -276,14 +290,22 @@ void BasePlanner::publishVisualization() {
   markers.markers.insert(markers.markers.end(), polygon.markers.begin(),
                          polygon.markers.end());
 
-  // The polyhedron to cover.
+  // The raw polyhedron to cover.
   visualization_msgs::MarkerArray mesh;
   if (!createPolyhedronMarkerArray(settings_.raw_polyhedron.getPolyhedron(),
                                    settings_.global_frame_id, &mesh)) {
-    ROS_WARN("Failed to generate polyhedron mesh markers.");
+    ROS_WARN("Failed to generate raw polyhedron mesh markers.");
   } else {
-    markers.markers.insert(markers.markers.end(), mesh.markers.begin(),
-                           mesh.markers.end());
+    raw_polyhedron_pub_.publish(mesh);
+  }
+
+  // The clipped polyhedron to cover.
+  visualization_msgs::MarkerArray clipped_mesh;
+  if (!createPolyhedronMarkerArray(settings_.clipped_polyhedron.getPolyhedron(),
+                                   settings_.global_frame_id, &clipped_mesh)) {
+    ROS_WARN("Failed to generate clipped polyhedron mesh markers.");
+  } else {
+    clipped_polyhedron_pub_.publish(clipped_mesh);
   }
 
   // Publishing
