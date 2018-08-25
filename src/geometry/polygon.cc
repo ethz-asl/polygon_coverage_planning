@@ -17,20 +17,26 @@
 #include <glog/logging.h>
 #include <boost/make_shared.hpp>
 
+#include "mav_2d_coverage_planning/geometry/polygon_triangulation.h"
+
 namespace mav_coverage_planning {
 
 Polygon::Polygon() {}
 
-Polygon::Polygon(VertexConstIterator v_begin, VertexConstIterator v_end)
-    : Polygon(Polygon_2(v_begin, v_end)) {}
+Polygon::Polygon(VertexConstIterator v_begin, VertexConstIterator v_end,
+                 const PlaneTransformation<K>& plane_tf)
+    : Polygon(Polygon_2(v_begin, v_end), plane_tf) {}
 
-Polygon::Polygon(const Polygon_2& polygon)
-    : Polygon(PolygonWithHoles(polygon)) {}
+Polygon::Polygon(const Polygon_2& polygon,
+                 const PlaneTransformation<K>& plane_tf)
+    : Polygon(PolygonWithHoles(polygon), plane_tf) {}
 
-Polygon::Polygon(const PolygonWithHoles& polygon)
+Polygon::Polygon(const PolygonWithHoles& polygon,
+                 const PlaneTransformation<K>& plane_tf)
     : polygon_(polygon),
       is_strictly_simple_(checkStrictlySimple()),
       is_convex_(checkConvexity()) {
+  plane_tf_ = plane_tf;
   sortCC();
   simplify();
 }
@@ -798,6 +804,22 @@ Point_2 Polygon::projectPointOnHull(const Point_2& p) const {
   }
 
   return projection;
+}
+
+Polyhedron_3 Polygon::toMesh() const {
+  // Triangulation.
+  std::vector<std::vector<Point_2>> faces_2;
+  triangulatePolygon(polygon_, &faces_2);
+
+  // To 3D mesh.
+  Polyhedron_3 mesh;
+  for (const std::vector<Point_2>& face : faces_2) {
+    std::vector<Point_3> triangle = plane_tf_.to3d(face);
+    // TODO(rikba): Replace this with polyhedron mesh builder.
+    mesh.make_triangle(triangle[0], triangle[1], triangle[2]);
+  }
+
+  return mesh;
 }
 
 }  // namespace mav_coverage_planning

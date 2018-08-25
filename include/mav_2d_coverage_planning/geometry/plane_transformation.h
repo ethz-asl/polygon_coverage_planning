@@ -18,7 +18,7 @@ class PlaneTransformation {
 
  public:
   PlaneTransformation(const Plane_3& plane);
-  PlaneTransformation(){};
+  PlaneTransformation() : PlaneTransformation(Plane_3(0.0, 0.0, 1.0, 0.0)){};
   Point_2 to2d(const Point_3& p_3) const;
   std::vector<Point_2> to2d(const std::vector<Point_3>& p_3) const;
   Point_3 to3d(const Point_2& p_2) const;

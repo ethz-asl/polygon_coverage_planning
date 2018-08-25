@@ -1,6 +1,7 @@
 #include <cstdlib>
 
 #include <gtest/gtest.h>
+#include <CGAL/Random.h>
 
 #include "mav_2d_coverage_planning/cost_functions/path_cost_functions.h"
 #include "mav_2d_coverage_planning/planners/polygon_stripmap_planner.h"

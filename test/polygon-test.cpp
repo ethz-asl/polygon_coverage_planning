@@ -1,4 +1,5 @@
 #include <cstdlib>
+#include <fstream>
 
 #include <gtest/gtest.h>
 #include <boost/make_shared.hpp>
@@ -207,6 +208,23 @@ TEST(PolygonTest, projectPointOnHull) {
   // Point on vertex.
   p = Point_2(0, 0);
   EXPECT_EQ(p, poly.projectPointOnHull(p));
+}
+
+TEST(PolygonTest, toMesh) {
+  Polygon poly(createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
+
+  Polyhedron_3 mesh = poly.toMesh();
+  EXPECT_TRUE(mesh.is_pure_triangle());
+  EXPECT_FALSE(mesh.is_closed());
+
+  for (Polyhedron_3::Vertex_iterator it = mesh.vertices_begin();
+       it != mesh.vertices_end(); ++it) {
+    Point_2 p_2 = poly.getPlaneTransformation().to2d(it->point());
+    EXPECT_TRUE(poly.pointInPolygon(p_2));
+  }
+
+  std::ofstream out("/tmp/rectangle_in_rectangle.off");
+  out << mesh;
 }
 
 int main(int argc, char** argv) {

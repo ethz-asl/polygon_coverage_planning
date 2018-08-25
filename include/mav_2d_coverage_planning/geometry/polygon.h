@@ -2,19 +2,24 @@
 #define MAV_2D_COVERAGE_PLANNING_GEOMETRY_POLYGON_H_
 
 #include <iostream>
+#include <set>
 #include <sstream>
 #include <vector>
-#include <set>
 
 #include <mav_coverage_planning_comm/cgal_definitions.h>
+
+#include "mav_2d_coverage_planning/geometry/plane_transformation.h"
 
 namespace mav_coverage_planning {
 class Polygon {
  public:
   Polygon();
-  Polygon(VertexConstIterator v_begin, VertexConstIterator v_end);
-  Polygon(const Polygon_2& polygon);
-  Polygon(const PolygonWithHoles& polygon);
+  Polygon(VertexConstIterator v_begin, VertexConstIterator v_end,
+          const PlaneTransformation<K>& plane_tf = PlaneTransformation<K>());
+  Polygon(const Polygon_2& polygon,
+          const PlaneTransformation<K>& plane_tf = PlaneTransformation<K>());
+  Polygon(const PolygonWithHoles& polygon,
+          const PlaneTransformation<K>& plane_tf = PlaneTransformation<K>());
 
   // Given a simple, convex polygon, compute a sweep plan.
   // max_sweep_distance: maximum distance between two sweeping lines to still
@@ -98,6 +103,11 @@ class Polygon {
 
   friend std::ostream& operator<<(std::ostream& stream, const Polygon& p);
 
+  Polyhedron_3 toMesh() const;
+  inline PlaneTransformation<K> getPlaneTransformation() const {
+    return plane_tf_;
+  }
+
  private:
   bool checkValidOffset(
       const PolygonWithHoles& original,
@@ -132,6 +142,7 @@ class Polygon {
   // Property cache.
   bool is_strictly_simple_;
   bool is_convex_;
+  PlaneTransformation<K> plane_tf_;
 };
 
 }  // namespace mav_coverage_planning

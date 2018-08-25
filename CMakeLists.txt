@@ -22,6 +22,7 @@ include_directories(${MONO_INCLUDE_DIRS})
 cs_add_library(${PROJECT_NAME}
   src/cost_functions/path_cost_functions.cc
   src/geometry/plane_transformation.cc
+  src/geometry/polygon_triangulation.cc
   src/geometry/polygon.cc
   src/graphs/gtspp_product_graph.cc
   src/graphs/sweep_plan_graph.cc
