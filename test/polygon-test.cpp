@@ -7,6 +7,8 @@
 #include "mav_2d_coverage_planning/geometry/polygon.h"
 #include "mav_2d_coverage_planning/tests/test_helpers.h"
 
+#include <mav_coverage_planning_comm/eigen_conversions.h>
+
 using namespace mav_coverage_planning;
 
 TEST(PolygonTest, Offset) {
@@ -219,7 +221,8 @@ TEST(PolygonTest, toMesh) {
 
   for (Polyhedron_3::Vertex_iterator it = mesh.vertices_begin();
        it != mesh.vertices_end(); ++it) {
-    Point_2 p_2 = poly.getPlaneTransformation().to2d(it->point());
+    Point_3 p_3 = convertPoint3<Polyhedron_3::Point_3, Point_3>(it->point());
+    Point_2 p_2 = poly.getPlaneTransformation().to2d(p_3);
     EXPECT_TRUE(poly.pointInPolygon(p_2));
   }
 
