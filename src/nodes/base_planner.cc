@@ -7,6 +7,7 @@
 
 #include <geometry_msgs/PoseArray.h>
 #include <mav_3d_coverage_mesh_conversion/grid_map/conversion.h>
+#include <mav_3d_coverage_planning/mesh_processing/clipping.h>
 #include <mav_coverage_planning_comm/trajectory_cost_functions.h>
 #include <mav_trajectory_generation/trajectory_sampling.h>
 #include <mav_trajectory_generation_ros/ros_visualization.h>
@@ -88,7 +89,7 @@ void BasePlanner::getBaseParametersFromRos() {
   setCostFunction();
   setPolygon();
   setPolyhedronFromGridmap();
-  clipPolyhedron();
+  clip();
 
   nh_private_.getParam("altitude", settings_.altitude);
 
@@ -173,21 +174,17 @@ void BasePlanner::setPolyhedronFromGridmap() {
   }
   ROS_INFO_STREAM("Opening file: " << gridmap_bag);
 
-  Polyhedron_3 elevation_map;
-  if (!loadMeshFromGridMapBag<Polyhedron_3, K>(gridmap_bag, "/grid_map",
-                                               "elevation", &elevation_map)) {
+  if (!loadMeshFromGridMapBag<Polyhedron_3>(
+          gridmap_bag, "/grid_map", "elevation", &settings_.raw_polyhedron))
     ROS_WARN("Failed to load grid map.");
-    return;
-  }
-
-  settings_.raw_polyhedron = Polyhedron(elevation_map);
 }
 
-void BasePlanner::clipPolyhedron() {
+void BasePlanner::clip() {
   ROS_INFO("Clipping polyhedron.");
 
-  if (!settings_.raw_polyhedron.clip(settings_.polygon,
-                                     &settings_.clipped_polyhedron))
+  if (!clipPolyhedron<Polyhedron_3, InexactKernel>(
+          settings_.polygon.getPolygon(), settings_.raw_polyhedron,
+          &settings_.clipped_polyhedron))
     ROS_WARN("Failed clipping.");
 }
 
@@ -292,7 +289,7 @@ void BasePlanner::publishVisualization() {
 
   // The raw polyhedron to cover.
   visualization_msgs::MarkerArray mesh;
-  if (!createPolyhedronMarkerArray(settings_.raw_polyhedron.getPolyhedron(),
+  if (!createPolyhedronMarkerArray(settings_.raw_polyhedron,
                                    settings_.global_frame_id, &mesh)) {
     ROS_WARN("Failed to generate raw polyhedron mesh markers.");
   } else {
@@ -301,7 +298,7 @@ void BasePlanner::publishVisualization() {
 
   // The clipped polyhedron to cover.
   visualization_msgs::MarkerArray clipped_mesh;
-  if (!createPolyhedronMarkerArray(settings_.clipped_polyhedron.getPolyhedron(),
+  if (!createPolyhedronMarkerArray(settings_.clipped_polyhedron,
                                    settings_.global_frame_id, &clipped_mesh)) {
     ROS_WARN("Failed to generate clipped polyhedron mesh markers.");
   } else {
