@@ -9,7 +9,6 @@
 
 // Planning structures.
 #include <mav_2d_coverage_planning/geometry/polygon.h>
-#include <mav_3d_coverage_planning/polyhedron.h>
 #include <mav_coverage_planning_comm/trajectory_cost_functions.h>
 #include <mav_coverage_planning_comm/trajectory_definitions.h>
 #include <mav_msgs/eigen_mav_msgs.h>
