@@ -15,6 +15,7 @@
 #include <CGAL/create_offset_polygons_from_polygon_with_holes_2.h>
 #include <CGAL/partition_2.h>
 #include <glog/logging.h>
+#include <mav_coverage_planning_comm/eigen_conversions.h>
 #include <boost/make_shared.hpp>
 
 #include "mav_2d_coverage_planning/geometry/polygon_triangulation.h"
@@ -815,8 +816,12 @@ Polyhedron_3 Polygon::toMesh() const {
   Polyhedron_3 mesh;
   for (const std::vector<Point_2>& face : faces_2) {
     std::vector<Point_3> triangle = plane_tf_.to3d(face);
+
     // TODO(rikba): Replace this with polyhedron mesh builder.
-    mesh.make_triangle(triangle[0], triangle[1], triangle[2]);
+    mesh.make_triangle(
+        convertPoint3<Point_3, Polyhedron_3::Point_3>(triangle[0]),
+        convertPoint3<Point_3, Polyhedron_3::Point_3>(triangle[1]),
+        convertPoint3<Point_3, Polyhedron_3::Point_3>(triangle[2]));
   }
 
   return mesh;

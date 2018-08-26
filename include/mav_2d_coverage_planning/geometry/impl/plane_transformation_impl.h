@@ -11,7 +11,6 @@ PlaneTransformation<Kernel>::PlaneTransformation(const Plane_3& plane)
     : plane_(plane) {
   // Base vectors.
   // Project into xy-plane:
-  const Vector_3& n = plane.orthogonal_vector();
   if ((abs(plane.c()) > abs(plane.a())) ||
       (abs(plane.c()) > abs(plane.b()))) {  // Project into xy-plane.
     is_edge_case_ = false;
