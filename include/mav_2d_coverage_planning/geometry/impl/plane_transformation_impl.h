@@ -10,17 +10,19 @@ template <class Kernel>
 PlaneTransformation<Kernel>::PlaneTransformation(const Plane_3& plane)
     : plane_(plane) {
   // Base vectors.
-  // Project into xy-plane:
-  if ((abs(plane.c()) > abs(plane.a())) ||
-      (abs(plane.c()) > abs(plane.b()))) {  // Project into xy-plane.
-    is_edge_case_ = false;
-    b_1_ = Vector_3(1.0, 0.0, -plane.a() / plane.c());
-    b_2_ = Vector_3(0.0, 1.0, -plane.b() / plane.c());
-  } else  // Project into yz-plane:
-  {
-    is_edge_case_ = true;
+  const double kZeroDevisionGuard = 1.0e-6;
+  if (abs(plane.a()) > kZeroDevisionGuard) {
+    projection_type_ = ProjectionType::kYZ;
     b_1_ = Vector_3(-plane.b() / plane.a(), 1.0, 0.0);
     b_2_ = Vector_3(-plane.c() / plane.a(), 0.0, 1.0);
+  } else if (abs(plane.c()) > kZeroDevisionGuard) {
+    projection_type_ = ProjectionType::kXY;
+    b_1_ = Vector_3(1.0, 0.0, -plane.a() / plane.c());
+    b_2_ = Vector_3(0.0, 1.0, -plane.b() / plane.c());
+  } else {
+    projection_type_ = ProjectionType::kZX;
+    b_1_ = Vector_3(0.0, -plane.c() / plane.b(), 1.0);
+    b_2_ = Vector_3(1.0, -plane.a() / plane.b(), 0.0);
   }
   b_1_ = normalize(b_1_);
   b_2_ = normalize(b_2_);
@@ -43,12 +45,27 @@ template <class Kernel>
 typename Kernel::Point_2 PlaneTransformation<Kernel>::to2d(
     const Point_3& p_3) const {
   FT x, y;
-  if (is_edge_case_) {
-    x = (p_3.y() - p_0_.y()) / b_1_.y();
-    y = (p_3.z() - p_0_.z()) / b_2_.z();
-  } else {
-    x = (p_3.x() - p_0_.x()) / b_1_.x();
-    y = (p_3.y() - p_0_.y()) / b_2_.y();
+  switch (projection_type_) {
+    case ProjectionType::kYZ: {
+      x = (p_3.y() - p_0_.y()) / b_1_.y();
+      y = (p_3.z() - p_0_.z()) / b_2_.z();
+      break;
+    }
+    case ProjectionType::kXY: {
+      x = (p_3.x() - p_0_.x()) / b_1_.x();
+      y = (p_3.y() - p_0_.y()) / b_2_.y();
+      break;
+    }
+    case ProjectionType::kZX: {
+      x = (p_3.z() - p_0_.z()) / b_1_.z();
+      y = (p_3.x() - p_0_.x()) / b_2_.x();
+      break;
+    }
+    default: {
+      x = 0;
+      y = 0;
+      break;
+    }
   }
   return Point_2(x, y);
 }

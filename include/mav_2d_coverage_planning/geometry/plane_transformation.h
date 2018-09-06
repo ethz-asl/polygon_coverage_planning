@@ -27,11 +27,13 @@ class PlaneTransformation {
   inline Plane_3 getPlane() const { return plane_; }
 
  private:
+  enum ProjectionType { kXY, kYZ, kZX };
   Vector_3 normalize(const Vector_3& v) const;
   Vector_3 b_1_;
   Vector_3 b_2_;
   Vector_3 p_0_;
   Plane_3 plane_;
+  ProjectionType projection_type_;
   bool is_edge_case_;
 };
 }  // namespace mav_coverage_planning
