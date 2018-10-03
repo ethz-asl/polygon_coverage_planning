@@ -19,7 +19,7 @@
     <!-- Sweep planner specific parameter -->
     <param name="lateral_fov" value="1.57" />
     <param name="longitudinal_fov" value="1.0472" />
-    <param name="min_view_overlap" value="0.2" />
+    <param name="min_view_overlap" value="0.8" />
   </node>
 
 </launch>
