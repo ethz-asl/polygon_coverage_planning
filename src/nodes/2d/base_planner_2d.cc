@@ -24,7 +24,10 @@ BasePlanner2D::Settings::Settings()
       local_frame_id("odom"),
       global_frame_id("world"),
       publish_plan_on_planning_complete(false),
-      publish_visualization_on_planning_complete(true) {}
+      publish_visualization_on_planning_complete(true),
+      robot_size(1.0),
+      min_view_overlap(0.0)
+      {}
 
 BasePlanner2D::BasePlanner2D(const ros::NodeHandle& nh,
                              const ros::NodeHandle& nh_private)
@@ -76,6 +79,14 @@ void BasePlanner2D::advertiseTopics() {
 
 void BasePlanner2D::getParametersFromRos() {
   // Getting control params from the server
+  if (!nh_private_.getParam("robot_size", settings_.robot_size)) {
+    ROS_WARN_STREAM("No robot size specified. Using default value of: "
+                    << settings_.robot_size);
+  }
+  
+  if (!nh_private_.getParam("min_view_overlap", settings_.min_view_overlap)) {
+  }
+  
   if (!nh_private_.getParam("local_frame_id", settings_.local_frame_id)) {
     ROS_WARN_STREAM("No local frame id specified. Using default value of: "
                     << settings_.local_frame_id);

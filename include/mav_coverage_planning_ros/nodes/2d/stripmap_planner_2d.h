@@ -9,8 +9,8 @@
 
 namespace mav_coverage_planning {
 
-// The default FOV of the camera
-constexpr double kDefaultFOVCameraRad = M_PI / 2.0;
+// The default width of robot
+constexpr double kDefaultRobotSize =2.0;
 // The default minimum view overlap between two sweeps [0 .. 1)
 constexpr double kDefaultMinViewOverlap = 0.2;
 
@@ -22,20 +22,13 @@ class StripmapPlanner2D : public BasePlanner2D {
   StripmapPlanner2D(const ros::NodeHandle& nh,
                     const ros::NodeHandle& nh_private)
       : BasePlanner2D(nh, nh_private),
-        lateral_fov_(kDefaultFOVCameraRad),
-        longitudinal_fov_(kDefaultFOVCameraRad),
+        robot_size_(kDefaultRobotSize),
         min_view_overlap_(kDefaultMinViewOverlap) {
     // Parameters.
-    if (!nh_private_.getParam("lateral_fov", lateral_fov_)) {
+    if (!nh_private_.getParam("robot_size", robot_size_)) {
       ROS_WARN_STREAM(
-          "No lateral camera field of view specified. Using default value of: "
-          << lateral_fov_);
-    }
-    if (!nh_private_.getParam("longitudinal_fov", longitudinal_fov_)) {
-      ROS_WARN_STREAM(
-          "No longitudinal camera field of view specified. Using default value "
-          "of: "
-          << longitudinal_fov_);
+          "No robot size specified. Using default value of: "
+          << robot_size_);
     }
     if (!nh_private_.getParam("min_view_overlap", min_view_overlap_)) {
       ROS_WARN_STREAM("No minimum overlap specified. Using default value of: "
@@ -60,9 +53,7 @@ class StripmapPlanner2D : public BasePlanner2D {
     settings.polygon = settings_.polygon;
     settings.path_cost_function = settings_.sweep_cost_function;
     settings.segment_cost_function = settings_.visibility_graph_cost_function;
-    settings.altitude = settings_.altitude;
-    settings.lateral_fov = lateral_fov_;
-    settings.longitudinal_fov = longitudinal_fov_;
+    settings.robot_size = robot_size_;
     settings.min_view_overlap = min_view_overlap_;
 
     planner_.reset(new StripmapPlanner(settings));
@@ -80,8 +71,7 @@ class StripmapPlanner2D : public BasePlanner2D {
   std::unique_ptr<StripmapPlanner> planner_;
 
   // System Parameters
-  double lateral_fov_;
-  double longitudinal_fov_;
+  double robot_size_;
   double min_view_overlap_;
 };
 }  // namespace mav_coverage_planning

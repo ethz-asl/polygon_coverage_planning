@@ -18,7 +18,7 @@ bool ShortestPath2D::solvePlanner(const Point_2& start, const Point_2& goal) {
 bool ShortestPath2D::resetPlanner() {
   ROS_INFO_STREAM("Start creating the shortest plan graph.");
   planner_.reset(new visibility_graph::VisibilityGraph(
-      settings_.polygon, settings_.visibility_graph_cost_function));
+      settings_.polygon, settings_.visibility_graph_cost_function, (1 - settings_.min_view_overlap) * settings_.robot_size));
   if (planner_->isInitialized()) {
     ROS_INFO_STREAM("Finished creating the shortest plan graph.");
     return true;

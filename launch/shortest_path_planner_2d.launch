@@ -17,6 +17,8 @@
     <rosparam command="load" file="$(find mav_coverage_planning_ros)/cfg/base_planner_2d.yaml" />
     <!-- Polygon, altitude, and world frame ID -->
     <rosparam command="load" file="$(find mav_coverage_planning_ros)/cfg/example_polygon_forest.yaml" />
+    <param name="robot_size" value="1.0" />
+    <param name="min_view_overlap" value="0.2" />
   </node>
 
 </launch>

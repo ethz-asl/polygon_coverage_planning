@@ -7,7 +7,7 @@ polygon:
       secs: 0
       nsecs: 0
     frame_id: 'world'
-  altitude: 5.0
+  altitude: 2.0
   polygon:
     hull:
       points:

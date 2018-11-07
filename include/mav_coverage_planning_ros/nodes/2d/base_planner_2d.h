@@ -43,6 +43,9 @@ class BasePlanner2D {
     std::string global_frame_id;
     bool publish_plan_on_planning_complete;
     bool publish_visualization_on_planning_complete;
+    double robot_size;
+    double min_view_overlap;
+    
     enum CostFunctionType {
       kDistance = 0,  // Minimize distance.
       kTime           // Minimize flight time.
