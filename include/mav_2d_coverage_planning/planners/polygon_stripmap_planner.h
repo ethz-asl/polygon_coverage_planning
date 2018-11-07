@@ -13,9 +13,7 @@ class PolygonStripmapPlanner {
     Polygon polygon;
     PathCostFunctionType path_cost_function;
     SegmentCostFunctionType segment_cost_function;
-    double altitude;
-    double lateral_fov;
-    double longitudinal_fov;
+    double robot_size;
     double min_view_overlap;
 
     bool check() const;
@@ -58,7 +56,7 @@ class PolygonStripmapPlanner {
   // Check for valid user input.
   bool checkUserInput() const;
 
-  double computeSweepDistance(double fov) const;
+  double computeSweepDistance() const;
 
   // Valid construction.
   bool is_initialized_;

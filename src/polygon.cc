@@ -146,6 +146,7 @@ bool Polygon::convertPolygonWithHolesToPolygonWithoutHoles(
   if (!is_strictly_simple_) return false;
 
   if (polygon_.number_of_holes() == 0) {
+
     *polygon_without_holes = Polygon(polygon_);
     return true;
   }
@@ -178,6 +179,7 @@ bool Polygon::computeConvexDecompositionFromPolygonWithHoles(
 
   return true;
 }
+
 
 bool Polygon::checkValidOffset(
     const PolygonWithHoles& original,

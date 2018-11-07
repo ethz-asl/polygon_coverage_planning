@@ -57,7 +57,7 @@ class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
                  const std::vector<Polygon>& polygon_clusters,
                  double sweep_distance, double offset_distance)
       : GraphBase(),
-        visibility_graph_(polygon, seg_cost_function),
+        visibility_graph_(polygon, seg_cost_function, offset_distance),
         cost_function_(cost_function),
         polygon_clusters_(polygon_clusters),
         sweep_distance_(sweep_distance),

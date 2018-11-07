@@ -31,17 +31,13 @@ bool PolygonStripmapPlanner::setup() {
   }
 
   // Create sweep plan graph.
-  const double max_lateral_distance =
-      computeSweepDistance(settings_.lateral_fov);
-  const double max_longitudinal_distance =
-      computeSweepDistance(settings_.longitudinal_fov);
   const double max_offset_distance =
-      std::min(max_lateral_distance, max_longitudinal_distance);
+      computeSweepDistance();
   LOG(INFO) << "Start creating sweep plan graph.";
   sweep_plan_graph_ = sweep_plan_graph::SweepPlanGraph(
       settings_.polygon, settings_.path_cost_function,
       settings_.segment_cost_function, convex_decomposition_,
-      max_lateral_distance, max_offset_distance);
+      max_offset_distance, max_offset_distance/2);
   if (is_initialized_) {
     if (!sweep_plan_graph_.isInitialized()) {
       LOG(ERROR) << "Cannot create sweep plan graph.";
@@ -99,9 +95,8 @@ bool PolygonStripmapPlanner::runSolver(const Point_2& start,
   return sweep_plan_graph_.solve(start, goal, solution);
 }
 
-double PolygonStripmapPlanner::computeSweepDistance(double fov) const {
-  return (1 - settings_.min_view_overlap) * 2 * settings_.altitude *
-         std::tan(fov / 2.0);
+double PolygonStripmapPlanner::computeSweepDistance() const {
+  return (1 - settings_.min_view_overlap) * settings_.robot_size;
 }
 
 bool PolygonStripmapPlanner::Settings::check() const {
@@ -112,27 +107,8 @@ bool PolygonStripmapPlanner::Settings::check() const {
   if (!polygon.isStrictlySimple()) {
     LOG(ERROR) << "The polygon or its holes are not simple.";
     return false;
-  } else if (altitude <= 0.0) {
-    LOG(ERROR) << "The user defined altitude is " << altitude
-               << " but needs to be greater than " << 0.0 << ".";
-    return false;
-  } else if (lateral_fov <= 0.0) {
-    LOG(ERROR) << "The user defined lateral_fov is " << lateral_fov
-               << " but needs to be greater than " << 0.0 << ".";
-    return false;
-  } else if (longitudinal_fov <= 0.0) {
-    LOG(ERROR) << "The user defined longitudinal_fov is " << longitudinal_fov
-               << " but needs to be greater than " << 0.0 << ".";
-    return false;
-  } else if (lateral_fov >= M_PI) {
-    LOG(ERROR) << "The user defined lateral_fov is " << lateral_fov
-               << " but needs to be less than " << M_PI << ".";
-    return false;
-  } else if (longitudinal_fov >= M_PI) {
-    LOG(ERROR) << "The user defined longitudinal_fov is " << longitudinal_fov
-               << " but needs to be less than " << M_PI << ".";
-    return false;
-  } else if (min_view_overlap < 0.0) {
+  }
+  else if (min_view_overlap < 0.0) {
     LOG(ERROR) << "The user defined minimum view overlap is "
                << min_view_overlap << " but needs to be greater than " << 0.0
                << ".";

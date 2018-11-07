@@ -6,15 +6,21 @@ namespace mav_coverage_planning {
 namespace visibility_graph {
 
 VisibilityGraph::VisibilityGraph(const Polygon& polygon,
-                                 const SegmentCostFunctionType& cost_function)
-    : GraphBase(), polygon_(polygon), cost_function_(cost_function) {
+                                 const SegmentCostFunctionType& cost_function, 
+                                 double offset_distance)
+    : GraphBase(), polygon_(polygon), cost_function_(cost_function), offset_distance_(offset_distance) {
   // Build visibility graph.
   is_created_ = create();
 }
 
 bool VisibilityGraph::create() {
   clear();
-
+  Polygon p;
+  if (!polygon_.computeOffsetPolygon(offset_distance_, &p)) {
+    LOG(WARNING) << "Cannot shrink polygon:" << polygon_
+                 << "with distance: " << offset_distance_;
+  }
+  polygon_ = p;
   // Select shortest path vertices.
   std::vector<VertexConstCirculator> graph_vertices;
   if (!polygon_.appendConcaveOuterBoundaryVertices(&graph_vertices))
@@ -154,7 +160,7 @@ bool VisibilityGraph::getWaypoints(const Solution& solution,
       LOG(ERROR) << "Cannot reconstruct solution.";
       return false;
     }
-    (*waypoints)[i] = node_property->coordinates;
+  (*waypoints)[i] = node_property->coordinates;
   }
   return true;
 }
