@@ -26,6 +26,7 @@ BasePlanner2D::Settings::Settings()
       publish_plan_on_planning_complete(false),
       publish_visualization_on_planning_complete(true),
       robot_size(1.0),
+      wall_dist(0.0),
       min_view_overlap(0.0)
       {}
 
@@ -82,6 +83,8 @@ void BasePlanner2D::getParametersFromRos() {
   if (!nh_private_.getParam("robot_size", settings_.robot_size)) {
     ROS_WARN_STREAM("No robot size specified. Using default value of: "
                     << settings_.robot_size);
+  }
+  if (!nh_private_.getParam("wall_dist", settings_.wall_dist)) {
   }
   
   if (!nh_private_.getParam("min_view_overlap", settings_.min_view_overlap)) {

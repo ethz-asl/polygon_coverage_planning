@@ -44,6 +44,7 @@ class BasePlanner2D {
     bool publish_plan_on_planning_complete;
     bool publish_visualization_on_planning_complete;
     double robot_size;
+    double wall_dist;
     double min_view_overlap;
     
     enum CostFunctionType {

@@ -17,7 +17,8 @@
     <!-- Polygon, altitude, and world frame ID -->
     <rosparam command="load" file="$(find mav_coverage_planning_ros)/cfg/cleaning_polygon.yaml" />
     <!-- Sweep planner specific parameter -->
-    <param name="robot_size" value="0.6" />
+    <param name="robot_size" value="0.4" />
+    <param name="wall_dist" value="0.7" />
     <param name="min_view_overlap" value="0.0" />
   </node>
 
