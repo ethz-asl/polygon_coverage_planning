@@ -18,8 +18,16 @@ bool PolygonStripmapPlanner::setup() {
     DLOG(INFO) << "Correct user input.";
   }
 
-  // Create convex decomposition.
-  if (is_initialized_) {
+    // Create convex decomposition.
+    if (is_initialized_) {
+      Polygon p;
+    if (!settings_.polygon.computeOffsetPolygon(settings_.wall_dist, &p)) {
+      LOG(WARNING) << "Cannot shrink polygon:" << settings_.polygon
+                   << "with distance: " << settings_.wall_dist;
+    } else {
+      settings_.polygon = p;
+    }
+      
     if (!settings_.polygon.computeConvexDecompositionFromPolygonWithHoles(
             &convex_decomposition_)) {
       LOG(ERROR) << "Cannot compute convex decomposition.";

@@ -15,6 +15,7 @@ class PolygonStripmapPlanner {
     SegmentCostFunctionType segment_cost_function;
     double robot_size;
     double min_view_overlap;
+    double wall_dist;
 
     bool check() const;
   };
