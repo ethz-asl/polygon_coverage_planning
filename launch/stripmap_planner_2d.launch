@@ -1,5 +1,11 @@
 <launch>
 
+  <node name="rviz"
+    pkg="rviz"
+    type="rviz"
+    output="log"
+    args="-d $(find mav_coverage_planning_ros)/cfg/rviz_2d_stripmap.rviz" />
+
   <node name="stripmap_planner_2d"
     pkg="mav_coverage_planning_ros"
     type="stripmap_planner_2d_node"
