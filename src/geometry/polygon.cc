@@ -1,4 +1,4 @@
-#include "mav_2d_coverage_planning/polygon.h"
+#include "mav_2d_coverage_planning/geometry/polygon.h"
 
 #include <algorithm>
 #include <limits>
@@ -15,22 +15,29 @@
 #include <CGAL/create_offset_polygons_from_polygon_with_holes_2.h>
 #include <CGAL/partition_2.h>
 #include <glog/logging.h>
+#include <mav_coverage_planning_comm/eigen_conversions.h>
 #include <boost/make_shared.hpp>
+
+#include "mav_2d_coverage_planning/geometry/polygon_triangulation.h"
 
 namespace mav_coverage_planning {
 
 Polygon::Polygon() {}
 
-Polygon::Polygon(VertexConstIterator v_begin, VertexConstIterator v_end)
-    : Polygon(Polygon_2(v_begin, v_end)) {}
+Polygon::Polygon(VertexConstIterator v_begin, VertexConstIterator v_end,
+                 const PlaneTransformation<K>& plane_tf)
+    : Polygon(Polygon_2(v_begin, v_end), plane_tf) {}
 
-Polygon::Polygon(const Polygon_2& polygon)
-    : Polygon(PolygonWithHoles(polygon)) {}
+Polygon::Polygon(const Polygon_2& polygon,
+                 const PlaneTransformation<K>& plane_tf)
+    : Polygon(PolygonWithHoles(polygon), plane_tf) {}
 
-Polygon::Polygon(const PolygonWithHoles& polygon)
+Polygon::Polygon(const PolygonWithHoles& polygon,
+                 const PlaneTransformation<K>& plane_tf)
     : polygon_(polygon),
       is_strictly_simple_(checkStrictlySimple()),
       is_convex_(checkConvexity()) {
+  plane_tf_ = plane_tf;
   sortCC();
   simplify();
 }
@@ -103,6 +110,10 @@ bool Polygon::computeConvexDecomposition(
   // Precondition.
   if (polygon_.number_of_holes() > 0) return false;
   if (!is_strictly_simple_) return false;
+  if (is_convex_) {
+    *convex_polygons = {*this};
+    return true;
+  }
 
   // Convex decomposition.
   typedef CGAL::Partition_traits_2<K> PartitionTraits;
@@ -139,6 +150,50 @@ bool Polygon::computeConvexDecomposition(
   return true;
 }
 
+bool Polygon::computeYMonotoneDecomposition(
+    std::vector<Polygon>* y_monotone_polygons) const {
+  CHECK_NOTNULL(y_monotone_polygons);
+
+  // Precondition.
+  if (polygon_.number_of_holes() > 0) return false;
+  if (!is_strictly_simple_) return false;
+
+  // y-monotone decomposition.
+  typedef CGAL::Partition_traits_2<K> PartitionTraits;
+  typedef PartitionTraits::Polygon_2 PartitionPolygon;
+  std::vector<PartitionPolygon> partition_polygons;
+  CGAL::optimal_convex_partition_2(polygon_.outer_boundary().vertices_begin(),
+                                   polygon_.outer_boundary().vertices_end(),
+                                   std::back_inserter(partition_polygons),
+                                   PartitionTraits());
+
+  // Validity check.
+  typedef CGAL::Is_y_monotone_2<PartitionTraits> IsYMonotone2;
+  typedef CGAL::Partition_is_valid_traits_2<PartitionTraits, IsYMonotone2>
+      PartitionValidityTraits;
+  if (!CGAL::partition_is_valid_2(
+          polygon_.outer_boundary().vertices_begin(),
+          polygon_.outer_boundary().vertices_end(), partition_polygons.begin(),
+          partition_polygons.end(), PartitionValidityTraits())) {
+    // Partition is overlapping, union area != original area or non y-monotone.
+    return false;
+  }
+
+  // Copy polygon.
+  y_monotone_polygons->clear();
+  y_monotone_polygons->reserve(partition_polygons.size());
+  for (const PartitionPolygon& p : partition_polygons) {
+    // TODO(rikba): Some unnecessary move from list to vector because I don't
+    // know how to handle these partition traits.
+    std::vector<Point_2> vertices = {
+        std::make_move_iterator(p.vertices_begin()),
+        std::make_move_iterator(p.vertices_end())};
+    y_monotone_polygons->emplace_back(vertices.begin(), vertices.end());
+  }
+
+  return true;
+}
+
 bool Polygon::convertPolygonWithHolesToPolygonWithoutHoles(
     Polygon* polygon_without_holes) const {
   CHECK_NOTNULL(polygon_without_holes);
@@ -146,7 +201,6 @@ bool Polygon::convertPolygonWithHolesToPolygonWithoutHoles(
   if (!is_strictly_simple_) return false;
 
   if (polygon_.number_of_holes() == 0) {
-
     *polygon_without_holes = Polygon(polygon_);
     return true;
   }
@@ -180,6 +234,19 @@ bool Polygon::computeConvexDecompositionFromPolygonWithHoles(
   return true;
 }
 
+bool Polygon::computeYMonotoneDecompositionFromPolygonWithHoles(
+    std::vector<Polygon>* y_monotone_polygons) {
+  CHECK_NOTNULL(y_monotone_polygons);
+
+  Polygon polygon_without_holes;
+  if (!convertPolygonWithHolesToPolygonWithoutHoles(&polygon_without_holes))
+    return false;
+
+  if (!polygon_without_holes.computeYMonotoneDecomposition(y_monotone_polygons))
+    return false;
+
+  return true;
+}
 
 bool Polygon::checkValidOffset(
     const PolygonWithHoles& original,
@@ -738,6 +805,26 @@ Point_2 Polygon::projectPointOnHull(const Point_2& p) const {
   }
 
   return projection;
+}
+
+Polyhedron_3 Polygon::toMesh() const {
+  // Triangulation.
+  std::vector<std::vector<Point_2>> faces_2;
+  triangulatePolygon(polygon_, &faces_2);
+
+  // To 3D mesh.
+  Polyhedron_3 mesh;
+  for (const std::vector<Point_2>& face : faces_2) {
+    std::vector<Point_3> triangle = plane_tf_.to3d(face);
+
+    // TODO(rikba): Replace this with polyhedron mesh builder.
+    mesh.make_triangle(
+        convertPoint3<Point_3, Polyhedron_3::Point_3>(triangle[0]),
+        convertPoint3<Point_3, Polyhedron_3::Point_3>(triangle[1]),
+        convertPoint3<Point_3, Polyhedron_3::Point_3>(triangle[2]));
+  }
+
+  return mesh;
 }
 
 }  // namespace mav_coverage_planning

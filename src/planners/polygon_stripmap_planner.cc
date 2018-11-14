@@ -43,8 +43,7 @@ bool PolygonStripmapPlanner::setup() {
       computeSweepDistance();
   LOG(INFO) << "Start creating sweep plan graph.";
   sweep_plan_graph_ = sweep_plan_graph::SweepPlanGraph(
-      settings_.polygon, settings_.path_cost_function,
-      settings_.segment_cost_function, convex_decomposition_,
+      settings_.polygon, settings_.path_cost_function, convex_decomposition_,
       max_offset_distance, max_offset_distance/2);
   if (is_initialized_) {
     if (!sweep_plan_graph_.isInitialized()) {

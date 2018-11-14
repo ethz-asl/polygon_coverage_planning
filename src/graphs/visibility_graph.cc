@@ -1,14 +1,13 @@
 #include "mav_2d_coverage_planning/graphs/visibility_graph.h"
+#include "mav_2d_coverage_planning/cost_functions/path_cost_functions.h"
 
 #include <glog/logging.h>
 
 namespace mav_coverage_planning {
 namespace visibility_graph {
 
-VisibilityGraph::VisibilityGraph(const Polygon& polygon,
-                                 const SegmentCostFunctionType& cost_function, 
-                                 double offset_distance)
-    : GraphBase(), polygon_(polygon), cost_function_(cost_function), offset_distance_(offset_distance) {
+VisibilityGraph::VisibilityGraph(const Polygon& polygon, double offset_distance)
+    : GraphBase(), polygon_(polygon), offset_distance_(offset_distance) {
   // Build visibility graph.
   is_created_ = create();
 }
@@ -63,9 +62,9 @@ bool VisibilityGraph::addEdges() {
             adj_node_property->coordinates)) {
       EdgeId forwards_edge_id(new_id, adj_id);
       EdgeId backwards_edge_id(adj_id, new_id);
-      const double cost =
-          cost_function_(new_node_property->coordinates,
-                         adj_node_property->coordinates);  // Symmetric cost.
+      const double cost = computeEuclideanSegmentCost(
+          new_node_property->coordinates,
+          adj_node_property->coordinates);  // Symmetric cost.
       if (!addEdge(forwards_edge_id, EdgeProperty(), cost) ||
           !addEdge(backwards_edge_id, EdgeProperty(), cost)) {
         return false;
@@ -183,8 +182,8 @@ bool VisibilityGraph::calculateHeuristic(size_t goal,
           << "Cannot access adjacent node property to calculate heuristic.";
       return false;
     }
-    (*heuristic)[adj_id] = cost_function_(adj_node_property->coordinates,
-                                          goal_node_property->coordinates);
+    (*heuristic)[adj_id] = computeEuclideanSegmentCost(
+        adj_node_property->coordinates, goal_node_property->coordinates);
   }
 
   return true;

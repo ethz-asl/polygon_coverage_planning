@@ -1,15 +1,18 @@
 #include <cstdlib>
+#include <fstream>
 
 #include <gtest/gtest.h>
 #include <boost/make_shared.hpp>
 
-#include "mav_2d_coverage_planning/polygon.h"
+#include "mav_2d_coverage_planning/geometry/polygon.h"
 #include "mav_2d_coverage_planning/tests/test_helpers.h"
+
+#include <mav_coverage_planning_comm/eigen_conversions.h>
 
 using namespace mav_coverage_planning;
 
 TEST(PolygonTest, Offset) {
-  Polygon poly = createSophisticatedPolygon();
+  Polygon poly(createSophisticatedPolygon<Polygon_2, PolygonWithHoles>());
 
   for (size_t i = 0; i < 100; ++i) {
     FT max_offset = createRandomDouble(0.0, 10.0);
@@ -20,7 +23,8 @@ TEST(PolygonTest, Offset) {
 }
 
 TEST(PolygonTest, ConvertPolygonWithHolesToPolygonWithoutHoles) {
-  Polygon rectangle_in_rectangle = createRectangleInRectangle();
+  Polygon rectangle_in_rectangle(
+      createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
   Polygon poly_without_holes;
   EXPECT_TRUE(
       rectangle_in_rectangle.convertPolygonWithHolesToPolygonWithoutHoles(
@@ -30,7 +34,8 @@ TEST(PolygonTest, ConvertPolygonWithHolesToPolygonWithoutHoles) {
 }
 
 TEST(PolygonTest, ConvexDecomposition) {
-  Polygon rectangle_in_rectangle = createRectangleInRectangle();
+  Polygon rectangle_in_rectangle(
+      createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
   std::vector<Polygon> convex_polygons;
   EXPECT_TRUE(
       rectangle_in_rectangle.computeConvexDecompositionFromPolygonWithHoles(
@@ -38,8 +43,19 @@ TEST(PolygonTest, ConvexDecomposition) {
   EXPECT_EQ(4, convex_polygons.size());
 }
 
+TEST(PolygonTest, YMonotoneDecomposition) {
+  Polygon rectangle_in_rectangle(
+      createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
+  std::vector<Polygon> y_monotone_polygons;
+  EXPECT_TRUE(
+      rectangle_in_rectangle.computeYMonotoneDecompositionFromPolygonWithHoles(
+          &y_monotone_polygons));
+  EXPECT_EQ(4, y_monotone_polygons.size());
+}
+
 TEST(PolygonTest, pointInOnPolygon) {
-  Polygon rect_in_rect = createRectangleInRectangle();
+  Polygon rect_in_rect(
+      createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
 
   // Point on vertex.
   Point_2 p(0.0, 0.0);
@@ -75,7 +91,7 @@ TEST(PolygonTest, computeLineSweepPlan) {
   const double kStartVertexIdx = 0;
   const bool kCounterClockwise = true;
 
-  Polygon diamond = createDiamond();
+  Polygon diamond(createDiamond<Polygon_2>());
   std::vector<Point_2> waypoints;
   EXPECT_TRUE(diamond.computeLineSweepPlan(kMaxSweepDistance, kStartVertexIdx,
                                            kCounterClockwise, &waypoints));
@@ -84,7 +100,8 @@ TEST(PolygonTest, computeLineSweepPlan) {
 }
 
 TEST(PolygonTest, computeVisibilityPolygon) {
-  Polygon rectangle_in_rectangle = createRectangleInRectangle();
+  Polygon rectangle_in_rectangle(
+      createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
   Polygon visibility_polygon;
 
   // Query on polygon vertex.
@@ -168,7 +185,7 @@ TEST(PolygonTest, computeVisibilityPolygon) {
 }
 
 TEST(PolygonTest, projectPointOnHull) {
-  Polygon poly = createRectangleInRectangle();
+  Polygon poly(createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
 
   // Point outside closest to vertex.
   Point_2 p(-1.0, -1.0);
@@ -191,8 +208,26 @@ TEST(PolygonTest, projectPointOnHull) {
   EXPECT_EQ(p, poly.projectPointOnHull(p));
 
   // Point on vertex.
-  p = Point_2(0,0);
+  p = Point_2(0, 0);
   EXPECT_EQ(p, poly.projectPointOnHull(p));
+}
+
+TEST(PolygonTest, toMesh) {
+  Polygon poly(createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
+
+  Polyhedron_3 mesh = poly.toMesh();
+  EXPECT_TRUE(mesh.is_pure_triangle());
+  EXPECT_FALSE(mesh.is_closed());
+
+  for (Polyhedron_3::Vertex_iterator it = mesh.vertices_begin();
+       it != mesh.vertices_end(); ++it) {
+    Point_3 p_3 = convertPoint3<Polyhedron_3::Point_3, Point_3>(it->point());
+    Point_2 p_2 = poly.getPlaneTransformation().to2d(p_3);
+    EXPECT_TRUE(poly.pointInPolygon(p_2));
+  }
+
+  std::ofstream out("/tmp/rectangle_in_rectangle.off");
+  out << mesh;
 }
 
 int main(int argc, char** argv) {

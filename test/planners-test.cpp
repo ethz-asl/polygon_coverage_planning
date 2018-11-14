@@ -1,12 +1,13 @@
 #include <cstdlib>
 
 #include <gtest/gtest.h>
+#include <CGAL/Random.h>
 
-#include "mav_2d_coverage_planning/cost_functions/euclidean_cost_function.h"
+#include "mav_2d_coverage_planning/cost_functions/path_cost_functions.h"
 #include "mav_2d_coverage_planning/planners/polygon_stripmap_planner.h"
 #include "mav_2d_coverage_planning/planners/polygon_stripmap_planner_exact.h"
 #include "mav_2d_coverage_planning/planners/polygon_stripmap_planner_exact_preprocessed.h"
-#include "mav_2d_coverage_planning/polygon.h"
+#include "mav_2d_coverage_planning/geometry/polygon.h"
 #include "mav_2d_coverage_planning/tests/test_helpers.h"
 
 using namespace mav_coverage_planning;
@@ -33,9 +34,6 @@ void runPlanners(const std::vector<Polygon>& polygons) {
     settings.polygon = p;
     EXPECT_EQ(0, settings.polygon.getPolygon().number_of_holes());
 
-    settings.segment_cost_function =
-        std::bind(&computeEuclideanSegmentCost, std::placeholders::_1,
-                  std::placeholders::_2);
     settings.path_cost_function =
         std::bind(&computeEuclideanPathCost, std::placeholders::_1);
     settings.altitude = createRandomDouble(kAltitudeMin, kAltitudeMax);
@@ -99,9 +97,8 @@ TEST(StripmapPlannerTest, RandomConvexPolygon) {
     double y_0 = createRandomDouble(kCenterMin, kCenterMax);
     double r =
         createRandomDouble(kPolygonDiameterMin, kPolygonDiameterMax) / 2.0;
-    if (!createRandomConvexPolygon(x_0, y_0, r, &polygons[i])) {
-      continue;
-    }
+    polygons[i] = Polygon(createRandomConvexPolygon<Polygon_2, K>(x_0, y_0, r));
+    if (polygons[i].getPolygon().outer_boundary().size() <= 2) continue;
     EXPECT_TRUE(polygons[i].isConvex());
   }
   runPlanners(polygons);
@@ -116,9 +113,9 @@ TEST(StripmapPlannerTest, RandomSimplePolygon) {
     double r =
         createRandomDouble(kPolygonDiameterMin, kPolygonDiameterMax) / 2.0;
     const int kMaxPolySize = 10;
-    if (!createRandomSimplePolygon(r, random, kMaxPolySize, &polygons[i])) {
-      continue;
-    }
+    polygons[i] = Polygon(
+        createRandomSimplePolygon<Polygon_2, K>(r, random, kMaxPolySize));
+    if (polygons[i].getPolygon().outer_boundary().size() <= 2) continue;
     EXPECT_TRUE(polygons[i].isStrictlySimple());
   }
   runPlanners(polygons);
