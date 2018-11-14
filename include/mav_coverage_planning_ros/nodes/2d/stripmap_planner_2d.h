@@ -59,7 +59,6 @@ class StripmapPlanner2D : public BasePlanner2D {
     typename StripmapPlanner::Settings settings;
     settings.polygon = settings_.polygon;
     settings.path_cost_function = settings_.sweep_cost_function;
-    settings.segment_cost_function = settings_.visibility_graph_cost_function;
     settings.altitude = settings_.altitude;
     settings.lateral_fov = lateral_fov_;
     settings.longitudinal_fov = longitudinal_fov_;

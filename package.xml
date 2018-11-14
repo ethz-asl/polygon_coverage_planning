@@ -27,6 +27,10 @@
   <depend>minkindr_conversions</depend>
   <depend>eigen_conversions</depend>
 
+  <depend>mav_trajectory_generation_ros</depend>
+
   <depend>mav_2d_coverage_planning</depend>
+  <depend>mav_3d_coverage_planning</depend>
+  <depend>mav_coverage_planning_comm</depend>
 
 </package>

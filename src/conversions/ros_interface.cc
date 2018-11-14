@@ -5,9 +5,12 @@
 
 #include <geometry_msgs/Point.h>
 #include <glog/logging.h>
-#include <mav_2d_coverage_planning/definitions.h>
+#include <mav_coverage_planning_comm/cgal_definitions.h>
+#include <mav_msgs/conversions.h>
+#include <mav_msgs/eigen_mav_msgs.h>
 #include <ros/ros.h>
 #include <Eigen/Core>
+#include <CGAL/Polygon_mesh_processing/triangulate_faces.h>
 
 namespace mav_coverage_planning {
 
@@ -151,6 +154,26 @@ void createStartAndEndPointMarkers(const Point_2& start, const Point_2& end,
                                    const std::string& ns,
                                    visualization_msgs::Marker* start_point,
                                    visualization_msgs::Marker* end_point) {
+  mav_msgs::EigenTrajectoryPoint eigen_start;
+  eigen_start.position_W.x() = CGAL::to_double(start.x());
+  eigen_start.position_W.y() = CGAL::to_double(start.y());
+  eigen_start.position_W.z() = altitude;
+
+  mav_msgs::EigenTrajectoryPoint eigen_end;
+  eigen_end.position_W.x() = CGAL::to_double(end.x());
+  eigen_end.position_W.y() = CGAL::to_double(end.y());
+  eigen_end.position_W.z() = altitude;
+
+  return createStartAndEndPointMarkers(eigen_start, eigen_end, frame_id, ns,
+                                       start_point, end_point);
+}
+
+void createStartAndEndPointMarkers(const mav_msgs::EigenTrajectoryPoint& start,
+                                   const mav_msgs::EigenTrajectoryPoint& end,
+                                   const std::string& frame_id,
+                                   const std::string& ns,
+                                   visualization_msgs::Marker* start_point,
+                                   visualization_msgs::Marker* end_point) {
   CHECK_NOTNULL(start_point);
   CHECK_NOTNULL(end_point);
 
@@ -160,13 +183,12 @@ void createStartAndEndPointMarkers(const Point_2& start, const Point_2& end,
   end_point->ns = ns + "_end";
   start_point->action = end_point->action = visualization_msgs::Marker::ADD;
 
-  start_point->pose.position.x = CGAL::to_double(start.x());
-  start_point->pose.position.y = CGAL::to_double(start.y());
-  start_point->pose.position.z = altitude;
+  geometry_msgs::PoseStamped start_stamped, end_stamped;
+  msgPoseStampedFromEigenTrajectoryPoint(start, &start_stamped);
+  msgPoseStampedFromEigenTrajectoryPoint(end, &end_stamped);
 
-  end_point->pose.position.x = CGAL::to_double(end.x());
-  end_point->pose.position.y = CGAL::to_double(end.y());
-  end_point->pose.position.z = altitude;
+  start_point->pose = start_stamped.pose;
+  end_point->pose = end_stamped.pose;
 
   start_point->pose.orientation.w = end_point->pose.orientation.w = 1.0;
 
@@ -223,6 +245,96 @@ bool polygonFromMsg(const mav_planning_msgs::PolygonWithHolesStamped& msg,
     ROS_ERROR_STREAM("Input polygon is not simple.");
     return false;
   }
+  return true;
+}
+
+bool createPolyhedronMarkerArray(const Polyhedron_3& polyhedron,
+                                 const std::string& frame_id,
+                                 visualization_msgs::MarkerArray* markers) {
+  typedef Polyhedron_3::Halfedge_around_facet_circulator halfedge_circulator;
+  typedef boost::graph_traits<Polyhedron_3>::face_descriptor face_descriptor;
+
+  CHECK_NOTNULL(markers);
+  markers->markers.clear();
+
+  // Triangulate mesh.
+  Polyhedron_3 mesh = polyhedron;
+  if (!CGAL::Polygon_mesh_processing::triangulate_faces(mesh)) return false;
+
+  // Create faces.
+  visualization_msgs::Marker triangle_list;
+  triangle_list.header.frame_id = frame_id;
+  triangle_list.header.stamp = ros::Time::now();
+  triangle_list.ns = "faces";
+  triangle_list.id = 0;
+  triangle_list.type = visualization_msgs::Marker::TRIANGLE_LIST;
+  triangle_list.action = visualization_msgs::Marker::ADD;
+  triangle_list.pose.position.x = 0.0;
+  triangle_list.pose.position.y = 0.0;
+  triangle_list.pose.position.z = 0.0;
+  triangle_list.pose.orientation.x = 0.0;
+  triangle_list.pose.orientation.y = 0.0;
+  triangle_list.pose.orientation.z = 0.0;
+  triangle_list.pose.orientation.w = 1.0;
+  triangle_list.scale.x = 1.0;
+  triangle_list.scale.y = 1.0;
+  triangle_list.scale.z = 1.0;
+  triangle_list.color.r = 0.5;
+  triangle_list.color.g = 0.5;
+  triangle_list.color.b = 0.5;
+  triangle_list.color.a = 1.0;
+  for (const face_descriptor& f : faces(mesh)) {
+    halfedge_circulator he_c = f->facet_begin();
+    do {
+      geometry_msgs::Point p;
+      p.x = CGAL::to_double(he_c->vertex()->point().x());
+      p.y = CGAL::to_double(he_c->vertex()->point().y());
+      p.z = CGAL::to_double(he_c->vertex()->point().z());
+      triangle_list.points.push_back(p);
+    } while (++he_c != f->facet_begin());
+  }
+  markers->markers.push_back(triangle_list);
+
+  // Create lines.
+  size_t id = 0;
+  for (const face_descriptor& f : faces(mesh)) {
+    visualization_msgs::Marker border;
+    border.header.frame_id = frame_id;
+    border.header.stamp = ros::Time::now();
+    border.ns = "border_" + std::to_string(id);
+    border.id = id++;
+    border.type = visualization_msgs::Marker::LINE_STRIP;
+    border.action = visualization_msgs::Marker::ADD;
+    border.pose.position.x = 0.0;
+    border.pose.position.y = 0.0;
+    border.pose.position.z = 0.0;
+    border.pose.orientation.x = 0.0;
+    border.pose.orientation.y = 0.0;
+    border.pose.orientation.z = 0.0;
+    border.pose.orientation.w = 1.0;
+    border.scale.x = 0.1;
+    border.color.r = 0.0;
+    border.color.g = 0.0;
+    border.color.b = 0.0;
+    border.color.a = 1.0;
+
+    halfedge_circulator he_c = f->facet_begin();
+    do {
+      geometry_msgs::Point p;
+      p.x = CGAL::to_double(he_c->vertex()->point().x());
+      p.y = CGAL::to_double(he_c->vertex()->point().y());
+      p.z = CGAL::to_double(he_c->vertex()->point().z());
+      border.points.push_back(p);
+    } while (++he_c != f->facet_begin());
+    geometry_msgs::Point p;
+    p.x = CGAL::to_double(he_c->vertex()->point().x());
+    p.y = CGAL::to_double(he_c->vertex()->point().y());
+    p.z = CGAL::to_double(he_c->vertex()->point().z());
+    border.points.push_back(p);
+
+    markers->markers.push_back(border);
+  }
+
   return true;
 }
 

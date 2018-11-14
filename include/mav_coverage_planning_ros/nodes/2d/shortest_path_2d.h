@@ -7,7 +7,7 @@
 
 #include "mav_coverage_planning_ros/nodes/2d/base_planner_2d.h"
 
-#include <mav_2d_coverage_planning/definitions.h>
+#include <mav_coverage_planning_comm/cgal_definitions.h>
 #include <mav_2d_coverage_planning/graphs/visibility_graph.h>
 
 namespace mav_coverage_planning {

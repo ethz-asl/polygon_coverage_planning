@@ -1,4 +1,6 @@
-cost_function_type: 0 # [0: Euclidean Distance, 1: Time]
+cost_function_type: 1 # [0: Euclidean Distance, 1: Time]
+v_max: 3.0 # Only for time optimization.
+a_max: 1.0 # Only for time optimization.
 
 latch_topics: true
 
