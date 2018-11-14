@@ -15,8 +15,8 @@
 #include <mav_msgs/eigen_mav_msgs.h>
 #include <mav_visualization/helpers.h>
 
-#include <mav_2d_coverage_planning/definitions.h>
-#include <mav_2d_coverage_planning/polygon.h>
+#include <mav_coverage_planning_comm/cgal_definitions.h>
+#include <mav_2d_coverage_planning/geometry/polygon.h>
 
 namespace mav_coverage_planning {
 
@@ -61,6 +61,17 @@ void createStartAndEndPointMarkers(const Point_2& start, const Point_2& end,
                                    const std::string& ns,
                                    visualization_msgs::Marker* start_point,
                                    visualization_msgs::Marker* end_point);
+
+void createStartAndEndPointMarkers(const mav_msgs::EigenTrajectoryPoint& start,
+                                   const mav_msgs::EigenTrajectoryPoint& end,
+                                   const std::string& frame_id,
+                                   const std::string& ns,
+                                   visualization_msgs::Marker* start_point,
+                                   visualization_msgs::Marker* end_point);
+
+bool createPolyhedronMarkerArray(const Polyhedron_3& polyhedron,
+                                 const std::string& frame_id,
+                                 visualization_msgs::MarkerArray* markers);
 
 void polygon2FromPolygonMsg(const mav_planning_msgs::Polygon2D& msg,
                             Polygon_2* polygon);
