@@ -139,7 +139,7 @@ bool PolygonStripmapPlanner::sweepAroundObstacles(
 }
 
 void PolygonStripmapPlanner::createCornerSweeps(
-        const std::vector<Point_2>& hull, 
+        std::vector<Point_2>& hull, 
         std::vector<Point_2>* solution) const {
    visibility_graph::VisibilityGraph visibility_graph(polygon_orig_, 
           computeSweepDistance());
@@ -149,6 +149,24 @@ void PolygonStripmapPlanner::createCornerSweeps(
   float theta = 0;
   Point_2 prev_point = solution -> back();
   Point_2 next_point;
+  
+  Vector_2 vector1 = hull[0] - prev_point;
+  Vector_2 vector2 = next_point - hull[0];
+  double length1 = sqrt(to_double(vector1.squared_length()));
+  double length2 = sqrt(to_double(vector2.squared_length()));
+  if (length1 != 0 && length2 != 0){
+    theta = acos(to_double(vector1*vector2)/(length1*length2));
+  } 
+  Point_2 temp;
+  if (theta > M_PI/2) {
+    for (std::size_t i = 0u; i < floor((hull.size()-1)/2); 
+            ++i) {
+      temp = hull[i+1];
+      hull[i+1] = hull[hull.size()-i-1];
+      hull[hull.size()-i-1] = temp;
+    }
+  }
+  
   for (std::size_t i = 0u; i < hull.size(); 
             ++i) {
     if ( i > 0 ) {
@@ -159,16 +177,15 @@ void PolygonStripmapPlanner::createCornerSweeps(
     } else {
       next_point = hull.front();
     }
-    Vector_2 vector1 = hull[i] - prev_point;
-    Vector_2 vector2 = next_point - hull[i];
-    double length1 = sqrt(to_double(vector1.squared_length()));
-    double length2 = sqrt(to_double(vector2.squared_length()));
+    vector1 = hull[i] - prev_point;
+    vector2 = next_point - hull[i];
+    length1 = sqrt(to_double(vector1.squared_length()));
+    length2 = sqrt(to_double(vector2.squared_length()));
     if (length1 != 0 && length2 != 0){
       theta = acos(to_double(vector1*vector2)/(length1*length2));
     } else {
       continue;
     }
-    
     if (theta > alpha_min) {
       float dist1 = (settings_.wall_dist + settings_.robot_size - 
               settings_.robot_size/sin(theta))*1.2;

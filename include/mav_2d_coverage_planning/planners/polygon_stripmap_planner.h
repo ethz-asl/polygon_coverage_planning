@@ -55,7 +55,7 @@ class PolygonStripmapPlanner {
   
   virtual bool sweepAroundObstacles(std::vector<Point_2>* solution) const;
   
-  virtual void createCornerSweeps(const std::vector<Point_2>& hull, 
+  virtual void createCornerSweeps(std::vector<Point_2>& hull, 
           std::vector<Point_2>* solution) const;
 
   std::vector<Polygon> convex_decomposition_;
