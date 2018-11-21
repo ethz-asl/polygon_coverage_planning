@@ -1,5 +1,5 @@
 #include "mav_2d_coverage_planning/planners/polygon_stripmap_planner.h"
-
+#include <math.h>
 #include <glog/logging.h>
 
 namespace mav_coverage_planning {
@@ -20,6 +20,7 @@ bool PolygonStripmapPlanner::setup() {
 
     // Create convex decomposition.
     if (is_initialized_) {
+      polygon_orig_ = settings_.polygon;
       Polygon p;
     if (!settings_.polygon.computeOffsetPolygon(settings_.wall_dist, &p)) {
       LOG(WARNING) << "Cannot shrink polygon:" << settings_.polygon
@@ -81,7 +82,14 @@ bool PolygonStripmapPlanner::solve(const Point_2& start, const Point_2& goal,
     LOG(ERROR) << "Failed solving graph.";
     return false;
   }
-
+  
+  if (settings_.sweep_around_obstacles) {
+    if (!sweepAroundObstacles(solution)){
+      LOG(ERROR) << "Failed sweeping around obstacles.";
+      return false;
+    }
+  }
+  
   // Make sure original start and end are part of the plan.
   if (!settings_.polygon.pointInPolygon(start)) {
     solution->insert(solution->begin(), start);
@@ -91,6 +99,112 @@ bool PolygonStripmapPlanner::solve(const Point_2& start, const Point_2& goal,
   }
 
   return true;
+}
+
+bool PolygonStripmapPlanner::sweepAroundObstacles(
+                             std::vector<Point_2>* solution) const{
+  Point_2 goal = solution->back();
+  solution -> pop_back();
+  Polygon p;
+  if (!polygon_orig_.computeOffsetPolygon(settings_.robot_size, &p)) {
+    LOG(WARNING) << "Cannot shrink polygon:" << polygon_orig_
+                 << "with distance: " << settings_.robot_size;
+  }
+  std::vector<Point_2> waypoints;
+  visibility_graph::VisibilityGraph visibility_graph(settings_.polygon, 
+         computeSweepDistance());
+  std::vector<std::vector<Point_2>> holes = p.getHoleVertices();
+  
+  for (size_t i = 0u; i < holes.size(); ++i) {
+    std::vector<Point_2> hole = holes[i];
+    waypoints.clear();
+    visibility_graph.solve(solution -> back(), hole.front(), &waypoints);
+    solution -> insert(solution -> end(), 
+            waypoints.begin() + 1, waypoints.end());
+    createCornerSweeps(hole, solution);
+  }
+  
+  std::vector<Point_2> hull = p.getHullVertices();
+  waypoints.clear();
+  visibility_graph.solve(solution -> back(), hull.front(), &waypoints);
+  solution -> insert(solution -> end(), waypoints.begin() + 1, waypoints.end());
+  createCornerSweeps(hull, solution);
+  
+  waypoints.clear();
+  visibility_graph.solve(solution -> back(), goal, &waypoints);
+  solution -> insert(solution -> end(), waypoints.begin() + 1, 
+          waypoints.end() - 1);
+  solution -> push_back(goal);
+  return true;
+}
+
+void PolygonStripmapPlanner::createCornerSweeps(
+        const std::vector<Point_2>& hull, 
+        std::vector<Point_2>* solution) const {
+   visibility_graph::VisibilityGraph visibility_graph(polygon_orig_, 
+          computeSweepDistance());
+  Point_2 start;
+  float alpha_min = asin(settings_.robot_size/sqrt(pow(settings_.wall_dist, 2) +
+                    pow(settings_.robot_size/2, 2)))*0.75;
+  float theta = 0;
+  Point_2 prev_point = solution -> back();
+  Point_2 next_point;
+  for (std::size_t i = 0u; i < hull.size(); 
+            ++i) {
+    if ( i > 0 ) {
+      prev_point = hull[i-1];
+    } 
+    if (i < hull.size() - 1) {
+      next_point = hull[i+1];
+    } else {
+      next_point = hull.front();
+    }
+    Vector_2 vector1 = hull[i] - prev_point;
+    Vector_2 vector2 = next_point - hull[i];
+    double length1 = sqrt(to_double(vector1.squared_length()));
+    double length2 = sqrt(to_double(vector2.squared_length()));
+    if (length1 != 0 && length2 != 0){
+      theta = acos(to_double(vector1*vector2)/(length1*length2));
+    } else {
+      continue;
+    }
+    
+    if (theta > alpha_min) {
+      float dist1 = (settings_.wall_dist + settings_.robot_size - 
+              settings_.robot_size/sin(theta))*1.2;
+      float dist2 = (cos(M_PI - theta)*dist1 + sin(M_PI-theta)*
+              dist1/tan(alpha_min))*1.4;
+      Point_2 point1 = prev_point + (hull[i] - prev_point)*
+              (length1 - dist1)/length1;
+      Point_2 point2 = hull[i] + (next_point - hull[i])*(dist2)/length2;
+      
+      if (i == 0) {
+        vector1 = hull[i] - hull.back();
+        length1 = sqrt(to_double(vector1.squared_length()));
+        theta = acos(to_double(vector1*vector2)/(length1*length2));
+        dist1 = (settings_.wall_dist + settings_.robot_size - 
+                settings_.robot_size/sin(theta))*1.2;
+        start = hull.back() + (hull[i] - hull.back())*(length1 - dist1)/length1;
+      }
+      
+      solution -> push_back(point1);
+        
+      std::vector<Point_2> waypoints;
+      visibility_graph.solve(solution -> back(), point2, &waypoints);
+      solution -> insert(solution -> end(), waypoints.begin() + 1, 
+              waypoints.end() - 1);
+      
+      if (waypoints.size() == 2) {
+        solution -> push_back(point2);
+      }
+    } else {
+      if (i == 0) {
+        start = hull[i];
+      }
+      solution->push_back(hull[i]);
+    }
+  }
+    solution->push_back(start);
 }
 
 bool PolygonStripmapPlanner::runSolver(const Point_2& start,

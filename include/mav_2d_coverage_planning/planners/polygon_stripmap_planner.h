@@ -19,6 +19,7 @@ class PolygonStripmapPlanner {
     double min_view_overlap;
     double robot_size;
     double wall_dist;
+    bool sweep_around_obstacles;
 
     bool check() const;
   };
@@ -51,6 +52,11 @@ class PolygonStripmapPlanner {
   // Default: Heuristic GTSPP solver.
   virtual bool runSolver(const Point_2& start, const Point_2& goal,
                          std::vector<Point_2>* solution) const;
+  
+  virtual bool sweepAroundObstacles(std::vector<Point_2>* solution) const;
+  
+  virtual void createCornerSweeps(const std::vector<Point_2>& hull, 
+          std::vector<Point_2>* solution) const;
 
   std::vector<Polygon> convex_decomposition_;
   // The sweep plan graph with all possible waypoints its node connections.
@@ -61,11 +67,14 @@ class PolygonStripmapPlanner {
   bool checkUserInput() const;
 
   double computeSweepDistance() const;
+  
 
   // Valid construction.
   bool is_initialized_;
   // User problem settings.
   Settings settings_;
+  
+  Polygon polygon_orig_;
 };
 
 }  // namespace mav_coverage_planning
