@@ -24,7 +24,8 @@ BasePlanner2D::Settings::Settings()
       publish_visualization_on_planning_complete(true),
       robot_size(1.0),
       wall_dist(0.0),
-      min_view_overlap(0.0)
+      min_view_overlap(0.0),
+      sweep_around_obstacles(false)
       {}
 
 BasePlanner2D::BasePlanner2D(const ros::NodeHandle& nh,
@@ -83,7 +84,8 @@ void BasePlanner2D::getParametersFromRos() {
   }
   if (!nh_private_.getParam("wall_dist", settings_.wall_dist)) {
   }
-  
+  if (!nh_private_.getParam("sweep_around_obstacles", settings_.sweep_around_obstacles)) {
+  }
   if (!nh_private_.getParam("min_view_overlap", settings_.min_view_overlap)) {
   }
   

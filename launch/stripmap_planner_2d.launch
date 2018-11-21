@@ -20,6 +20,7 @@
     <param name="robot_size" value="0.4" />
     <param name="wall_dist" value="0.7" />
     <param name="min_view_overlap" value="0.0" />
+    <param name="sweep_around_obstacles" value="true" />
   </node>
 
 </launch>
