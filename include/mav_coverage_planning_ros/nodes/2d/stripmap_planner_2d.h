@@ -14,7 +14,7 @@ constexpr double kDefaultRobotSize =1.0;
 // The default minimum view overlap between two sweeps [0 .. 1)
 constexpr double kDefaultMinViewOverlap = 0.0;
 constexpr double kDefaultWallDist = 0.0;
-
+constexpr bool kDefaultSweepAroundObstacles = false;
 // A ros wrapper for the line sweep planner
 template <class StripmapPlanner>
 class StripmapPlanner2D : public BasePlanner2D {
@@ -24,8 +24,10 @@ class StripmapPlanner2D : public BasePlanner2D {
                     const ros::NodeHandle& nh_private)
       : BasePlanner2D(nh, nh_private),
         robot_size_(kDefaultRobotSize),
-	wall_dist_(kDefaultWallDist),
-        min_view_overlap_(kDefaultMinViewOverlap) {
+        wall_dist_(kDefaultWallDist),
+        min_view_overlap_(kDefaultMinViewOverlap),
+        sweep_around_obstacles_(kDefaultSweepAroundObstacles)
+        {
     // Parameters.
     if (!nh_private_.getParam("robot_size", robot_size_)) {
       ROS_WARN_STREAM(
@@ -40,6 +42,11 @@ class StripmapPlanner2D : public BasePlanner2D {
     if (!nh_private_.getParam("min_view_overlap", min_view_overlap_)) {
       ROS_WARN_STREAM("No minimum overlap specified. Using default value of: "
                       << min_view_overlap_);
+    }
+    
+    if (!nh_private_.getParam("sweep_around_obstacles", sweep_around_obstacles_)) {
+      ROS_WARN_STREAM("Not defined if robot should sweep around obstacles. Using default value of: "
+                      << sweep_around_obstacles_);
     }
 
     // Creating the line sweep planner from the retrieved parameters.
@@ -82,6 +89,7 @@ class StripmapPlanner2D : public BasePlanner2D {
   double robot_size_;
   double wall_dist_;
   double min_view_overlap_;
+  bool sweep_around_obstacles_;
 };
 }  // namespace mav_coverage_planning
 

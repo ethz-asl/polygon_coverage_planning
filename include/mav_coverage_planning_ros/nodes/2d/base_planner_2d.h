@@ -46,6 +46,7 @@ class BasePlanner2D {
     double robot_size;
     double wall_dist;
     double min_view_overlap;
+    bool sweep_around_obstacles;
     
     enum CostFunctionType {
       kDistance = 0,  // Minimize distance.
@@ -134,7 +135,6 @@ class BasePlanner2D {
   // Helper function to set planning request start pose from current odometry.
   bool planningRequestStartPoseFromOdometry(
       mav_planning_msgs::PlannerService::Request* req) const;
-
   // Publishers and Services
   ros::Publisher marker_pub_;
   ros::Publisher waypoint_list_pub_;
