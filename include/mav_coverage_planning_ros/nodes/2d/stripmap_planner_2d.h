@@ -68,6 +68,7 @@ class StripmapPlanner2D : public BasePlanner2D {
     settings.robot_size = robot_size_;
     settings.wall_dist = wall_dist_;
     settings.min_view_overlap = min_view_overlap_;
+    settings.sweep_around_obstacles = sweep_around_obstacles_;
 
     planner_.reset(new StripmapPlanner(settings));
     planner_->setup();
