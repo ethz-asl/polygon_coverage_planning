@@ -9,6 +9,7 @@
 #include <mav_coverage_planning_comm/cgal_definitions.h>
 
 #include "mav_2d_coverage_planning/geometry/plane_transformation.h"
+#include "mav_2d_coverage_planning/geometry/BCD.h"
 
 namespace mav_coverage_planning {
 class Polygon {

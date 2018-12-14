@@ -34,26 +34,27 @@ class BCD {
   };
   
   BCD(const PolygonWithHoles& polygon);
-  bool computeBCDFromPolygonWithHoles(std::vector<Polygon>* polygons);
+  bool computeBCDFromPolygonWithHoles(std::vector<Polygon_2>* polygons);
   
  private:
   void removeDublicatedVeritices();
   void innerPolygonEnd(bool first_vertex, Event* event, 
-        std::vector<Edge>& upper_vertices, Edge* edge_upper, Edge* edge_lower, 
+        std::vector<Edge>& upper_vertices, int edge_upper, int edge_lower, 
         bool outer);
   void closeSecondEvent(double x_current, double y_event, bool upper);
-  void updateEventStatus(Event* event, bool upper, double x_current, double y_event);
-  void closePolygon(double x_current, std::vector<Edge>& upper_vertices, Edge* edge_lower, Edge* edge_upper);
-  void createEvents(Polygon& polygon, std::vector<Event>* events);
-  void initVertex(Vertex& vertex, vertex iterator orig_vertex);
+  void updateEventStatus(Event& event, bool upper, double x_current, double y_event);
+  void closePolygon(double x_current, std::vector<Edge>& upper_vertices, int edge_lower, int edge_upper);
+  void createEvents(Polygon_2& polygon, std::vector<Event>& events);
+  void initVertex(Vertex& vertex, VertexConstCirculator orig_vertex);
   void initEvent(Event& event_list, Vertex vertex_now, Vertex vertex_next);
-  bool find_next_event(Edge edge1, Edge edge2, bool& first_vertex, Event*& next_event, bool &outer);
+  bool find_next_event(bool& first_vertex, Event*& next_event, bool &outer, Edge edge1, Edge edge2);
   double calculateVertex(double x, Edge edge);
-  void getEdges(Edge*& edge_upper, Edge*& edge_lower);
+  void getEdges(int& edge_upper_number, int& edge_lower_number);
   void createVertices(bool first_vertex, Event* event, std::vector<Edge>& upper_vertices, bool outer);
   void updateEdgeList(Event* event, Point_2 location, Point_2 direction);
   void addEvent(std::vector<Edge>& poly, bool two_vertices, 
         Point_2 point1, Point_2 direction, Point_2 point2);
+  bool find_next_event(bool& first_vertex, Event*& next_event, bool &outer); //Check this in MATLAB
   
   PolygonWithHoles polygon_;
   

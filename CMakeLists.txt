@@ -24,6 +24,7 @@ cs_add_library(${PROJECT_NAME}
   src/geometry/plane_transformation.cc
   src/geometry/polygon_triangulation.cc
   src/geometry/polygon.cc
+  src/geometry/BCD.cpp
   src/graphs/gtspp_product_graph.cc
   src/graphs/sweep_plan_graph.cc
   src/graphs/visibility_graph.cc
