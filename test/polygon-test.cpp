@@ -33,6 +33,7 @@ TEST(PolygonTest, ConvertPolygonWithHolesToPolygonWithoutHoles) {
   EXPECT_EQ(10, poly_without_holes.getPolygon().outer_boundary().size());
 }
 
+
 TEST(PolygonTest, ConvexDecomposition) {
   Polygon rectangle_in_rectangle(
       createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
@@ -41,6 +42,16 @@ TEST(PolygonTest, ConvexDecomposition) {
       rectangle_in_rectangle.computeConvexDecompositionFromPolygonWithHoles(
           &convex_polygons));
   EXPECT_EQ(4, convex_polygons.size());
+}
+
+TEST(PolygonTest, BCDecomposition) {
+  Polygon rectangle_in_rectangle(
+      createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
+  std::vector<Polygon> bc_polygons;
+  EXPECT_TRUE(
+      rectangle_in_rectangle.computeBCDFromPolygonWithHoles(
+          &bc_polygons));
+  EXPECT_EQ(4, bc_polygons.size());
 }
 
 TEST(PolygonTest, YMonotoneDecomposition) {

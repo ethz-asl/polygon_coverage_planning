@@ -2,7 +2,6 @@
 #define BCD_H_
 
 #include <mav_coverage_planning_comm/cgal_definitions.h>
-#include "mav_2d_coverage_planning/geometry/polygon.h"
 
 namespace mav_coverage_planning {
 
@@ -34,7 +33,7 @@ class BCD {
   };
   
   BCD(const PolygonWithHoles& polygon);
-  bool computeBCDFromPolygonWithHoles(std::vector<Polygon_2>* polygons);
+  bool computeBCDFromPolygonWithHoles(std::vector<Polygon_2>& polygons);
   
  private:
   void removeDublicatedVeritices();
@@ -44,7 +43,7 @@ class BCD {
   void closeSecondEvent(double x_current, double y_event, bool upper);
   void updateEventStatus(Event& event, bool upper, double x_current, double y_event);
   void closePolygon(double x_current, std::vector<Edge>& upper_vertices, int edge_lower, int edge_upper);
-  void createEvents(Polygon_2& polygon, std::vector<Event>& events);
+  bool createEvents(Polygon_2& polygon, std::vector<Event>& events);
   void initVertex(Vertex& vertex, VertexConstCirculator orig_vertex);
   void initEvent(Event& event_list, Vertex vertex_now, Vertex vertex_next);
   bool find_next_event(bool& first_vertex, Event*& next_event, bool &outer, Edge edge1, Edge edge2);

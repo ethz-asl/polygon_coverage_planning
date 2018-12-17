@@ -47,10 +47,10 @@ catkin_add_gtest(test_polygon
 )
 target_link_libraries(test_polygon ${PROJECT_NAME})
 
-catkin_add_gtest(test_visibility_graph
-  test/visibility_graph-test.cpp
-)
-target_link_libraries(test_visibility_graph ${PROJECT_NAME})
+#catkin_add_gtest(test_visibility_graph
+#  test/visibility_graph-test.cpp
+#)
+#target_link_libraries(test_visibility_graph ${PROJECT_NAME})
 
 catkin_add_gtest(test_planners
   test/planners-test.cpp

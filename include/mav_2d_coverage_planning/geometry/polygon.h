@@ -70,6 +70,9 @@ class Polygon {
   // computeYMonotoneDecomposition.
   bool computeYMonotoneDecompositionFromPolygonWithHoles(
       std::vector<Polygon>* y_monotone_polygons);
+  
+  bool computeBCDFromPolygonWithHoles(
+    std::vector<Polygon>* convex_polygons);
 
   // Compute the visibility polygon given a point inside a strictly simple
   // polygon. Francisc Bungiu, Michael Hemmer, John Hershberger, Kan Huang, and
