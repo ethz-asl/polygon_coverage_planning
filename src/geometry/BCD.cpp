@@ -71,12 +71,15 @@ bool BCD::computeBCDFromPolygonWithHoles(std::vector<Polygon_2>& polygons) {
   polygons.clear();
   polygons.reserve(created_polygons.size());
   Polygon_2 polygon;
+  int i = 0;
   for(std::vector<std::vector<Edge>>::iterator it = created_polygons.begin(); it != created_polygons.end(); ++it) {
     polygon.clear();
     for(std::vector<Edge>::iterator poly = it->begin(); poly != it->end(); ++poly) {
+      LOG(WARNING) << "Poly"<<i<<" x: "<<poly->loc.x()<<" y: "<<poly->loc.y();
       polygon.push_back(poly->loc);
     }
     polygons.emplace_back(polygon);
+    i++;
   }
   return true;
 }
@@ -198,16 +201,13 @@ bool BCD::createEvents(Polygon_2& polygon, std::vector<Event>& events){
     return false;
   }
   std::vector<Vertex> vertices; 
-  
-  //for(Polygon_2::Vertex_const_iterator vi = polygon.vertices_begin();
-    //   vi != polygon.vertices_end(); ++vi ) { 
   VertexConstCirculator vit = polygon.vertices_circulator();
   do {
     Vertex vertex;
     initVertex(vertex, vit);
     vertices.push_back(vertex);
   } while (++vit != polygon.vertices_circulator());
-  //}
+  
   for(size_t i = 0; i < vertices.size(); ++i ) {
     if (!vertices[(i-1+vertices.size())%vertices.size()].merge_next) {
       Event event;
@@ -477,7 +477,7 @@ void BCD::createVertices(bool first_vertex, Event* event, std::vector<Edge>& upp
   } else {
     upper_point = calculateVertex(x_current, upper_vertices.back());
   }
-  if (abs(event -> location2.y()) - event -> location.y() > eps) {
+  if (abs(event -> location2.y() - event -> location.y()) > eps) {
     two_vertices = true;
   }
   if (abs(upper_point - new_point.y()) < eps) {

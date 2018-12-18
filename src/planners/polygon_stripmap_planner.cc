@@ -28,13 +28,24 @@ bool PolygonStripmapPlanner::setup() {
     } else {
       settings_.polygon = p;
     }
-    if (!settings_.polygon.computeBCDFromPolygonWithHoles(//computeConvexDecompositionFromPolygonWithHoles(
-            &convex_decomposition_)) {
-      LOG(ERROR) << "Cannot compute convex decomposition.";
-      is_initialized_ = false;
-    } else {
-      LOG(INFO) << "Successfully created convex partition with "
-                << convex_decomposition_.size() << " convex polygon(s).";
+    if (settings_.decomposition_type.compare("convex") == 0) {
+      if (!settings_.polygon.computeConvexDecompositionFromPolygonWithHoles(
+              &convex_decomposition_)) {
+        LOG(ERROR) << "Cannot compute convex decomposition.";
+        is_initialized_ = false;
+      } else {
+        LOG(INFO) << "Successfully created convex partition with "
+                  << convex_decomposition_.size() << " convex polygon(s).";
+      }
+    }  else if (settings_.decomposition_type.compare("bcd") == 0) {
+      if (!settings_.polygon.computeBCDFromPolygonWithHoles(
+              &convex_decomposition_)) {
+        LOG(ERROR) << "Cannot compute convex decomposition.";
+        is_initialized_ = false;
+      } else {
+        LOG(INFO) << "Successfully created convex partition with "
+                  << convex_decomposition_.size() << " convex polygon(s).";
+      }
     }
   }
 

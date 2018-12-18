@@ -20,6 +20,7 @@ class PolygonStripmapPlanner {
     double robot_size;
     double wall_dist;
     bool sweep_around_obstacles;
+    std::string decomposition_type;
 
     bool check() const;
   };
