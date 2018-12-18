@@ -14,6 +14,7 @@
 #include <CGAL/connect_holes.h>
 #include <CGAL/create_offset_polygons_from_polygon_with_holes_2.h>
 #include <CGAL/partition_2.h>
+#include <CGAL/is_y_monotone_2.h>
 #include <glog/logging.h>
 #include <mav_coverage_planning_comm/eigen_conversions.h>
 #include <boost/make_shared.hpp>
@@ -365,9 +366,18 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
   waypoints->clear();
 
   // Preconditions.
-  if (!is_strictly_simple_) return false;
-  if (!is_convex_) return false;
-  if (polygon_.outer_boundary().size() < 3) return false;
+  if (!is_strictly_simple_) {
+    LOG(WARNING) << "Polygon is not strictly simple.";
+    return false;
+  }
+  if (polygon_.number_of_holes() > 0) {
+    LOG(WARNING) << "Polygon has holes.";
+    return false;
+  }
+  if (polygon_.outer_boundary().size() < 3) {
+    LOG(WARNING) << "Polygon has less than 3 vertices.";
+    return false;
+  }
 
   // Copy of polygon with start_vertex_idx being first vertex.
   Polygon_2 polygon;
@@ -392,6 +402,12 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
       CGAL::ROTATION, polygon.edges_begin()->direction(), 1, 1e9);
   rotation = rotation.inverse();
   polygon = CGAL::transform(rotation, polygon);
+
+  // Check if it is y-monotone.
+  if (!CGAL::is_y_monotone_2(polygon.vertices_begin(), polygon.vertices_end())){
+    LOG(WARNING) << "Polygon is not y-monotone.";
+    return false;
+  }
 
   // Compute sweep distance for equally spaced sweeps.
   double polygon_length = polygon.bbox().ymax() - polygon.bbox().ymin();
