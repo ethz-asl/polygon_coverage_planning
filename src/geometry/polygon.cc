@@ -367,15 +367,15 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
 
   // Preconditions.
   if (!is_strictly_simple_) {
-    LOG(WARNING) << "Polygon is not strictly simple.";
+    DLOG(INFO) << "Polygon is not strictly simple.";
     return false;
   }
   if (polygon_.number_of_holes() > 0) {
-    LOG(WARNING) << "Polygon has holes.";
+    DLOG(INFO) << "Polygon has holes.";
     return false;
   }
   if (polygon_.outer_boundary().size() < 3) {
-    LOG(WARNING) << "Polygon has less than 3 vertices.";
+    DLOG(INFO) << "Polygon has less than 3 vertices.";
     return false;
   }
 
@@ -402,12 +402,6 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
       CGAL::ROTATION, polygon.edges_begin()->direction(), 1, 1e9);
   rotation = rotation.inverse();
   polygon = CGAL::transform(rotation, polygon);
-
-  // Check if it is y-monotone.
-  if (!CGAL::is_y_monotone_2(polygon.vertices_begin(), polygon.vertices_end())){
-    LOG(WARNING) << "Polygon is not y-monotone.";
-    return false;
-  }
 
   // Compute sweep distance for equally spaced sweeps.
   double polygon_length = polygon.bbox().ymax() - polygon.bbox().ymin();
@@ -447,8 +441,14 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
     std::vector<PolygonWithHoles> intersections;
     CGAL::intersection(polygon, sweep_mask, std::back_inserter(intersections));
     // Some assertions.
-    if (intersections.size() != 1) return false;
-    if (intersections.front().number_of_holes() != 0) return false;
+    if (intersections.size() != 1) {
+      DLOG(INFO) << "Number of mask intersections is not 1.";
+      return false;
+    }
+    if (intersections.front().number_of_holes() != 0) {
+      DLOG(INFO) << "Intersection has holes.";
+      return false;
+    }
 
     // Orientate intersection according to sweep direction.
     Polygon_2& intersection = intersections.front().outer_boundary();
