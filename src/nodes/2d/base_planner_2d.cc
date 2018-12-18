@@ -25,7 +25,8 @@ BasePlanner2D::Settings::Settings()
       robot_size(1.0),
       wall_dist(0.0),
       min_view_overlap(0.0),
-      sweep_around_obstacles(false)
+      sweep_around_obstacles(false),
+      decomposition_type("convex")
       {}
 
 BasePlanner2D::BasePlanner2D(const ros::NodeHandle& nh,
@@ -83,6 +84,8 @@ void BasePlanner2D::getParametersFromRos() {
                     << settings_.robot_size);
   }
   if (!nh_private_.getParam("wall_dist", settings_.wall_dist)) {
+  }
+  if (!nh_private_.getParam("decomposition_type", settings_.decomposition_type)) {
   }
   if (!nh_private_.getParam("sweep_around_obstacles", settings_.sweep_around_obstacles)) {
   }
@@ -266,8 +269,13 @@ bool BasePlanner2D::publishVisualization() {
 
   // The decomposed polygons.
   std::vector<Polygon> convex_decomposition;
-  settings_.polygon.computeConvexDecompositionFromPolygonWithHoles(
+  if (settings_.decomposition_type.compare("convex") == 0) {
+    settings_.polygon.computeConvexDecompositionFromPolygonWithHoles(
       &convex_decomposition);
+  } else if (settings_.decomposition_type.compare("bcd") == 0) {
+    settings_.polygon.computeBCDFromPolygonWithHoles(
+      &convex_decomposition);
+  }
   for (size_t i = 0; i < convex_decomposition.size(); ++i) {
     visualization_msgs::MarkerArray convex_polygon_markers;
     std::string name = "convex_polygon_" + std::to_string(i);

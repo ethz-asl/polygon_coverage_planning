@@ -50,6 +50,7 @@ class BasePlanner2D {
     double wall_dist;
     double min_view_overlap;
     bool sweep_around_obstacles;
+    std::string decomposition_type;
     
     enum CostFunctionType {
       kDistance = 0,  // Minimize distance.

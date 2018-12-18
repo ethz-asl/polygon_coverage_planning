@@ -26,7 +26,8 @@ class StripmapPlanner2D : public BasePlanner2D {
         robot_size_(kDefaultRobotSize),
         wall_dist_(kDefaultWallDist),
         min_view_overlap_(kDefaultMinViewOverlap),
-        sweep_around_obstacles_(kDefaultSweepAroundObstacles)
+        sweep_around_obstacles_(kDefaultSweepAroundObstacles),
+        decomposition_type_("convex")
         {
 
     // Parameters.
@@ -46,6 +47,10 @@ class StripmapPlanner2D : public BasePlanner2D {
     if (!nh_private_.getParam("sweep_around_obstacles", sweep_around_obstacles_)) {
       ROS_WARN_STREAM("Not defined if robot should sweep around obstacles. Using default value of: "
                       << sweep_around_obstacles_);
+    }
+     if (!nh_private_.getParam("decomposition_type", decomposition_type_)) {
+    ROS_WARN_STREAM("No decomposition type specified. Using default value of: "
+                    << decomposition_type_);
     }
 
     // Creating the line sweep planner from the retrieved parameters.
@@ -69,6 +74,7 @@ class StripmapPlanner2D : public BasePlanner2D {
     settings.wall_dist = wall_dist_;
     settings.min_view_overlap = min_view_overlap_;
     settings.sweep_around_obstacles = sweep_around_obstacles_;
+    settings.decomposition_type = decomposition_type_;
 
     planner_.reset(new StripmapPlanner(settings));
     planner_->setup();
@@ -89,6 +95,7 @@ class StripmapPlanner2D : public BasePlanner2D {
   double wall_dist_;
   double min_view_overlap_;
   bool sweep_around_obstacles_;
+  std::string decomposition_type_;
 };
 }  // namespace mav_coverage_planning
 
