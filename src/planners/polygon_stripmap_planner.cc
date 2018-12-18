@@ -28,8 +28,7 @@ bool PolygonStripmapPlanner::setup() {
     } else {
       settings_.polygon = p;
     }
-      
-    if (!settings_.polygon.computeConvexDecompositionFromPolygonWithHoles(
+    if (!settings_.polygon.computeBCDFromPolygonWithHoles(//computeConvexDecompositionFromPolygonWithHoles(
             &convex_decomposition_)) {
       LOG(ERROR) << "Cannot compute convex decomposition.";
       is_initialized_ = false;
