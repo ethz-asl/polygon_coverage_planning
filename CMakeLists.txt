@@ -46,6 +46,11 @@ cs_add_executable(stripmap_planner_3d_node
 )
 target_link_libraries(stripmap_planner_3d_node ${PROJECT_NAME})
 
+cs_add_executable(test_polygon_sweep_planning
+  test/test_polygon_sweep_planning.cc
+)
+target_link_libraries(test_polygon_sweep_planning ${PROJECT_NAME})
+
 ##########
 # EXPORT #
 ##########
