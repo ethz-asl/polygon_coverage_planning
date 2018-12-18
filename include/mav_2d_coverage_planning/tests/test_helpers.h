@@ -50,6 +50,19 @@ Polygon createDiamond() {
   return diamond;
 }
 
+template <class Polygon>
+Polygon createBCDCell() {
+  Polygon bcd_cell;
+
+  bcd_cell.push_back(typename Polygon::Point_2(-5.5, 9.1));
+  bcd_cell.push_back(typename Polygon::Point_2(-5.5, 5.9));
+  bcd_cell.push_back(typename Polygon::Point_2(-0.252786, 5.9));
+  bcd_cell.push_back(typename Polygon::Point_2(3.5, 4.02361));
+  bcd_cell.push_back(typename Polygon::Point_2(3.5, 9.1));
+
+  return bcd_cell;
+}
+
 template <class Polygon, class PolygonWithHoles>
 PolygonWithHoles createSophisticatedPolygon() {
   Polygon outer;
