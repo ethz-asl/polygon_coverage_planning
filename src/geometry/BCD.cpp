@@ -90,7 +90,7 @@ void BCD::removeDublicatedVeritices() {
     std::vector<Edge>::iterator last = created_polygons[i].end();
     std::vector<Edge>::iterator result = first;
     while (++first != last) {
-        if (!(result->loc == first->loc) && ++result != first) {
+        if (!(abs(result->loc.x() - first->loc.x())<eps && abs(result->loc.y() - first->loc.y())<eps) && ++result != first) {
             *result = std::move(*first);
         }
     }

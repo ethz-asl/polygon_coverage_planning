@@ -95,7 +95,7 @@ bool SweepPlanGraph::computeLineSweepPlans(
     std::vector<std::vector<Point_2>>* cluster_sweeps) const {
   CHECK_NOTNULL(cluster_sweeps);
   cluster_sweeps->clear();
-  cluster_sweeps->resize(2 * polygon.getPolygon().outer_boundary().size());
+  cluster_sweeps->reserve(2 * polygon.getPolygon().outer_boundary().size());
 
   // Shrink polygon.
   Polygon p;
@@ -107,23 +107,24 @@ bool SweepPlanGraph::computeLineSweepPlans(
   // Create all sweep plans.
   size_t idx = 0;
   bool cc_orientation = true;
+  std::vector<Point_2> sweep;
   for (size_t start_id = 0; start_id < p.getPolygon().outer_boundary().size();
        ++start_id) {
     if (!p.computeLineSweepPlan(sweep_distance_, start_id, cc_orientation,
-                                &(*cluster_sweeps)[idx])) {
-      LOG(ERROR) << "Could not compute sweep plan for start_id: " << start_id
+                                &sweep)) {
+      LOG(WARNING) << "Could not compute sweep plan for start_id: " << start_id
                  << " in polygon: " << p;
-      return false;
+    } else {
+      cluster_sweeps->push_back(sweep);
     }
-    ++idx;
 
     if (!p.computeLineSweepPlan(sweep_distance_, start_id, !cc_orientation,
-                                &(*cluster_sweeps)[idx])) {
-      LOG(ERROR) << "Could not compute sweep plan for start_id: " << start_id
+                               &sweep)) {
+      LOG(WARNING) << "Could not compute sweep plan for start_id: " << start_id
                  << " in polygon: " << p;
-      return false;
+    } else {
+      cluster_sweeps->push_back(sweep);
     }
-    ++idx;
   }
 
   return true;
@@ -149,7 +150,7 @@ bool SweepPlanGraph::getClusters(
   }
   if (cluster_set != expected_clusters) {
     return false;  // Clusters not enumerated [0 .. n-1].
-  }
+  } //HERE
 
   clusters->resize(cluster_set.size());
   for (size_t i = 0; i < clusters->size(); ++i) {
