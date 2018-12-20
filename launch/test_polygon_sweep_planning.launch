@@ -1,0 +1,19 @@
+<launch>
+
+  <node name="rviz"
+    pkg="rviz"
+    type="rviz"
+    output="log"
+    args="-d $(find mav_coverage_planning_ros)/cfg/test_polygon_sweep_planning.rviz" />
+
+  <node name="test_polygon_sweep_planning"
+    pkg="mav_coverage_planning_ros"
+    type="test_polygon_sweep_planning"
+    output="screen"
+    clear_params="true" >
+
+    <!-- Polygon, altitude, and world frame ID -->
+    <rosparam command="load" file="$(find mav_coverage_planning_ros)/cfg/example_polygon_bcd_cell.yaml" />
+  </node>
+
+</launch>
