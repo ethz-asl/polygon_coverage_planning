@@ -110,6 +110,39 @@ TEST(PolygonTest, computeLineSweepPlan) {
   for (const Point_2& p : waypoints) EXPECT_TRUE(diamond.pointInPolygon(p));
 }
 
+TEST(PolygonText, computeLineSweepPlanBCDCell) {
+  const double kMaxSweepDistance = 1.0;
+
+  Polygon poly(createBCDCell<Polygon_2>());
+
+  bool cc_orientation = true;
+  for (size_t start_id = 0;
+       start_id < poly.getPolygon().outer_boundary().size(); ++start_id) {
+    std::vector<Point_2> waypoints;
+    bool success = poly.computeLineSweepPlan(kMaxSweepDistance, start_id,
+                                             cc_orientation, &waypoints);
+    if (start_id == 0 || start_id == 3 || start_id == 4)
+      EXPECT_TRUE(success);
+    else
+      EXPECT_FALSE(success);
+    if (success) {
+      EXPECT_GE(waypoints.size(), 4);
+      for (const Point_2& p : waypoints) EXPECT_TRUE(poly.pointInPolygon(p));
+    }
+
+    success = poly.computeLineSweepPlan(kMaxSweepDistance, start_id,
+                                        !cc_orientation, &waypoints);
+    if (start_id == 0 || start_id == 1 || start_id == 4)
+      EXPECT_TRUE(success);
+    else
+      EXPECT_FALSE(success);
+    if (success) {
+      EXPECT_GE(waypoints.size(), 4);
+      for (const Point_2& p : waypoints) EXPECT_TRUE(poly.pointInPolygon(p));
+    }
+  }
+}
+
 TEST(PolygonTest, computeVisibilityPolygon) {
   Polygon rectangle_in_rectangle(
       createRectangleInRectangle<Polygon_2, PolygonWithHoles>());

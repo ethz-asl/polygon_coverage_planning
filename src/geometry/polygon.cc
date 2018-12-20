@@ -14,6 +14,7 @@
 #include <CGAL/connect_holes.h>
 #include <CGAL/create_offset_polygons_from_polygon_with_holes_2.h>
 #include <CGAL/partition_2.h>
+#include <CGAL/is_y_monotone_2.h>
 #include <glog/logging.h>
 #include <mav_coverage_planning_comm/eigen_conversions.h>
 #include <boost/make_shared.hpp>
@@ -380,9 +381,18 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
   waypoints->clear();
 
   // Preconditions.
-  if (!is_strictly_simple_) return false;
-  if (!is_convex_) return false;
-  if (polygon_.outer_boundary().size() < 3) return false;
+  if (!is_strictly_simple_) {
+    DLOG(INFO) << "Polygon is not strictly simple.";
+    return false;
+  }
+  if (polygon_.number_of_holes() > 0) {
+    DLOG(INFO) << "Polygon has holes.";
+    return false;
+  }
+  if (polygon_.outer_boundary().size() < 3) {
+    DLOG(INFO) << "Polygon has less than 3 vertices.";
+    return false;
+  }
 
   // Copy of polygon with start_vertex_idx being first vertex.
   Polygon_2 polygon;
@@ -446,8 +456,14 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
     std::vector<PolygonWithHoles> intersections;
     CGAL::intersection(polygon, sweep_mask, std::back_inserter(intersections));
     // Some assertions.
-    if (intersections.size() != 1) return false;
-    if (intersections.front().number_of_holes() != 0) return false;
+    if (intersections.size() != 1) {
+      DLOG(INFO) << "Number of mask intersections is not 1.";
+      return false;
+    }
+    if (intersections.front().number_of_holes() != 0) {
+      DLOG(INFO) << "Intersection has holes.";
+      return false;
+    }
 
     // Orientate intersection according to sweep direction.
     Polygon_2& intersection = intersections.front().outer_boundary();
