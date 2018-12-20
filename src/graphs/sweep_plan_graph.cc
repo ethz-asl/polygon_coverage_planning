@@ -105,7 +105,6 @@ bool SweepPlanGraph::computeLineSweepPlans(
   }
 
   // Create all sweep plans.
-  size_t idx = 0;
   bool cc_orientation = true;
   std::vector<Point_2> sweep;
   for (size_t start_id = 0; start_id < p.getPolygon().outer_boundary().size();

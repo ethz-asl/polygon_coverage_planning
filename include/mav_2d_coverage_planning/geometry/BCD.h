@@ -54,6 +54,7 @@ class BCD {
   void addEvent(std::vector<Edge>& poly, bool two_vertices, 
         Point_2 point1, Point_2 direction, Point_2 point2);
   bool find_next_event(bool& first_vertex, Event*& next_event, bool &outer); //Check this in MATLAB
+  PolygonWithHoles rotPolygon(double alpha);
   
   PolygonWithHoles polygon_;
   

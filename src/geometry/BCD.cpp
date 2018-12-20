@@ -1,5 +1,6 @@
 #include "mav_2d_coverage_planning/geometry/BCD.h"
 #include <glog/logging.h>
+#include <math.h>
 
 namespace mav_coverage_planning {
 BCD::BCD(const PolygonWithHoles& polygon): polygon_(polygon){
@@ -16,72 +17,105 @@ BCD::BCD(const PolygonWithHoles& polygon): polygon_(polygon){
 }
 
 bool BCD::computeBCDFromPolygonWithHoles(std::vector<Polygon_2>& polygons) {
-  createEvents(polygon_.outer_boundary(), outer_events);
-  for (PolygonWithHoles::Hole_const_iterator hi = polygon_.holes_begin();
-       hi != polygon_.holes_end(); ++hi) {
-    std::vector<Event> inner_events;
-    Polygon_2 hole = *hi;
-    createEvents (hole, inner_events);
-    all_inner_events.push_back(inner_events);
-  }
-  //Start algorithm
-  bool first_vertex = false;
-  bool outer = false;
-  std::vector<Edge> upper_vertices;
+  for (size_t times = 0; times<4; ++times) {
+    outer_events.clear();
+    all_inner_events.clear();
+    edge_list.clear();
+    created_polygons.clear();
+    polygon_nr = 0;
+    
+    createEvents(polygon_.outer_boundary(), outer_events);
+    for (PolygonWithHoles::Hole_const_iterator hi = polygon_.holes_begin();
+         hi != polygon_.holes_end(); ++hi) {
+      std::vector<Event> inner_events;
+      Polygon_2 hole = *hi;
+      createEvents (hole, inner_events);
+      all_inner_events.push_back(inner_events);
+    }
+    //Start algorithm
+    bool first_vertex = false;
+    bool outer = false;
+    std::vector<Edge> upper_vertices;
+
+    Event* next_event;
+    find_next_event(first_vertex, next_event, outer);
+    Edge edge = {.loc = next_event->location, .dir = next_event->floor};
+    edge_list.push_back(edge);
+    Edge edge2 = {.loc = next_event->location2, .dir = next_event->ceiling};
+    edge_list.push_back(edge2);
+    next_event->closed = true; 
+    while (!edge_list.empty()) {
+      int edge_upper;
+      int edge_lower;
+      getEdges(edge_upper, edge_lower);
+      std::vector<Edge> new_polygon;
+      new_polygon.push_back(edge_list[edge_upper]);
+      new_polygon.push_back(edge_list[edge_lower]);
+      created_polygons.push_back(new_polygon);
+      find_next_event(first_vertex, 
+              next_event, outer, created_polygons[polygon_nr].front(), 
+              created_polygons[polygon_nr].back());
+      int type = next_event->type;
+      upper_vertices.clear();
+      while (type == 2) {
+        if (upper_vertices.size() == 0) {
+          find_next_event(first_vertex,
+                  next_event, outer, created_polygons[polygon_nr].front(), 
+                  created_polygons[polygon_nr].back());
+        } else {
+          find_next_event(first_vertex, next_event, outer, upper_vertices.back(), 
+                  created_polygons[polygon_nr].back());
+        }
+        if (next_event->type == 2) {
+          createVertices(first_vertex, next_event, upper_vertices, outer);
+        }
+        type = next_event->type;
+      }
+      innerPolygonEnd(first_vertex, next_event, 
+              upper_vertices, edge_upper, edge_lower, outer);
+      polygon_nr ++;
+    }
+    if (times == 0) { //HERE
+      removeDublicatedVeritices();
+      polygons.clear();
+      polygons.reserve(created_polygons.size());
+      Polygon_2 polygon;
+      int i = 0;
+
+      for(std::vector<std::vector<Edge>>::iterator it = created_polygons.begin(); it != created_polygons.end(); ++it) {
+        polygon.clear();
+        for(std::vector<Edge>::iterator poly = it->begin(); poly != it->end(); ++poly) {
+          polygon.push_back(poly->loc);
+        }
+        polygons.emplace_back(polygon);
+        i++;
+      }
+    }
   
-  Event* next_event;
-  find_next_event(first_vertex, next_event, outer);
-  Edge edge = {.loc = next_event->location, .dir = next_event->floor};
-  edge_list.push_back(edge);
-  Edge edge2 = {.loc = next_event->location2, .dir = next_event->ceiling};
-  edge_list.push_back(edge2);
-  next_event->closed = true; 
-  while (!edge_list.empty()) {
-    int edge_upper;
-    int edge_lower;
-    getEdges(edge_upper, edge_lower);
-    std::vector<Edge> new_polygon;
-    new_polygon.push_back(edge_list[edge_upper]);
-    new_polygon.push_back(edge_list[edge_lower]);
-    created_polygons.push_back(new_polygon);
-    find_next_event(first_vertex, 
-            next_event, outer, created_polygons[polygon_nr].front(), 
-            created_polygons[polygon_nr].back());
-    int type = next_event->type;
-    upper_vertices.clear();
-    while (type == 2) {
-      if (upper_vertices.size() == 0) {
-        find_next_event(first_vertex,
-                next_event, outer, created_polygons[polygon_nr].front(), 
-                created_polygons[polygon_nr].back());
-      } else {
-        find_next_event(first_vertex, next_event, outer, upper_vertices.back(), 
-                created_polygons[polygon_nr].back());
-      }
-      if (next_event->type == 2) {
-        createVertices(first_vertex, next_event, upper_vertices, outer);
-      }
-      type = next_event->type;
-    }
-    innerPolygonEnd(first_vertex, next_event, 
-            upper_vertices, edge_upper, edge_lower, outer);
-    polygon_nr ++;
+    double alpha = M_PI/4;
+    polygon_ = rotPolygon(alpha);
   }
-  removeDublicatedVeritices();
-  polygons.clear();
-  polygons.reserve(created_polygons.size());
-  Polygon_2 polygon;
-  int i = 0;
-  for(std::vector<std::vector<Edge>>::iterator it = created_polygons.begin(); it != created_polygons.end(); ++it) {
-    polygon.clear();
-    for(std::vector<Edge>::iterator poly = it->begin(); poly != it->end(); ++poly) {
-      LOG(WARNING) << "Poly"<<i<<" x: "<<poly->loc.x()<<" y: "<<poly->loc.y();
-      polygon.push_back(poly->loc);
-    }
-    polygons.emplace_back(polygon);
-    i++;
-  }
+  
   return true;
+}
+
+PolygonWithHoles BCD::rotPolygon(double alpha) {
+  Polygon_2 hull;
+  for (VertexConstIterator it = polygon_.outer_boundary().vertices_begin(); it != polygon_.outer_boundary().vertices_end(); ++it) {
+    Point_2 new_point(it->x()*cos(alpha) - it->y()*sin(alpha), it->x()*sin(alpha) + it->y()*cos(alpha));  
+    hull.push_back(new_point);
+  }
+  PolygonWithHoles pwh(hull);
+  for (PolygonWithHoles::Hole_const_iterator hi = polygon_.holes_begin();
+         hi != polygon_.holes_end(); ++hi) {
+    Polygon_2 hole;
+    for (VertexConstIterator it = hi->vertices_begin(); it != hi->vertices_end(); ++it) {
+      Point_2 new_point(it->x()*cos(alpha) - it->y()*sin(alpha), it->x()*sin(alpha) + it->y()*cos(alpha));
+      hole.push_back(new_point);
+    } 
+    pwh.add_hole(hole);
+  }
+  return pwh;
 }
 
 void BCD::removeDublicatedVeritices() {
