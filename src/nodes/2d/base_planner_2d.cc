@@ -226,6 +226,7 @@ void BasePlanner2D::solve(const Point_2& start, const Point_2& goal) {
     }
   } else {
     ROS_ERROR_STREAM("Failed calculating plan.");
+    visualization_msgs::MarkerArray markers;
   }
 }
 
