@@ -10,7 +10,7 @@ namespace mav_coverage_planning {
 
 typedef std::function<double(const std::vector<Point_2>& path)>
     PathCostFunctionType;
-
+double computeWaypointsPathCost(const std::vector<Point_2>& path);
 // Given a vector of waypoints, compute its euclidean distances.
 double computeEuclideanPathCost(const std::vector<Point_2>& path);
 

@@ -123,6 +123,8 @@ bool SweepPlanGraph::computeLineSweepPlans(
                  << " in polygon: " << p;
     } else {
       cluster_sweeps->push_back(sweep);
+      std::reverse(sweep.begin(), sweep.end());
+      cluster_sweeps->push_back(sweep);
     }
   }
 

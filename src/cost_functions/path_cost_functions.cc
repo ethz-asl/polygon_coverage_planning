@@ -4,6 +4,10 @@
 
 namespace mav_coverage_planning {
 
+double computeWaypointsPathCost(const std::vector<Point_2>& path) {
+  return path.size();
+}
+
 double computeEuclideanPathCost(const std::vector<Point_2>& path) {
   double distance = 0.0;
   for (size_t i = 0; i < path.size() - 1; i++)
