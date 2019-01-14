@@ -128,6 +128,11 @@ void BasePlanner2D::getParametersFromRos() {
                     settings_.v_max, settings_.a_max);
       break;
     }
+    case Settings::CostFunctionType::kWaypoints: {
+      settings_.sweep_cost_function =
+          std::bind(&computeWaypointsPathCost, std::placeholders::_1);
+      break;
+    }
     default: {
       ROS_WARN_STREAM("Cost function type: "
                       << settings_.getCostFunctionTypeName()

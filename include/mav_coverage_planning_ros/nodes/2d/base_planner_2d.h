@@ -54,7 +54,8 @@ class BasePlanner2D {
     
     enum CostFunctionType {
       kDistance = 0,  // Minimize distance.
-      kTime           // Minimize flight time.
+      kTime ,          // Minimize flight time.
+      kWaypoints
     } cost_function_type = kDistance;
     double v_max;
     double a_max;
@@ -65,6 +66,8 @@ class BasePlanner2D {
           return "Euclidean distance";
         case CostFunctionType::kTime:
           return "Time";
+        case CostFunctionType::kWaypoints:
+          return "Time";
         default:
           return "Unknown!";
       }
@@ -72,7 +75,8 @@ class BasePlanner2D {
 
     inline bool checkCostFunctionTypeValid() {
       return (cost_function_type == CostFunctionType::kDistance) ||
-             (cost_function_type == CostFunctionType::kTime);
+             (cost_function_type == CostFunctionType::kTime)||
+             (cost_function_type == CostFunctionType::kWaypoints);
     }
   };
 
