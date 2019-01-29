@@ -3,7 +3,7 @@
 #include <math.h>
 
 namespace mav_coverage_planning {
-BCD::BCD(const PolygonWithHoles& polygon): polygon_(polygon){
+BCD::BCD(const PolygonWithHoles& polygon): polygon_(polygon) {
   polygon_nr = 0;
   //TODO(luliu): how do I write this without this loop?
   int size = 0;
@@ -91,7 +91,7 @@ bool BCD::computeBCDFromPolygonWithHoles(std::vector<Polygon_2>& polygons) {
         for(std::vector<Edge>::iterator poly = it->begin(); 
                 poly != it->end(); ++poly) {
           Point_2 new_point(poly->loc.x()*cos(-alpha*times) - 
-            poly->loc.y()*sin(-alpha*times), poly->loc.x()*sin(-alpha*times) 
+            poly->loc.y()*sin(- alpha*times), poly->loc.x()*sin(-alpha*times) 
             + poly->loc.y()*cos(-alpha*times));  
           polygon.push_back(new_point);
         }
@@ -110,18 +110,18 @@ PolygonWithHoles BCD::rotPolygon(double alpha) {
   Polygon_2 hull;
   for (VertexConstIterator it = polygon_.outer_boundary().vertices_begin(); 
           it != polygon_.outer_boundary().vertices_end(); ++it) {
-    Point_2 new_point(it->x()*cos(alpha) - 
-      it->y()*sin(alpha), it->x()*sin(alpha) + it->y()*cos(alpha));  
+    Point_2 new_point(it -> x()*cos(alpha) - 
+      it -> y()*sin(alpha), it -> x()*sin(alpha) + it -> y()*cos(alpha));  
     hull.push_back(new_point);
   }
   PolygonWithHoles pwh(hull);
   for (PolygonWithHoles::Hole_const_iterator hi = polygon_.holes_begin();
          hi != polygon_.holes_end(); ++hi) {
     Polygon_2 hole;
-    for (VertexConstIterator it = hi->vertices_begin(); 
-            it != hi->vertices_end(); ++it) {
-      Point_2 new_point(it->x()*cos(alpha) - it->y()*sin(alpha), 
-              it->x()*sin(alpha) + it->y()*cos(alpha));
+    for (VertexConstIterator it = hi -> vertices_begin(); 
+            it != hi -> vertices_end(); ++it) {
+      Point_2 new_point(it->x()*cos(alpha) - it -> y()*sin(alpha), 
+              it -> x()*sin(alpha) + it -> y()*cos(alpha));
       hole.push_back(new_point);
     } 
     pwh.add_hole(hole);
@@ -144,10 +144,10 @@ void BCD::removeDublicatedVeritices() {
     created_polygons[i].erase(++result, created_polygons[i].end()); 
   }
   for (size_t i = 0; i < created_polygons.size(); ++i) {
-    std::vector<Edge>::iterator first = created_polygons[i].begin()+1;
+    std::vector<Edge>::iterator first = created_polygons[i].begin() + 1;
     std::vector<Edge>::iterator last = created_polygons[i].end();
     std::vector<Edge>::iterator result = created_polygons[i].begin();
-    std::vector<Edge>::iterator result2 = created_polygons[i].begin()+1;
+    std::vector<Edge>::iterator result2 = created_polygons[i].begin() + 1;
     while (++first < last) {
         if ((abs(result -> loc.x() - first -> loc.x()) < eps && 
                 abs(result2 -> loc.x() - first -> loc.x()) < eps) ||
@@ -215,18 +215,18 @@ void BCD::closeSecondEvent(double x_current, double y_event, bool upper) {
 
 void BCD::updateEventStatus(Event& event, bool upper, 
         double x_current, double y_event) {
-   if (abs(x_current - event.location.x()) < eps &&
+  if (abs(x_current - event.location.x()) < eps &&
            (abs(event.location.y() - y_event) < eps || 
            abs(event.location2.y() - y_event) < eps)) {
-        if (upper) {
-            event.upper = true;
-        } else {
-            event.lower = true;
-        }
-       if (event.upper && event.lower) {
-            event.closed = true;
-       }
-   }
+    if (upper) {
+        event.upper = true;
+    } else {
+        event.lower = true;
+    }
+    if (event.upper && event.lower) {
+         event.closed = true;
+    }
+  }
 }
 
 void BCD::closePolygon(double x_current, 
@@ -243,7 +243,7 @@ void BCD::closePolygon(double x_current,
     if (edge_upper > edge_lower) {
       edge_upper--;
     }
-    edge_list.erase(edge_list.begin()+edge_lower); //Check this
+    edge_list.erase(edge_list.begin()+edge_lower);
   } else {  
     edge_list[edge_lower].loc = location;
   }
@@ -401,8 +401,8 @@ bool BCD::find_next_event(bool& first_vertex, Event*& next_event,
               } else {
                   first_vertex = false;
               }
-            } else if (inner_events[i].location.y() <= y1+eps && 
-                    inner_events[i].location.y() >= y2-eps) {
+            } else if (inner_events[i].location.y() <= y1 + eps && 
+                    inner_events[i].location.y() >= y2 - eps) {
                 first_vertex = true;
             } else {
                 first_vertex = false;
@@ -426,10 +426,10 @@ bool BCD::find_next_event(bool& first_vertex, Event*& next_event, bool &outer) {
   double x_search = inf;
   int type = -1;
   for (size_t i=0; i<outer_events.size();++i) {
-    if (outer_events[i].location.x() <= x_search+eps && 
+    if (outer_events[i].location.x() <= x_search + eps && 
             !outer_events[i].closed) {
       if (outer_events[i].type > type || 
-              outer_events[i].location.x() < x_search-eps) {
+              outer_events[i].location.x() < x_search - eps) {
           x_search= CGAL::to_double(outer_events[i].location.x());
           type = outer_events[i].type;
           next_event = &outer_events[i];
@@ -490,9 +490,10 @@ void BCD::getEdges(int& edge_upper_number, int& edge_lower_number) {
     find_next_event(first_vertex, next_event, outer);
     double x_now = CGAL::to_double(next_event -> location.x());
     if (next_event->type == 0 && value_loc_x >= x_now - eps) {
-      Edge edge1 = {.loc = next_event->location, .dir = next_event->floor};
+      Edge edge1 = {.loc = next_event -> location, .dir = next_event -> floor};
       edge_list.push_back(edge1);
-      Edge edge2 = {.loc = next_event->location2, .dir = next_event->ceiling};
+      Edge edge2 = {.loc = next_event -> location2, 
+                    .dir = next_event -> ceiling};
       edge_list.push_back(edge2);
       next_event -> closed = true;
       value_loc_x = x_now;
@@ -523,11 +524,11 @@ void BCD::getEdges(int& edge_upper_number, int& edge_lower_number) {
       value_dir_y = 
               calculateVertex(CGAL::to_double(edge_list[i].dir.x()), edge);
     }
-    if ((abs(edge_list[i].loc.x()-edge.loc.x())<eps && 
+    if ((abs(edge_list[i].loc.x() - edge.loc.x())<eps && 
             static_cast<int>(i) != edge_lower_number) 
-            && (edge.loc.y() > edge_list[i].loc.y()+eps|| 
-            (abs(edge.loc.y()-edge_list[i].loc.y())<eps && 
-            value_dir_y > edge_list[i].dir.y()+eps))) {
+            && (edge.loc.y() > edge_list[i].loc.y() + eps|| 
+            (abs(edge.loc.y() - edge_list[i].loc.y()) < eps && 
+            value_dir_y > edge_list[i].dir.y() + eps))) {
       edge_upper_number = i;
       edge = edge_list[i];
     }
@@ -586,9 +587,9 @@ void BCD::updateEdgeList(Event* event, Point_2 location, Point_2 direction) {
   size_t i = 0;
   while (i <= edge_list.size()) {
     if((abs(edge_list[i].dir.x() - event -> location.x()) < eps && 
-            abs(edge_list[i].dir.y() - event -> location.y())<eps) || 
-            (abs(edge_list[i].dir.x() - event -> location2.x()) <eps && 
-            abs(edge_list[i].dir.y() - event-> location2.y())<eps)) {
+            abs(edge_list[i].dir.y() - event -> location.y()) < eps) || 
+            (abs(edge_list[i].dir.x() - event -> location2.x()) < eps && 
+            abs(edge_list[i].dir.y() - event-> location2.y()) < eps)) {
       edge_list[i].loc = location;
       edge_list[i].dir = direction;
       event -> closed = true;
@@ -608,8 +609,6 @@ void BCD::addEvent(std::vector<Edge>& poly, bool two_vertices,
     poly.push_back(edge2);
   }
 }
-
-
 
 }
 
