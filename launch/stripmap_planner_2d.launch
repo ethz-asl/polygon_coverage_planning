@@ -15,14 +15,14 @@
     <!-- Basic and control parameter -->
     <rosparam command="load" file="$(find mav_coverage_planning_ros)/cfg/base_planner_2d.yaml" />
     <!-- Polygon, altitude, and world frame ID -->
-    <rosparam command="load" file="$(find mav_coverage_planning_ros)/cfg/example_polygon_forest.yaml" />
+    <rosparam command="load" file="$(find mav_coverage_planning_ros)/cfg/cleaning_polygon.yaml" />
     <!-- Sweep planner specific parameter -->
     <param name="robot_size" value="0.4" />
     <param name="wall_dist" value="0.7" />
     <param name="min_view_overlap" value="0.0" />
-    <param name="sweep_around_obstacles" value="true" />
+    <param name="sweep_around_obstacles" value="false" />
     <!-- Options: "bcd", "convex"-->
-    <param name="decomposition_type" value="convex" />
+    <param name="decomposition_type" value="bcd" />
   </node>
 
 </launch>
