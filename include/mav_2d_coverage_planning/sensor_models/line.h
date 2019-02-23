@@ -17,7 +17,7 @@ class Line : public SensorModelBase {
   }
 
   inline void computeOffsetDistance() override {
-    offset_distance_ = 0.5 * lateral_footprint_;
+    offset_distance_ = 0.5 * getSweepDistance();
   }
 
   double lateral_footprint_;

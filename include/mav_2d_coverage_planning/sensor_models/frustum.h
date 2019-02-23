@@ -22,8 +22,10 @@ class Frustum : public SensorModelBase {
   }
 
   inline void computeOffsetDistance() override {
-    offset_distance_ =
-        0.5 * std::min(lateral_footprint_, longitudinal_footprint_);
+    offset_distance_ = 0.5 * getSweepDistance();
+    if (lateral_footprint_ > longitudinal_footprint_) {
+      offset_distance_ *= longitudinal_footprint_ / lateral_footprint_;
+    }
   }
 
   inline double computeFootprint(double altitude, double fov) const {
