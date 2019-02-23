@@ -5,16 +5,14 @@
 
 #include <ros/ros.h>
 
+#include <mav_2d_coverage_planning/sensor_models/frustum.h>
+#include <mav_2d_coverage_planning/sensor_models/line.h>
+
+#include <mav_coverage_planning_ros/conversions/ros_interface.h>
 #include "mav_coverage_planning_ros/nodes/2d/base_planner_2d.h"
 
 namespace mav_coverage_planning {
 
-// The default width of robot
-constexpr double kDefaultRobotSize = 1.0;
-// The default minimum view overlap between two sweeps [0 .. 1)
-constexpr double kDefaultMinViewOverlap = 0.0;
-constexpr double kDefaultWallDist = 0.0;
-constexpr bool kDefaultSweepAroundObstacles = false;
 // A ros wrapper for the line sweep planner
 template <class StripmapPlanner>
 class StripmapPlanner2D : public BasePlanner2D {
@@ -23,35 +21,78 @@ class StripmapPlanner2D : public BasePlanner2D {
   StripmapPlanner2D(const ros::NodeHandle& nh,
                     const ros::NodeHandle& nh_private)
       : BasePlanner2D(nh, nh_private),
-        robot_size_(kDefaultRobotSize),
-        wall_dist_(kDefaultWallDist),
-        min_view_overlap_(kDefaultMinViewOverlap),
-        sweep_around_obstacles_(kDefaultSweepAroundObstacles),
-        decomposition_type_("convex")
-        {
-
+        decomposition_type_(DecompositionType::kBest),
+        sweep_around_obstacles_(false) {
     // Parameters.
-    if (!nh_private_.getParam("robot_size", robot_size_)) {
+    double lateral_overlap = 0.0;
+    if (!nh_private_.getParam("lateral_overlap", lateral_overlap)) {
+      ROS_WARN_STREAM("No lateral overlap specified. Using default value of: "
+                      << lateral_overlap);
+    }
+
+    if (!nh_private_.getParam("sweep_around_obstacles",
+                              sweep_around_obstacles_)) {
       ROS_WARN_STREAM(
-          "No robot size specified. Using default value of: " << robot_size_);
+          "Not defined if robot should sweep around obstacles. Using default "
+          "value of: "
+          << sweep_around_obstacles_);
     }
-    if (!nh_private_.getParam("wall_dist", wall_dist_)) {
+    int decomposition_type_int = 0;
+    if (!nh_private_.getParam("decomposition_type", decomposition_type_int)) {
       ROS_WARN_STREAM(
-          "No robot size specified. Using default value of: " << wall_dist_);
+          "No decomposition type specified. Using default value of: "
+          << decomposition_type_int);
     }
-    if (!nh_private_.getParam("min_view_overlap", min_view_overlap_)) {
-      ROS_WARN_STREAM("No minimum overlap specified. Using default value of: "
-                      << min_view_overlap_);
+    decomposition_type_ =
+        static_cast<DecompositionType>(decomposition_type_int);
+
+    // Get sensor model.
+    int sensor_model_type_int = 0;
+    if (!nh_private_.getParam("sensor_model_type", sensor_model_type_int)) {
+      ROS_WARN_STREAM("No sensor model type specified. Using default value of: "
+                      << sensor_model_type_int);
     }
-    
-    if (!nh_private_.getParam("sweep_around_obstacles", sweep_around_obstacles_)) {
-      ROS_WARN_STREAM("Not defined if robot should sweep around obstacles. Using default value of: "
-                      << sweep_around_obstacles_);
+    SensorModelType sensor_model_type =
+        static_cast<SensorModelType>(sensor_model_type_int);
+    switch (sensor_model_type) {
+      case SensorModelType::kLine: {
+        double lateral_footprint = 1.0;
+        if (!nh_private_.getParam("lateral_footprint", lateral_footprint)) {
+          ROS_WARN_STREAM(
+              "No lateral footprint specified. Using default value of: "
+              << lateral_footprint);
+        }
+        sensor_model_ =
+            std::make_shared<Line>(lateral_footprint, lateral_overlap);
+        ROS_INFO("Sensor model: line");
+        ROS_INFO_STREAM("Lateral footprint: " << lateral_footprint);
+        break;
+      }
+      case SensorModelType::kFrustum:
+      default: {
+        double lateral_fov = 0.5 * M_PI;
+        double longitudinal_fov = 0.5 * M_PI;
+        if (!nh_private_.getParam("lateral_fov", lateral_fov)) {
+          ROS_WARN_STREAM("No lateral fov specified. Using default value of: "
+                          << lateral_fov);
+        }
+        if (!nh_private_.getParam("longitudinal_fov", longitudinal_fov)) {
+          ROS_WARN_STREAM(
+              "No longitudinal fov specified. Using default value of: "
+              << longitudinal_fov);
+        }
+        sensor_model_ = std::make_shared<Frustum>(
+            settings_.altitude, lateral_fov, longitudinal_fov, lateral_overlap);
+        ROS_INFO("Sensor model: frustum");
+        ROS_INFO_STREAM("Lateral FOV: " << lateral_fov);
+        ROS_INFO_STREAM("Longitudinal FOV: " << longitudinal_fov);
+        ROS_INFO_STREAM("Altitude: " << settings_.altitude);
+        break;
+      }
     }
-     if (!nh_private_.getParam("decomposition_type", decomposition_type_)) {
-    ROS_WARN_STREAM("No decomposition type specified. Using default value of: "
-                    << decomposition_type_);
-    }
+    ROS_INFO_STREAM("Lateral overlap: " << lateral_overlap);
+    ROS_INFO_STREAM("Sweep distance: " << sensor_model_->getSweepDistance());
+    ROS_INFO_STREAM("Polygon offset: " << sensor_model_->getOffsetDistance());
 
     // Creating the line sweep planner from the retrieved parameters.
     // This operation may take some time.
@@ -70,9 +111,8 @@ class StripmapPlanner2D : public BasePlanner2D {
     typename StripmapPlanner::Settings settings;
     settings.polygon = settings_.polygon;
     settings.path_cost_function = settings_.sweep_cost_function;
-    settings.robot_size = robot_size_;
-    settings.wall_dist = wall_dist_;
-    settings.min_view_overlap = min_view_overlap_;
+    settings.min_wall_distance = settings_.min_wall_distance;
+    settings.sensor_model = sensor_model_;
     settings.sweep_around_obstacles = sweep_around_obstacles_;
     settings.decomposition_type = decomposition_type_;
 
@@ -87,15 +127,36 @@ class StripmapPlanner2D : public BasePlanner2D {
     }
   }
 
+  inline visualization_msgs::MarkerArray createDecompositionMarkers()
+      const override {
+    visualization_msgs::MarkerArray markers;
+    if (!planner_) {
+      return markers;
+    }
+
+    std::vector<Polygon> decomposition = planner_->getDecomposition();
+    for (size_t i = 0; i < decomposition.size(); ++i) {
+      visualization_msgs::MarkerArray decomposition_markers;
+      std::string name = "decomposition_polygon_" + std::to_string(i);
+      createPolygonMarkers(
+          decomposition[i], settings_.altitude, settings_.global_frame_id, name,
+          mav_visualization::Color::Red(), mav_visualization::Color::Red(),
+          &decomposition_markers);
+      markers.markers.insert(markers.markers.end(),
+                             decomposition_markers.markers.begin(),
+                             decomposition_markers.markers.end());
+    }
+
+    return markers;
+  }
+
   // The library object that actually does planning.
   std::unique_ptr<StripmapPlanner> planner_;
 
   // System Parameters
-  double robot_size_;
-  double wall_dist_;
-  double min_view_overlap_;
+  std::shared_ptr<SensorModelBase> sensor_model_;
+  DecompositionType decomposition_type_;
   bool sweep_around_obstacles_;
-  std::string decomposition_type_;
 };
 }  // namespace mav_coverage_planning
 

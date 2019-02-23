@@ -22,11 +22,7 @@ BasePlanner2D::Settings::Settings()
       global_frame_id("world"),
       publish_plan_on_planning_complete(false),
       publish_visualization_on_planning_complete(true),
-      robot_size(1.0),
-      wall_dist(0.0),
-      min_view_overlap(0.0),
-      sweep_around_obstacles(false),
-      decomposition_type("convex")
+      min_wall_distance(0.0)
       {}
 
 BasePlanner2D::BasePlanner2D(const ros::NodeHandle& nh,
@@ -79,19 +75,12 @@ void BasePlanner2D::advertiseTopics() {
 
 void BasePlanner2D::getParametersFromRos() {
   // Getting control params from the server
-  if (!nh_private_.getParam("robot_size", settings_.robot_size)) {
-    ROS_WARN_STREAM("No robot size specified. Using default value of: "
-                    << settings_.robot_size);
+  if (!nh_private_.getParam("min_wall_distance", settings_.min_wall_distance)) {
+    ROS_WARN_STREAM(
+        "No minimum wall distance specified. Using default value of: "
+        << settings_.min_wall_distance);
   }
-  if (!nh_private_.getParam("wall_dist", settings_.wall_dist)) {
-  }
-  if (!nh_private_.getParam("decomposition_type", settings_.decomposition_type)) {
-  }
-  if (!nh_private_.getParam("sweep_around_obstacles", settings_.sweep_around_obstacles)) {
-  }
-  if (!nh_private_.getParam("min_view_overlap", settings_.min_view_overlap)) {
-  }
-  
+
   if (!nh_private_.getParam("local_frame_id", settings_.local_frame_id)) {
     ROS_WARN_STREAM("No local frame id specified. Using default value of: "
                     << settings_.local_frame_id);
@@ -114,6 +103,13 @@ void BasePlanner2D::getParametersFromRos() {
     ROS_WARN_STREAM("cost_function_type not valid. Resetting to default: "
                     << settings_.cost_function_type << "("
                     << settings_.getCostFunctionTypeName() << ").");
+  }
+
+  ROS_INFO_STREAM(
+      "Setting cost function: " << settings_.getCostFunctionTypeName());
+  if (settings_.cost_function_type == Settings::CostFunctionType::kTime) {
+    ROS_INFO_STREAM("v_max: " << settings_.v_max
+                              << ", a_max: " << settings_.a_max);
   }
 
   switch (settings_.cost_function_type) {
@@ -274,25 +270,11 @@ bool BasePlanner2D::publishVisualization() {
                          polygon.markers.end());
 
   // The decomposed polygons.
-  std::vector<Polygon> convex_decomposition;
-  if (settings_.decomposition_type.compare("convex") == 0) {
-    settings_.polygon.computeConvexDecompositionFromPolygonWithHoles(
-      &convex_decomposition);
-  } else if (settings_.decomposition_type.compare("bcd") == 0) {
-    settings_.polygon.computeBCDFromPolygonWithHoles(
-      &convex_decomposition);
-  }
-  for (size_t i = 0; i < convex_decomposition.size(); ++i) {
-    visualization_msgs::MarkerArray convex_polygon_markers;
-    std::string name = "convex_polygon_" + std::to_string(i);
-    createPolygonMarkers(
-        convex_decomposition[i], settings_.altitude, settings_.global_frame_id,
-        name, mav_visualization::Color::Red(), mav_visualization::Color::Red(),
-        &convex_polygon_markers);
-    markers.markers.insert(markers.markers.end(),
-                           convex_polygon_markers.markers.begin(),
-                           convex_polygon_markers.markers.end());
-  }
+  visualization_msgs::MarkerArray decomposition_markers =
+      createDecompositionMarkers();
+  markers.markers.insert(markers.markers.end(),
+                         decomposition_markers.markers.begin(),
+                         decomposition_markers.markers.end());
 
   // Publishing
   marker_pub_.publish(markers);

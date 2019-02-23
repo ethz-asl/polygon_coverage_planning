@@ -1,4 +1,5 @@
 <launch>
+  <arg name="sensor_model_type" default="1"/>
 
   <node name="rviz"
     pkg="rviz"
@@ -15,14 +16,19 @@
     <!-- Basic and control parameter -->
     <rosparam command="load" file="$(find mav_coverage_planning_ros)/cfg/base_planner_2d.yaml" />
     <!-- Polygon, altitude, and world frame ID -->
-    <rosparam command="load" file="$(find mav_coverage_planning_ros)/cfg/cleaning_polygon.yaml" />
+    <rosparam command="load" file="$(find mav_coverage_planning_ros)/cfg/example_polygon_piombino.yaml" />
     <!-- Sweep planner specific parameter -->
-    <param name="robot_size" value="0.4" />
-    <param name="wall_dist" value="0.7" />
-    <param name="min_view_overlap" value="0.0" />
+    <param name="lateral_overlap" value="0.5" />
     <param name="sweep_around_obstacles" value="false" />
-    <!-- Options: "bcd", "convex"-->
-    <param name="decomposition_type" value="bcd" />
+    <!-- Options: 0, 1, 2 [best, bcd, convex]-->
+    <param name="decomposition_type" value="0" />
+    <!-- Sensor model: 0, 1 [line, frustum]-->
+    <param name="sensor_model_type" value="$(arg sensor_model_type)" />
+    <!-- Line parameters. -->
+    <param name="lateral_footprint" value="1.0" if="$(eval arg('sensor_model_type') == 0)" />
+    <!-- Frustum parameters. -->
+    <param name="lateral_fov" value="0.84" if="$(eval arg('sensor_model_type') == 1)" />
+    <param name="longitudinal_fov" value="1.07"  if="$(eval arg('sensor_model_type') == 1)"/>
   </node>
 
 </launch>

@@ -5,12 +5,14 @@
 
 #include <mav_2d_coverage_planning/cost_functions/path_cost_functions.h>
 #include <mav_2d_coverage_planning/geometry/polygon.h>
+#include <mav_2d_coverage_planning/sensor_models/sensor_model_base.h>
 #include <mav_coverage_planning_comm/cgal_definitions.h>
 
 #include <mav_planning_msgs/PlannerService.h>
 #include <mav_planning_msgs/PolygonService.h>
 #include <ros/ros.h>
 #include <std_srvs/Empty.h>
+#include <visualization_msgs/MarkerArray.h>
 
 // Stuff to receive MAV odometry:
 #include <geometry_msgs/TransformStamped.h>
@@ -46,15 +48,11 @@ class BasePlanner2D {
     std::string global_frame_id;
     bool publish_plan_on_planning_complete;
     bool publish_visualization_on_planning_complete;
-    double robot_size;
-    double wall_dist;
-    double min_view_overlap;
-    bool sweep_around_obstacles;
-    std::string decomposition_type;
-    
+    double min_wall_distance;
+
     enum CostFunctionType {
       kDistance = 0,  // Minimize distance.
-      kTime ,          // Minimize flight time.
+      kTime,          // Minimize flight time.
       kWaypoints
     } cost_function_type = kDistance;
     double v_max;
@@ -67,7 +65,7 @@ class BasePlanner2D {
         case CostFunctionType::kTime:
           return "Time";
         case CostFunctionType::kWaypoints:
-          return "Time";
+          return "Waypoints";
         default:
           return "Unknown!";
       }
@@ -75,7 +73,7 @@ class BasePlanner2D {
 
     inline bool checkCostFunctionTypeValid() {
       return (cost_function_type == CostFunctionType::kDistance) ||
-             (cost_function_type == CostFunctionType::kTime)||
+             (cost_function_type == CostFunctionType::kTime) ||
              (cost_function_type == CostFunctionType::kWaypoints);
     }
   };
@@ -136,6 +134,10 @@ class BasePlanner2D {
 
   // Visualization
   bool publishVisualization();
+  virtual inline visualization_msgs::MarkerArray createDecompositionMarkers()
+      const {
+    return visualization_msgs::MarkerArray();
+  }
   // Publishing the plan
   bool publishTrajectoryPoints();
 

@@ -1,4 +1,4 @@
-# A mav_planning_msgs/PolygonWithHoles.msg to describe a square environment 
+# A mav_planning_msgs/PolygonWithHoles.msg to describe a square environment with 4 holes. 
 polygon:
   header:
     seq: 0
