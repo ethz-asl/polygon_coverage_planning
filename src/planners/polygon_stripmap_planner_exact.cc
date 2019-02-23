@@ -7,7 +7,7 @@ namespace mav_coverage_planning {
 bool PolygonStripmapPlannerExact::setupSolver() {
   LOG(INFO) << "Creating boolean lattice.";
   boolean_lattice_ =
-      boolean_lattice::BooleanLattice(convex_decomposition_.size());
+      boolean_lattice::BooleanLattice(decomposition_.size());
   if (!boolean_lattice_.isInitialized()) {
     LOG(ERROR) << "Cannot create boolean lattice.";
     return false;

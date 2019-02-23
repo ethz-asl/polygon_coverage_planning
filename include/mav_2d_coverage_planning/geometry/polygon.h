@@ -12,6 +12,9 @@
 #include "mav_2d_coverage_planning/geometry/BCD.h"
 
 namespace mav_coverage_planning {
+
+enum DecompositionType { kBest = 0, kBoustrophedeon, kConvex };
+
 class Polygon {
  public:
   Polygon();
@@ -72,6 +75,21 @@ class Polygon {
       std::vector<Polygon>* y_monotone_polygons);
 
   bool computeBCDFromPolygonWithHoles(std::vector<Polygon>* bcd_polygons) const;
+
+  // Compute BCDs for every edge direction. Return any with the smallest number
+  // of cells.
+  // TODO(rikba): implement.
+  bool computeBestBCDFromPolygonWithHoles(
+      std::vector<Polygon>* bcd_polygons) const {
+    return computeBCDFromPolygonWithHoles(bcd_polygons);
+  }
+
+  //
+  // TODO(rikba): implement.
+  bool computeBestDecompositionFromPolygonWithHoles(
+      std::vector<Polygon>* bcd_polygons) const {
+    return computeBCDFromPolygonWithHoles(bcd_polygons);
+  }
 
   // Compute the visibility polygon given a point inside a strictly simple
   // polygon. Francisc Bungiu, Michael Hemmer, John Hershberger, Kan Huang, and

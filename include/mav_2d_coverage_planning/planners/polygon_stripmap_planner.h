@@ -1,10 +1,13 @@
 #ifndef MAV_2D_COVERAGE_PLANNING_PLANNERS_POLYGON_STRIPMAP_PLANNER_H_
 #define MAV_2D_COVERAGE_PLANNING_PLANNERS_POLYGON_STRIPMAP_PLANNER_H_
 
+#include <memory>
+
 #include <mav_coverage_planning_comm/cgal_definitions.h>
 #include "mav_2d_coverage_planning/cost_functions/path_cost_functions.h"
 #include "mav_2d_coverage_planning/geometry/polygon.h"
 #include "mav_2d_coverage_planning/graphs/sweep_plan_graph.h"
+#include "mav_2d_coverage_planning/sensor_models/sensor_model_base.h"
 
 namespace mav_coverage_planning {
 
@@ -13,27 +16,13 @@ class PolygonStripmapPlanner {
   struct Settings {
     Polygon polygon;
     PathCostFunctionType path_cost_function;
-    double altitude;
-    double lateral_fov;
-    double longitudinal_fov;
-    double min_view_overlap;
-    double robot_size;
-    double wall_dist;
+    std::shared_ptr<SensorModelBase> sensor_model;
+    double min_wall_distance;
     bool sweep_around_obstacles;
-    std::string decomposition_type;
-
-    bool check() const;
+    DecompositionType decomposition_type;
   };
 
   // Create a sweep plan for a 2D polygon with holes.
-  //
-  // polygon: the polygon to cover.
-  // cost_function: the cost function type.
-  // altitude: constant MAV altitude in [m].
-  // longitudinal_fov: lateral field of view of the sensor in [rad].
-  // lateral_fov: lateral field of view of the sensor in [rad].
-  // min_view_overlap: the minimum sensor footprint overlap of two sweep rows
-  // [0..1).
   PolygonStripmapPlanner(const Settings& settings);
 
   // Precompute solver essentials. To be run before solving.
@@ -48,34 +37,27 @@ class PolygonStripmapPlanner {
 
   inline bool isInitialized() const { return is_initialized_; }
 
+  inline std::vector<Polygon> getDecomposition() const {
+    return decomposition_;
+  }
+
  protected:
   virtual bool setupSolver() { return true; };
   // Default: Heuristic GTSPP solver.
   virtual bool runSolver(const Point_2& start, const Point_2& goal,
                          std::vector<Point_2>* solution) const;
-  
-  virtual bool sweepAroundObstacles(std::vector<Point_2>* solution) const;
-  
-  virtual void createCornerSweeps(std::vector<Point_2>& hull, 
-          std::vector<Point_2>* solution) const;
 
-  std::vector<Polygon> convex_decomposition_;
+  virtual bool sweepAroundObstacles(std::vector<Point_2>* solution) const;
+
+  std::vector<Polygon> decomposition_;
   // The sweep plan graph with all possible waypoints its node connections.
   sweep_plan_graph::SweepPlanGraph sweep_plan_graph_;
 
  private:
-  // Check for valid user input.
-  bool checkUserInput() const;
-
-  double computeSweepDistance() const;
-  
-
   // Valid construction.
   bool is_initialized_;
   // User problem settings.
   Settings settings_;
-  
-  Polygon polygon_orig_;
 };
 
 }  // namespace mav_coverage_planning
