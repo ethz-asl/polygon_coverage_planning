@@ -6,14 +6,21 @@
 namespace mav_coverage_planning {
 namespace visibility_graph {
 
-VisibilityGraph::VisibilityGraph(const Polygon& polygon)
-    : GraphBase(), polygon_(polygon) {
+VisibilityGraph::VisibilityGraph(const Polygon& polygon,
+                                 double offset_distance /* = 0.0 */)
+    : GraphBase(), polygon_(polygon), offset_distance_(offset_distance) {
   // Build visibility graph.
   is_created_ = create();
 }
 
 bool VisibilityGraph::create() {
   clear();
+  Polygon p;
+  if (!polygon_.computeOffsetPolygon(offset_distance_, &p)) {
+    LOG(WARNING) << "Cannot shrink polygon:" << polygon_
+                 << "with distance: " << offset_distance_;
+  }
+  polygon_ = p;
   // Select shortest path vertices.
   std::vector<VertexConstCirculator> graph_vertices;
   if (!polygon_.appendConcaveOuterBoundaryVertices(&graph_vertices))

@@ -26,7 +26,7 @@ struct EdgeProperty {};
 class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
  public:
   // Creates an undirected, weighted visibility graph.
-  VisibilityGraph(const Polygon& polygon);
+  VisibilityGraph(const Polygon& polygon, double offset_distance = 0.0);
 
   VisibilityGraph() : GraphBase() {}
 
@@ -65,6 +65,7 @@ class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
                                   Heuristic* heuristic) const override;
 
   Polygon polygon_;
+  double offset_distance_;
 };
 
 }  // namespace visibility_graph
