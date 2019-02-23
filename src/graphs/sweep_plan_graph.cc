@@ -96,31 +96,23 @@ bool SweepPlanGraph::computeLineSweepPlans(
   CHECK_NOTNULL(cluster_sweeps);
   cluster_sweeps->clear();
   cluster_sweeps->reserve(2 * polygon.getPolygon().outer_boundary().size());
-
-  // Shrink polygon.
-  Polygon p;
-  if (!polygon.computeOffsetPolygon(offset_distance_, &p)) {
-    LOG(WARNING) << "Cannot shrink polygon:" << polygon
-                 << " with sweep distance: " << sweep_distance_;
-  }
-
   // Create all sweep plans.
   bool cc_orientation = true;
   std::vector<Point_2> sweep;
-  for (size_t start_id = 0; start_id < p.getPolygon().outer_boundary().size();
+  for (size_t start_id = 0; start_id < polygon.getPolygon().outer_boundary().size();
        ++start_id) {
-    if (!p.computeLineSweepPlan(sweep_distance_, start_id, cc_orientation,
+    if (!polygon.computeLineSweepPlan(sweep_distance_, start_id, cc_orientation,
                                 &sweep)) {
       LOG(WARNING) << "Could not compute sweep plan for start_id: " << start_id
-                 << " in polygon: " << p;
+                 << " in polygon: " << polygon;
     } else {
       cluster_sweeps->push_back(sweep);
     }
 
-    if (!p.computeLineSweepPlan(sweep_distance_, start_id, !cc_orientation,
+    if (!polygon.computeLineSweepPlan(sweep_distance_, start_id, !cc_orientation,
                                &sweep)) {
       LOG(WARNING) << "Could not compute sweep plan for start_id: " << start_id
-                 << " in polygon: " << p;
+                 << " in polygon: " << polygon;
     } else {
       cluster_sweeps->push_back(sweep);
       std::reverse(sweep.begin(), sweep.end());

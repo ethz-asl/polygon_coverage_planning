@@ -58,9 +58,7 @@ bool PolygonStripmapPlanner::setup() {
     LOG(INFO) << "Start creating sweep plan graph.";
     sweep_plan_graph_ = sweep_plan_graph::SweepPlanGraph(
         settings_.polygon, settings_.path_cost_function, decomposition_,
-        settings_.sensor_model->getSweepDistance(),
-        settings_.sensor_model->getOffsetDistance(),
-        settings_.min_wall_distance);
+        settings_.sensor_model->getSweepDistance());
     if (!sweep_plan_graph_.isInitialized()) {
       LOG(ERROR) << "Cannot create sweep plan graph.";
       is_initialized_ = false;
@@ -120,15 +118,9 @@ bool PolygonStripmapPlanner::sweepAroundObstacles(
     std::vector<Point_2>* solution) const {
   Point_2 goal = solution->back();
   solution->pop_back();
-  Polygon p;
-  if (!settings_.polygon.computeOffsetPolygon(settings_.min_wall_distance,
-                                              &p)) {
-    LOG(WARNING) << "Cannot shrink polygon:" << settings_.polygon
-                 << "with distance: " << settings_.min_wall_distance;
-  }
   std::vector<Point_2> waypoints;
-  visibility_graph::VisibilityGraph visibility_graph(p);
-  std::vector<std::vector<Point_2>> holes = p.getHoleVertices();
+  visibility_graph::VisibilityGraph visibility_graph(settings_.polygon);
+  std::vector<std::vector<Point_2>> holes = settings_.polygon.getHoleVertices();
 
   for (size_t i = 0u; i < holes.size(); ++i) {
     std::vector<Point_2> hole = holes[i];
@@ -137,7 +129,7 @@ bool PolygonStripmapPlanner::sweepAroundObstacles(
     solution->insert(solution->end(), waypoints.begin() + 1, waypoints.end());
   }
 
-  std::vector<Point_2> hull = p.getHullVertices();
+  std::vector<Point_2> hull = settings_.polygon.getHullVertices();
   waypoints.clear();
   visibility_graph.solve(solution->back(), hull.front(), &waypoints);
   solution->insert(solution->end(), waypoints.begin() + 1, waypoints.end());

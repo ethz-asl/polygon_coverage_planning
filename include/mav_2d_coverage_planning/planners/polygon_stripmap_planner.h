@@ -17,7 +17,6 @@ class PolygonStripmapPlanner {
     Polygon polygon;
     PathCostFunctionType path_cost_function;
     std::shared_ptr<SensorModelBase> sensor_model;
-    double min_wall_distance;
     bool sweep_around_obstacles;
     DecompositionType decomposition_type;
   };

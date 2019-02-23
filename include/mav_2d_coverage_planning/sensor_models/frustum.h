@@ -10,22 +10,13 @@ namespace mav_coverage_planning {
 
 class Frustum : public SensorModelBase {
  public:
-  Frustum(double altitude, double lateral_fov, double longitudinal_fov,
-          double lateral_overlap)
+  Frustum(double altitude, double lateral_fov, double lateral_overlap)
       : SensorModelBase(lateral_overlap),
-        lateral_footprint_(computeFootprint(altitude, lateral_fov)),
-        longitudinal_footprint_(computeFootprint(altitude, longitudinal_fov)) {}
+        lateral_footprint_(computeFootprint(altitude, lateral_fov)) {}
 
  protected:
   inline void computeSweepDistance() override {
     sweep_distance_ = (1.0 - lateral_overlap_) * lateral_footprint_;
-  }
-
-  inline void computeOffsetDistance() override {
-    offset_distance_ = 0.5 * getSweepDistance();
-    if (lateral_footprint_ > longitudinal_footprint_) {
-      offset_distance_ *= longitudinal_footprint_ / lateral_footprint_;
-    }
   }
 
   inline double computeFootprint(double altitude, double fov) const {
@@ -36,7 +27,6 @@ class Frustum : public SensorModelBase {
   }
 
   double lateral_footprint_;
-  double longitudinal_footprint_;
 };
 
 }  // namespace mav_coverage_planning

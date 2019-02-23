@@ -55,20 +55,12 @@ class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
   SweepPlanGraph(const Polygon& polygon,
                  const PathCostFunctionType& cost_function,
                  const std::vector<Polygon>& polygon_clusters,
-                 double sweep_distance, double offset_distance,
-                 double min_wall_distance)
+                 double sweep_distance)
       : GraphBase(),
-        visibility_graph_(polygon, offset_distance),
+        visibility_graph_(polygon),
         cost_function_(cost_function),
         polygon_clusters_(polygon_clusters),
-        sweep_distance_(sweep_distance),
-        offset_distance_(offset_distance),
-        min_wall_distance_(min_wall_distance) {
-    if (offset_distance_ < min_wall_distance_) {
-      LOG(WARNING) << "Polygon offset distance is smaller than minimum wall "
-                      "distance. Overwriting polygon offset distance.";
-      offset_distance_ = min_wall_distance_;
-    }
+        sweep_distance_(sweep_distance) {
     is_created_ = create();  // Auto-create.
   }
   SweepPlanGraph() : GraphBase() {}
@@ -131,8 +123,6 @@ class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
   PathCostFunctionType cost_function_;     // The user defined cost function.
   std::vector<Polygon> polygon_clusters_;  // The polygon clusters.
   double sweep_distance_;                  // The max. sweep distance.
-  double offset_distance_;                 // The max. polygon offset distance.
-  double min_wall_distance_;               // The min. distance to walls.
 };
 
 }  // namespace sweep_plan_graph
