@@ -236,17 +236,16 @@ bool Polygon::computeConvexDecompositionFromPolygonWithHoles(
 }
 
 bool Polygon::computeBCDFromPolygonWithHoles(
-    std::vector<Polygon>* convex_polygons) {
-  CHECK_NOTNULL(convex_polygons);
+    std::vector<Polygon>* bcd_polygons) const {
+  CHECK_NOTNULL(bcd_polygons);
+  bcd_polygons->clear();
+
   BCD bcd(polygon_);
   std::vector<Polygon_2> polygons;
-  if (!bcd.computeBCDFromPolygonWithHoles(polygons))
-    return false;
-  convex_polygons->clear();
-  convex_polygons->reserve(polygons.size());
-  for (size_t i = 0; i<polygons.size(); ++i) {
-    convex_polygons->emplace_back(polygons[i]);
-  }
+  if (!bcd.computeBCDFromPolygonWithHoles(&polygons)) return false;
+  bcd_polygons->reserve(polygons.size());
+  for (const Polygon_2& p : polygons) bcd_polygons->emplace_back(p);
+
   return true;
 }
 
