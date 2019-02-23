@@ -55,26 +55,6 @@ Visualization Manager:
       Marker Topic: /shortest_path_planner_2d/path_markers
       Name: MarkerArray
       Namespaces:
-        convex_polygon_0hull: false
-        convex_polygon_10hull: false
-        convex_polygon_11hull: false
-        convex_polygon_12hull: false
-        convex_polygon_13hull: false
-        convex_polygon_14hull: false
-        convex_polygon_15hull: false
-        convex_polygon_16hull: false
-        convex_polygon_17hull: false
-        convex_polygon_18hull: false
-        convex_polygon_19hull: false
-        convex_polygon_1hull: false
-        convex_polygon_2hull: false
-        convex_polygon_3hull: false
-        convex_polygon_4hull: false
-        convex_polygon_5hull: false
-        convex_polygon_6hull: false
-        convex_polygon_7hull: false
-        convex_polygon_8hull: false
-        convex_polygon_9hull: false
         points_end: true
         points_start: true
         polygonhole_0: true
@@ -113,26 +93,21 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Class: rviz/Orbit
-      Distance: 286.815277
+      Angle: 0
+      Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
-      Focal Point:
-        X: 15.0491476
-        Y: 55.9801369
-        Z: -46.1142311
-      Focal Shape Fixed Size: true
-      Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.860397935
+      Scale: 3.59634495
       Target Frame: <Fixed Frame>
-      Value: Orbit (rviz)
-      Yaw: 1.10039771
+      Value: TopDownOrtho (rviz)
+      X: 51.163063
+      Y: 63.1196365
     Saved: ~
 Window Geometry:
   Displays:
@@ -150,5 +125,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1200
-  X: 59
-  Y: 36
+  X: 58
+  Y: 25

@@ -80,6 +80,7 @@ void BasePlanner2D::getParametersFromRos() {
         "No minimum wall distance specified. Using default value of: "
         << settings_.min_wall_distance);
   }
+  ROS_INFO_STREAM("Minimum wall distance: " << settings_.min_wall_distance);
 
   if (!nh_private_.getParam("local_frame_id", settings_.local_frame_id)) {
     ROS_WARN_STREAM("No local frame id specified. Using default value of: "
