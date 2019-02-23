@@ -71,28 +71,20 @@ class StripmapPlanner2D : public BasePlanner2D {
       case SensorModelType::kFrustum:
       default: {
         double lateral_fov = 0.5 * M_PI;
-        double longitudinal_fov = 0.5 * M_PI;
         if (!nh_private_.getParam("lateral_fov", lateral_fov)) {
           ROS_WARN_STREAM("No lateral fov specified. Using default value of: "
                           << lateral_fov);
         }
-        if (!nh_private_.getParam("longitudinal_fov", longitudinal_fov)) {
-          ROS_WARN_STREAM(
-              "No longitudinal fov specified. Using default value of: "
-              << longitudinal_fov);
-        }
-        sensor_model_ = std::make_shared<Frustum>(
-            settings_.altitude, lateral_fov, longitudinal_fov, lateral_overlap);
+        sensor_model_ = std::make_shared<Frustum>(settings_.altitude,
+                                                  lateral_fov, lateral_overlap);
         ROS_INFO("Sensor model: frustum");
         ROS_INFO_STREAM("Lateral FOV: " << lateral_fov);
-        ROS_INFO_STREAM("Longitudinal FOV: " << longitudinal_fov);
         ROS_INFO_STREAM("Altitude: " << settings_.altitude);
         break;
       }
     }
     ROS_INFO_STREAM("Lateral overlap: " << lateral_overlap);
     ROS_INFO_STREAM("Sweep distance: " << sensor_model_->getSweepDistance());
-    ROS_INFO_STREAM("Polygon offset: " << sensor_model_->getOffsetDistance());
 
     // Creating the line sweep planner from the retrieved parameters.
     // This operation may take some time.
@@ -109,9 +101,8 @@ class StripmapPlanner2D : public BasePlanner2D {
   inline bool resetPlanner() override {
     ROS_INFO_STREAM("Reset planner.");
     typename StripmapPlanner::Settings settings;
-    settings.polygon = settings_.polygon;
+    settings.polygon = settings_.polygon_offset;
     settings.path_cost_function = settings_.sweep_cost_function;
-    settings.min_wall_distance = settings_.min_wall_distance;
     settings.sensor_model = sensor_model_;
     settings.sweep_around_obstacles = sweep_around_obstacles_;
     settings.decomposition_type = decomposition_type_;

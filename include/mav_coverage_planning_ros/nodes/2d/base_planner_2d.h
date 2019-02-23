@@ -41,6 +41,8 @@ class BasePlanner2D {
   struct Settings {
     Settings();
     Polygon polygon;
+    Polygon polygon_offset;
+    double min_wall_distance;
     PathCostFunctionType sweep_cost_function;
     double altitude;
     bool latch_topics;
@@ -48,7 +50,6 @@ class BasePlanner2D {
     std::string global_frame_id;
     bool publish_plan_on_planning_complete;
     bool publish_visualization_on_planning_complete;
-    double min_wall_distance;
 
     enum CostFunctionType {
       kDistance = 0,  // Minimize distance.
@@ -76,6 +77,8 @@ class BasePlanner2D {
              (cost_function_type == CostFunctionType::kTime) ||
              (cost_function_type == CostFunctionType::kWaypoints);
     }
+
+    void offsetPolygon();
   };
 
   // Constructor

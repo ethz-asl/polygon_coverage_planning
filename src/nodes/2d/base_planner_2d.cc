@@ -14,16 +14,15 @@ namespace mav_coverage_planning {
 constexpr double kThrottleRate = 1.0 / 10.0;
 
 BasePlanner2D::Settings::Settings()
-    : sweep_cost_function(
+    : min_wall_distance(0.0),
+      sweep_cost_function(
           std::bind(&computeEuclideanPathCost, std::placeholders::_1)),
       altitude(-1.0),
       latch_topics(true),
       local_frame_id("odom"),
       global_frame_id("world"),
       publish_plan_on_planning_complete(false),
-      publish_visualization_on_planning_complete(true),
-      min_wall_distance(0.0)
-      {}
+      publish_visualization_on_planning_complete(true) {}
 
 BasePlanner2D::BasePlanner2D(const ros::NodeHandle& nh,
                              const ros::NodeHandle& nh_private)
@@ -164,12 +163,24 @@ void BasePlanner2D::getParametersFromRos() {
            "polygon from service call.");
   }
 
+  // Offset polygon.
+  settings_.offsetPolygon();
+
   // Getting the behaviour flags
   nh_private_.getParam("latch_topics", settings_.latch_topics);
   nh_private_.getParam("publish_plan_on_planning_complete",
                        settings_.publish_plan_on_planning_complete);
   nh_private_.getParam("publish_visualization_on_planning_complete",
                        settings_.publish_visualization_on_planning_complete);
+}
+
+void BasePlanner2D::Settings::offsetPolygon() {
+  if (min_wall_distance > 0.0 &&
+      !polygon.computeOffsetPolygon(min_wall_distance, &polygon_offset)) {
+    ROS_WARN_STREAM("Cannot shrink polygon: " << polygon << " with distance: "
+                                              << min_wall_distance);
+    polygon_offset = polygon;
+  }
 }
 
 void BasePlanner2D::receiveOdometryCallback(const nav_msgs::Odometry& msg) {
@@ -315,6 +326,10 @@ bool BasePlanner2D::setPolygonCallback(
     ROS_ERROR_STREAM("Planner is in an invalid state.");
     settings_.polygon = Polygon();
   }
+
+  // Offset polygon.
+  settings_.offsetPolygon();
+
   response.success = resetPlanner();
   return true;  // Still return true to identify service has been reached.
 }

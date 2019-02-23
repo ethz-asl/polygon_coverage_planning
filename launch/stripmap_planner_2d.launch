@@ -21,14 +21,13 @@
     <param name="lateral_overlap" value="0.5" />
     <param name="sweep_around_obstacles" value="false" />
     <!-- Options: 0, 1, 2 [best, bcd, convex]-->
-    <param name="decomposition_type" value="0" />
+    <param name="decomposition_type" value="2" />
     <!-- Sensor model: 0, 1 [line, frustum]-->
     <param name="sensor_model_type" value="$(arg sensor_model_type)" />
     <!-- Line parameters. -->
     <param name="lateral_footprint" value="1.0" if="$(eval arg('sensor_model_type') == 0)" />
     <!-- Frustum parameters. -->
     <param name="lateral_fov" value="0.84" if="$(eval arg('sensor_model_type') == 1)" />
-    <param name="longitudinal_fov" value="1.07"  if="$(eval arg('sensor_model_type') == 1)"/>
   </node>
 
 </launch>

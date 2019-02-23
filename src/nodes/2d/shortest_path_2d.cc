@@ -17,8 +17,8 @@ bool ShortestPath2D::solvePlanner(const Point_2& start, const Point_2& goal) {
 // Reset the planner when a new polygon is set.
 bool ShortestPath2D::resetPlanner() {
   ROS_INFO_STREAM("Start creating the shortest plan graph.");
-  planner_.reset(new visibility_graph::VisibilityGraph(
-      settings_.polygon, settings_.min_wall_distance));
+  planner_.reset(
+      new visibility_graph::VisibilityGraph(settings_.polygon_offset));
   if (planner_->isInitialized()) {
     ROS_INFO_STREAM("Finished creating the shortest plan graph.");
     return true;
