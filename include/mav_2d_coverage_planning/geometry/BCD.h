@@ -44,62 +44,64 @@ class BCD {
 
   // Closes the current polygon and updates edge list by deleting the edge from
   // the list or updating thefirst vertex of the edge.
-  void innerPolygonEnd(bool first_vertex, Event* event,
-                       std::vector<Edge>& upper_vertices, int edge_upper,
-                       int edge_lower, bool outer);
+  void innerPolygonEnd(bool first_vertex,
+                       const std::vector<Edge>& upper_vertices, int edge_upper,
+                       int edge_lower, bool outer, Event* event);
 
   // Ensures that also the second event is closed that bounds the newly
   // created polygon if they have the same x-value.
   void closeSecondEvent(double x_current, double y_event, bool upper);
 
   // Updates the event status (closed, upper and lower)
-  void updateEventStatus(Event& event, bool upper, double x_current,
-                         double y_event);
+  void updateEventStatus(bool upper, double x_current, double y_event,
+                         Event* event);
 
   // Close the previous polygon at x_current and add all vertices in
   // upper_vertices to the polygon CCW
-  void closePolygon(double x_current, std::vector<Edge>& upper_vertices,
+  void closePolygon(double x_current, const std::vector<Edge>& upper_vertices,
                     int edge_lower, int edge_upper);
 
   // Called once at beginning of algorithm. Sorts all verteces into
   // events of 'opening', 'closing' and 'middle'
-  bool createEvents(Polygon_2& polygon, std::vector<Event>& events);
+  bool createEvents(Polygon_2* polygon, std::vector<Event>* events);
 
   // Called by createEvents. Initializes all vertex parameters.
-  void initVertex(Vertex& vertex, VertexConstCirculator orig_vertex);
+  void initVertex(const VertexConstCirculator& orig_vertex,
+                  Vertex* vertex) const;
 
   // Called by createEvents. Initializes all event parameters.
-  void initEvent(Event& event_list, Vertex vertex_now, Vertex vertex_next);
+  void initEvent(const Vertex& vertex_now, const Vertex& vertex_next,
+                 Event* event_list) const;
 
   // Finds the vertex with the lowest x-value between edge1 and edge2.
-  bool find_next_event(bool& first_vertex, Event*& next_event, bool& outer,
-                       Edge edge1, Edge edge2);
+  bool findNextEvent(const Edge& edge1, const Edge& edge2, bool* first_vertex,
+                     Event** next_event, bool* outer);
+
+  // Finds the vertex with the lowest x-value.
+  bool findNextEvent(bool* first_vertex, Event** next_event, bool* outer);
 
   // Find y-value on edge for given x-value
-  double calculateVertex(double x, Edge edge);
+  double calculateVertex(double x, const Edge& edge) const;
 
   // Adds all opening events to edge list with lower or equal x-value than the
   // current leftmost vertex. All opening events are added twice, one in each
   // direction. The values edge upper number and edge lower number indicate the
   // edges that open the next polygon. This next polygon is opened between the
   // two vertices with the lowest x- and y-values.
-  void getEdges(int& edge_upper_number, int& edge_lower_number);
+  void getEdges(int* edge_upper_number, int* edge_lower_number);
 
   // Adds the event to the created polygons and updates the edge list such that
   // only the open edges are included.
-  void createVertices(bool first_vertex, Event* event,
-                      std::vector<Edge>& upper_vertices, bool outer);
+  void createVertices(bool first_vertex, bool outer, Event* event,
+                      std::vector<Edge>* upper_vertices);
   // Called by createVertices. Updates the edge list such that
   // only the open edges are included.
 
-  void updateEdgeList(Event* event, Point_2 location, Point_2 direction);
+  void updateEdgeList(Point_2 location, Point_2 direction, Event* event);
 
   // Called by createVertices. Adds the event to the created polygons.
-  void addEvent(std::vector<Edge>& poly, bool two_vertices, Point_2 point1,
-                Point_2 direction, Point_2 point2);
-
-  // Finds the vertex with the lowest x-value.
-  bool find_next_event(bool& first_vertex, Event*& next_event, bool& outer);
+  void addEvent(bool two_vertices, Point_2 point1, Point_2 direction,
+                Point_2 point2, std::vector<Edge>* poly);
 
   // Rotates polygon_ with angle alpha.
   PolygonWithHoles rotPolygon(double alpha);
