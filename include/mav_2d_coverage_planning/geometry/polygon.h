@@ -7,13 +7,14 @@
 #include <vector>
 
 #include <mav_coverage_planning_comm/cgal_definitions.h>
+#include <CGAL/Boolean_set_operations_2.h>
 
 #include "mav_2d_coverage_planning/geometry/BCD.h"
 #include "mav_2d_coverage_planning/geometry/plane_transformation.h"
 
 namespace mav_coverage_planning {
 
-enum DecompositionType { kBest = 0, kBoustrophedeon, kConvex };
+enum DecompositionType { kBest = 0, kBoustrophedeon, kConvex, kTrapezoidal };
 
 class Polygon {
  public:
@@ -89,12 +90,14 @@ class Polygon {
     return computeBCDFromPolygonWithHoles(bcd_polygons);
   }
 
-  //
   // TODO(rikba): implement.
   bool computeBestDecompositionFromPolygonWithHoles(
       std::vector<Polygon>* bcd_polygons) const {
     return computeBCDFromPolygonWithHoles(bcd_polygons);
   }
+
+  bool computeTrapezoidalDecompositionFromPolygonWithHoles(
+      std::vector<Polygon>* trap_polygons) const;
 
   // Compute the visibility polygon given a point inside a strictly simple
   // polygon. Francisc Bungiu, Michael Hemmer, John Hershberger, Kan Huang, and
@@ -123,6 +126,12 @@ class Polygon {
   Point_2 projectPointOnHull(const Point_2& p) const;
 
   FT computeArea() const;
+
+  inline bool doIntersect(const Polygon& p) const {
+    return CGAL::do_intersect(p.getPolygon(), polygon_);
+  }
+
+  bool intersect(const Polygon& p, Polygon* intersection) const;
 
   bool isStrictlySimple() const { return is_strictly_simple_; }
   bool isConvex() const { return is_convex_; }

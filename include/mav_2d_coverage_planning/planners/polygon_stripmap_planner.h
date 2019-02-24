@@ -40,6 +40,15 @@ class PolygonStripmapPlanner {
     return decomposition_;
   }
 
+  // Check which decomposition cells are adjacent. Return whether each cell has
+  // at least one neighbor.
+  // TODO(rikba): Convex decomposition adjacency is not fully captured because
+  // the polygon with holes they have been created from has been slightly
+  // altered.
+  bool updateDecompositionAdjacency();
+
+  bool offsetRectangularDecomposition();
+
  protected:
   virtual bool setupSolver() { return true; };
   // Default: Heuristic GTSPP solver.
@@ -49,6 +58,7 @@ class PolygonStripmapPlanner {
   virtual bool sweepAroundObstacles(std::vector<Point_2>* solution) const;
 
   std::vector<Polygon> decomposition_;
+  std::map<size_t, std::set<size_t>> decomposition_adjacency_;
   // The sweep plan graph with all possible waypoints its node connections.
   sweep_plan_graph::SweepPlanGraph sweep_plan_graph_;
 

@@ -104,17 +104,31 @@ bool Polygon::computeOffsetPolygon(FT max_offset,
   return true;
 }
 
+bool Polygon::computeTrapezoidalDecompositionFromPolygonWithHoles(
+    std::vector<Polygon>* trap_polygons) const {
+  CHECK_NOTNULL(trap_polygons);
+  trap_polygons->clear();
+
+  std::vector<Polygon_2> traps;
+  Polygon_vertical_decomposition_2 decom;
+  decom(polygon_, std::back_inserter(traps));
+
+  for (const Polygon_2& p : traps) trap_polygons->emplace_back(p);
+
+  return true;
+}
+
 bool Polygon::offsetEdge(const size_t& edge_id, double offset,
                          Polygon* offset_polygon) const {
   CHECK_NOTNULL(offset_polygon);
   *offset_polygon = *this;
 
   if (!is_strictly_simple_) {
-    DLOG(INFO) << "Polygon is not strictly simple.";
+    DLOG(WARNING) << "Polygon is not strictly simple.";
     return false;
   }
   if (polygon_.number_of_holes() > 0) {
-    DLOG(INFO) << "Polygon has holes.";
+    DLOG(WARNING) << "Polygon has holes.";
     return false;
   }
 
@@ -144,6 +158,10 @@ bool Polygon::offsetEdge(const size_t& edge_id, double offset,
   const double kMaskOffset = 1e-6;  // To cope with numerical imprecision.
   double min_y = -kMaskOffset;
   double max_y = offset + kMaskOffset;
+  if (0.5 * polygon.bbox().ymax() <= max_y) {
+    max_y = 0.5 * polygon.bbox().ymax() - kMaskOffset;
+    DLOG(INFO) << "Offset too large. Re-adjusting.";
+  }
   double min_x = polygon.bbox().xmin() - kMaskOffset;
   double max_x = polygon.bbox().xmax() + kMaskOffset;
   // Create sweep mask rectangle.
@@ -157,12 +175,12 @@ bool Polygon::offsetEdge(const size_t& edge_id, double offset,
   std::vector<PolygonWithHoles> intersection_list;
   CGAL::intersection(polygon, mask, std::back_inserter(intersection_list));
   if (intersection_list.size() != 1) {
-    DLOG(INFO) << "Not exactly one resulting intersections."
+    DLOG(WARNING) << "Not exactly one resulting intersections."
                << intersection_list.size();
     return false;
   }
   if (intersection_list[0].number_of_holes() > 0) {
-    DLOG(INFO) << "Mask intersection has holes.";
+    DLOG(WARNING) << "Mask intersection has holes.";
     return false;
   }
   Polygon_2 intersection = intersection_list[0].outer_boundary();
@@ -171,12 +189,12 @@ bool Polygon::offsetEdge(const size_t& edge_id, double offset,
   std::vector<PolygonWithHoles> diff_list;
   CGAL::difference(polygon, intersection, std::back_inserter(diff_list));
   if (diff_list.size() != 1) {
-    DLOG(INFO) << "Not exactle one resulting difference polygon."
+    DLOG(WARNING) << "Not exactle one resulting difference polygon."
                << diff_list.size();
     return false;
   }
   if (diff_list[0].number_of_holes() > 0) {
-    DLOG(INFO) << "Polygon difference has holes.";
+    DLOG(WARNING) << "Polygon difference has holes.";
     return false;
   }
   Polygon_2 difference = diff_list[0].outer_boundary();
@@ -511,6 +529,21 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
       static_cast<int>(std::ceil(polygon_length / max_sweep_distance)) + 1;
   double sweep_distance = polygon_length / (num_sweeps - 1);
 
+  // Return a single sweep line if polygon is too narrow.
+  const double kMaxOverlapError = 0.01;
+  if (polygon_length < kMaxOverlapError * max_sweep_distance) {
+    waypoints->push_back(*polygon.vertices_begin());
+    waypoints->push_back(*std::next(polygon.vertices_begin()));
+    // Transform back waypoints.
+    translation = translation.inverse();
+    rotation = rotation.inverse();
+    for (Point_2& p : *waypoints) {
+      p = rotation(p);
+      p = translation(p);
+    }
+    return true;
+  }
+
   // Calculate all remaining sweeps.
   const double kMaskOffset = 1e-6;  // To cope with numerical imprecision.
   double min_y = -kMaskOffset;
@@ -672,6 +705,23 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
     p = rotation(p);
     p = translation(p);
   }
+
+  return true;
+}
+
+bool Polygon::intersect(const Polygon& p, Polygon* intersection) const {
+  CHECK_NOTNULL(intersection);
+
+  std::vector<PolygonWithHoles> intersection_list;
+  CGAL::intersection(polygon_, p.getPolygon(),
+                     std::back_inserter(intersection_list));
+  if (intersection_list.size() != 1) {
+    DLOG(WARNING) << "Not exactly one resulting intersections."
+                  << intersection_list.size();
+    return false;
+  }
+
+  *intersection = Polygon(intersection_list[0]);
 
   return true;
 }

@@ -96,6 +96,7 @@ bool SweepPlanGraph::computeLineSweepPlans(
   CHECK_NOTNULL(cluster_sweeps);
   cluster_sweeps->clear();
   cluster_sweeps->reserve(2 * polygon.getPolygon().outer_boundary().size());
+
   // Create all sweep plans.
   bool cc_orientation = true;
   std::vector<Point_2> sweep;
