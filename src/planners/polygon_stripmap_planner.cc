@@ -37,7 +37,8 @@ bool PolygonStripmapPlanner::setup() {
     }
     case DecompositionType::kTrapezoidal: {
       if (!settings_.polygon
-               .computeTrapezoidalDecompositionFromPolygonWithHoles(
+               .computeBestTrapezoidalDecompositionFromPolygonWithHoles(
+                   settings_.sensor_model->getSweepDistance(),
                    &decomposition_)) {
         LOG(ERROR) << "Cannot compute trapezoidal decomposition.";
         is_initialized_ = false;

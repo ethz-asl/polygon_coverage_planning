@@ -118,6 +118,98 @@ bool Polygon::computeTrapezoidalDecompositionFromPolygonWithHoles(
   return true;
 }
 
+bool Polygon::computeBestTrapezoidalDecompositionFromPolygonWithHoles(
+    double sweep_offset, std::vector<Polygon>* trap_polygons) const {
+  CHECK_NOTNULL(trap_polygons);
+  trap_polygons->clear();
+  size_t min_num_sweeps = std::numeric_limits<size_t>::max();
+  size_t min_num_cells = std::numeric_limits<size_t>::max();
+  std::vector<Polygon_2> best_traps;
+
+  // Get all possible polygon directions.
+  std::vector<Direction_2> directions;
+  for (size_t i = 0; i < polygon_.outer_boundary().size(); ++i) {
+    directions.push_back(polygon_.outer_boundary().edge(i).direction());
+  }
+  for (PolygonWithHoles::Hole_const_iterator hit = polygon_.holes_begin();
+       hit != polygon_.holes_end(); ++hit) {
+    for (size_t i = 0; i < hit->size(); i++) {
+      directions.push_back(hit->edge(i).direction());
+    }
+  }
+
+  // Remove redundant directions.
+  std::set<size_t> to_remove;
+  for (size_t i = 0; i < directions.size() - 1; ++i) {
+    for (size_t j = i + 1; j < directions.size(); ++j) {
+      if (CGAL::orientation(directions[i].vector(), directions[j].vector()) ==
+          CGAL::COLLINEAR)
+        to_remove.insert(j);
+    }
+  }
+  for (std::set<size_t>::reverse_iterator rit = to_remove.rbegin();
+       rit != to_remove.rend(); ++rit) {
+    directions.erase(std::next(directions.begin(), *rit));
+  }
+
+  // For all possible rotations:
+  for (const Direction_2& dir : directions) {
+    CGAL::Aff_transformation_2<K> rotation(CGAL::ROTATION, dir, 1, 1e9);
+    rotation = rotation.inverse();
+    PolygonWithHoles rotated_polygon = polygon_;
+    rotated_polygon.outer_boundary() =
+        CGAL::transform(rotation, polygon_.outer_boundary());
+    PolygonWithHoles::Hole_iterator hit_rot = rotated_polygon.holes_begin();
+    for (PolygonWithHoles::Hole_const_iterator hit = polygon_.holes_begin();
+         hit != polygon_.holes_end(); ++hit) {
+      *(hit_rot++) = CGAL::transform(rotation, *hit);
+    }
+
+    // Calculate decomposition.
+    std::vector<Polygon_2> traps;
+    Polygon_vertical_decomposition_2 decom;
+    decom(rotated_polygon, std::back_inserter(traps));
+    if (traps.size() > min_num_cells) continue;
+
+    // Calculate minimum number of sweeps.
+    size_t num_sweeps = 0;
+    for (const Polygon_2& trap : traps) {
+      // 1. Find smallest line sweep length.
+      FT trap_length = std::numeric_limits<double>::max();
+      for (size_t i = 0; i < trap.size(); ++i) {
+        const Segment_2& edge = trap.edge(i);
+        FT temp_trap_length = 0.0;
+        for (size_t j = 0; j < trap.size(); ++j) {
+          const Point_2& p = trap.vertex(j);
+          FT dist = CGAL::squared_distance(edge.supporting_line(), p);
+          temp_trap_length = dist > temp_trap_length ? dist : temp_trap_length;
+        }
+        trap_length =
+            temp_trap_length < trap_length ? temp_trap_length : trap_length;
+      }
+      CHECK_GT(CGAL::to_double(trap_length), 0.0);
+      // 2. Calculate minimum number of sweeps for this trapezoid.
+      num_sweeps +=
+          static_cast<size_t>(std::ceil(
+              std::sqrt(CGAL::to_double(trap_length)) / sweep_offset)) +
+          1;
+    }
+    if (num_sweeps < min_num_sweeps) {
+      min_num_cells = traps.size();
+      min_num_sweeps = num_sweeps;
+      rotation = rotation.inverse();
+      best_traps.clear();
+      for (const Polygon_2& trap : traps) {
+        best_traps.emplace_back(CGAL::transform(rotation, trap));
+      }
+    }
+  }
+
+  for (const Polygon_2& p : best_traps) trap_polygons->emplace_back(p);
+
+  return true;
+}
+
 bool Polygon::offsetEdge(const size_t& edge_id, double offset,
                          Polygon* offset_polygon) const {
   CHECK_NOTNULL(offset_polygon);
@@ -176,7 +268,7 @@ bool Polygon::offsetEdge(const size_t& edge_id, double offset,
   CGAL::intersection(polygon, mask, std::back_inserter(intersection_list));
   if (intersection_list.size() != 1) {
     DLOG(WARNING) << "Not exactly one resulting intersections."
-               << intersection_list.size();
+                  << intersection_list.size();
     return false;
   }
   if (intersection_list[0].number_of_holes() > 0) {
@@ -190,7 +282,7 @@ bool Polygon::offsetEdge(const size_t& edge_id, double offset,
   CGAL::difference(polygon, intersection, std::back_inserter(diff_list));
   if (diff_list.size() != 1) {
     DLOG(WARNING) << "Not exactle one resulting difference polygon."
-               << diff_list.size();
+                  << diff_list.size();
     return false;
   }
   if (diff_list[0].number_of_holes() > 0) {

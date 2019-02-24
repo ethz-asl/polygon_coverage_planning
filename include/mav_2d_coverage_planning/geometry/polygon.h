@@ -6,8 +6,8 @@
 #include <sstream>
 #include <vector>
 
-#include <mav_coverage_planning_comm/cgal_definitions.h>
 #include <CGAL/Boolean_set_operations_2.h>
+#include <mav_coverage_planning_comm/cgal_definitions.h>
 
 #include "mav_2d_coverage_planning/geometry/BCD.h"
 #include "mav_2d_coverage_planning/geometry/plane_transformation.h"
@@ -98,6 +98,10 @@ class Polygon {
 
   bool computeTrapezoidalDecompositionFromPolygonWithHoles(
       std::vector<Polygon>* trap_polygons) const;
+
+  // The best TCD is considered the one with the smallest bound on sweeps.
+  bool computeBestTrapezoidalDecompositionFromPolygonWithHoles(
+      double sweep_offset, std::vector<Polygon>* trap_polygons) const;
 
   // Compute the visibility polygon given a point inside a strictly simple
   // polygon. Francisc Bungiu, Michael Hemmer, John Hershberger, Kan Huang, and
