@@ -16,12 +16,12 @@
     <!-- Basic and control parameter -->
     <rosparam command="load" file="$(find mav_coverage_planning_ros)/cfg/base_planner_2d.yaml" />
     <!-- Polygon, altitude, and world frame ID -->
-    <rosparam command="load" file="$(find mav_coverage_planning_ros)/cfg/example_polygon_forest.yaml" />
+    <rosparam command="load" file="$(find mav_coverage_planning_ros)/cfg/example_polygon_piombino_diamond.yaml" />
     <!-- Sweep planner specific parameter -->
-    <param name="lateral_overlap" value="0.5" />
+    <param name="lateral_overlap" value="0.6" />
     <param name="sweep_around_obstacles" value="false" />
-    <!-- Options: 0, 1, 2 [best, bcd, convex]-->
-    <param name="decomposition_type" value="0" />
+    <!-- Decomposition type: 0, 1, 2, 3 [best, bcd, convex, trapezoidal]-->
+    <param name="decomposition_type" value="3" />
     <!-- Sensor model: 0, 1 [line, frustum]-->
     <param name="sensor_model_type" value="$(arg sensor_model_type)" />
     <!-- Line parameters. -->
