@@ -13,8 +13,8 @@
 #include <CGAL/Triangular_expansion_visibility_2.h>
 #include <CGAL/connect_holes.h>
 #include <CGAL/create_offset_polygons_from_polygon_with_holes_2.h>
-#include <CGAL/partition_2.h>
 #include <CGAL/is_y_monotone_2.h>
+#include <CGAL/partition_2.h>
 #include <glog/logging.h>
 #include <mav_coverage_planning_comm/eigen_conversions.h>
 #include <boost/make_shared.hpp>
@@ -101,6 +101,94 @@ bool Polygon::computeOffsetPolygon(FT max_offset,
   }
 
   *offset_polygon = Polygon(*(result.front()));
+  return true;
+}
+
+bool Polygon::offsetEdge(const size_t& edge_id, double offset,
+                         Polygon* offset_polygon) const {
+  CHECK_NOTNULL(offset_polygon);
+  *offset_polygon = *this;
+
+  if (!is_strictly_simple_) {
+    DLOG(INFO) << "Polygon is not strictly simple.";
+    return false;
+  }
+  if (polygon_.number_of_holes() > 0) {
+    DLOG(INFO) << "Polygon has holes.";
+    return false;
+  }
+
+  // Create mask.
+  // Copy of polygon with edge start being first vertex.
+  Polygon_2 polygon;
+  Polygon_2::Vertex_circulator vc_start =
+      std::next(polygon_.outer_boundary().vertices_circulator(), edge_id);
+  Polygon_2::Vertex_circulator vc = vc_start;
+  do {
+    polygon.push_back(*vc);
+  } while (++vc != vc_start);
+
+  // Transform polygon to have first vertex in origin and first edge aligned
+  // with x-axis.
+  CGAL::Aff_transformation_2<K> translation(
+      CGAL::TRANSLATION,
+      Vector_2(-polygon.vertices_begin()->x(), -polygon.vertices_begin()->y()));
+  polygon = CGAL::transform(translation, polygon);
+
+  CGAL::Aff_transformation_2<K> rotation(
+      CGAL::ROTATION, polygon.edges_begin()->direction(), 1, 1e9);
+  rotation = rotation.inverse();
+  polygon = CGAL::transform(rotation, polygon);
+
+  // Calculate all remaining sweeps.
+  const double kMaskOffset = 1e-6;  // To cope with numerical imprecision.
+  double min_y = -kMaskOffset;
+  double max_y = offset + kMaskOffset;
+  double min_x = polygon.bbox().xmin() - kMaskOffset;
+  double max_x = polygon.bbox().xmax() + kMaskOffset;
+  // Create sweep mask rectangle.
+  Polygon_2 mask;
+  mask.push_back(Point_2(min_x, min_y));
+  mask.push_back(Point_2(max_x, min_y));
+  mask.push_back(Point_2(max_x, max_y));
+  mask.push_back(Point_2(min_x, max_y));
+
+  // Intersect mask and polygon.
+  std::vector<PolygonWithHoles> intersection_list;
+  CGAL::intersection(polygon, mask, std::back_inserter(intersection_list));
+  if (intersection_list.size() != 1) {
+    DLOG(INFO) << "Not exactly one resulting intersections."
+               << intersection_list.size();
+    return false;
+  }
+  if (intersection_list[0].number_of_holes() > 0) {
+    DLOG(INFO) << "Mask intersection has holes.";
+    return false;
+  }
+  Polygon_2 intersection = intersection_list[0].outer_boundary();
+
+  // Difference intersection and polygon.
+  std::vector<PolygonWithHoles> diff_list;
+  CGAL::difference(polygon, intersection, std::back_inserter(diff_list));
+  if (diff_list.size() != 1) {
+    DLOG(INFO) << "Not exactle one resulting difference polygon."
+               << diff_list.size();
+    return false;
+  }
+  if (diff_list[0].number_of_holes() > 0) {
+    DLOG(INFO) << "Polygon difference has holes.";
+    return false;
+  }
+  Polygon_2 difference = diff_list[0].outer_boundary();
+
+  // Transform back.
+  translation = translation.inverse();
+  rotation = rotation.inverse();
+  difference = CGAL::transform(rotation, difference);
+  difference = CGAL::transform(translation, difference);
+
+  // Create polygon object.
+  *offset_polygon = Polygon(difference);
   return true;
 }
 

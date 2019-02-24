@@ -8,8 +8,8 @@
 
 #include <mav_coverage_planning_comm/cgal_definitions.h>
 
-#include "mav_2d_coverage_planning/geometry/plane_transformation.h"
 #include "mav_2d_coverage_planning/geometry/BCD.h"
+#include "mav_2d_coverage_planning/geometry/plane_transformation.h"
 
 namespace mav_coverage_planning {
 
@@ -41,6 +41,11 @@ class Polygon {
   // Given a non-degenerate counter-clockwise weakly-simple polygon with
   // holes, compute the maximum offset polygon such that no edge collapses.
   bool computeOffsetPolygon(FT max_offset, Polygon* offset_polygon) const;
+
+  // Offsets a specific polygon edge by cropping an along the edge infinitly
+  // long rectangular window with offset width.
+  bool offsetEdge(const size_t& edge_id, double offset,
+                  Polygon* offset_polygon) const;
 
   // Given a simple polygon without holes, compute its convex decomposition.
   // Daniel H. Greene. The decomposition of polygons into convex parts. In
