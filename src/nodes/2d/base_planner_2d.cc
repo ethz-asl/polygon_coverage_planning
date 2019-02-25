@@ -274,6 +274,13 @@ bool BasePlanner2D::publishVisualization() {
   markers.markers.push_back(start_point);
   markers.markers.push_back(end_point);
 
+  // Start and end text.
+  visualization_msgs::Marker start_text, end_text;
+  createStartAndEndTextMarkers(solution_.front(), solution_.back(),
+                                settings_.altitude, settings_.global_frame_id,
+                                "points", &start_text, &end_text);
+  markers.markers.push_back(start_text);
+  markers.markers.push_back(end_text);
   // The original polygon:
   const double kPolygonLineSize = 0.4;
   visualization_msgs::MarkerArray polygon;

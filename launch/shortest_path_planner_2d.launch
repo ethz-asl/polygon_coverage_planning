@@ -4,7 +4,7 @@
     pkg="rviz"
     type="rviz"
     output="log"
-    args="-d $(find mav_coverage_planning_ros)/cfg/rviz_2d_shortest_path.rviz" />
+    args="-d $(find mav_coverage_planning_ros)/cfg/rviz_iros_shortest_path.rviz" />
 
 
   <node name="shortest_path_planner_2d"
@@ -16,7 +16,7 @@
     <!-- Basic and control parameter -->
     <rosparam command="load" file="$(find mav_coverage_planning_ros)/cfg/base_planner_2d.yaml" />
     <!-- Polygon, altitude, and world frame ID -->
-    <rosparam command="load" file="$(find mav_coverage_planning_ros)/cfg/example_polygon_forest.yaml" />
+    <rosparam command="load" file="$(find mav_coverage_planning_ros)/cfg/example_rectangle_with_hole.yaml" />
   </node>
 
 </launch>

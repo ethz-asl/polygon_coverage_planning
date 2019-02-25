@@ -67,6 +67,19 @@ void createStartAndEndPointMarkers(const mav_msgs::EigenTrajectoryPoint& start,
                                    visualization_msgs::Marker* start_point,
                                    visualization_msgs::Marker* end_point);
 
+void createStartAndEndTextMarkers(const Point_2& start, const Point_2& end,
+                                  double altitude, const std::string& frame_id,
+                                  const std::string& ns,
+                                  visualization_msgs::Marker* start_text,
+                                  visualization_msgs::Marker* end_text);
+
+void createStartAndEndTextMarkers(const mav_msgs::EigenTrajectoryPoint& start,
+                                  const mav_msgs::EigenTrajectoryPoint& end,
+                                  const std::string& frame_id,
+                                  const std::string& ns,
+                                  visualization_msgs::Marker* start_text,
+                                  visualization_msgs::Marker* end_text);
+
 bool createPolyhedronMarkerArray(const Polyhedron_3& polyhedron,
                                  const std::string& frame_id,
                                  visualization_msgs::MarkerArray* markers);

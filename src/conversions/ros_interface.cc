@@ -202,6 +202,61 @@ void createStartAndEndPointMarkers(const mav_msgs::EigenTrajectoryPoint& start,
   end_point->color.a = 0.5;
 }
 
+void createStartAndEndTextMarkers(const Point_2& start, const Point_2& end,
+                                  double altitude, const std::string& frame_id,
+                                  const std::string& ns,
+                                  visualization_msgs::Marker* start_text,
+                                  visualization_msgs::Marker* end_text) {
+  mav_msgs::EigenTrajectoryPoint eigen_start;
+  eigen_start.position_W.x() = CGAL::to_double(start.x());
+  eigen_start.position_W.y() = CGAL::to_double(start.y());
+  eigen_start.position_W.z() = altitude;
+
+  mav_msgs::EigenTrajectoryPoint eigen_end;
+  eigen_end.position_W.x() = CGAL::to_double(end.x());
+  eigen_end.position_W.y() = CGAL::to_double(end.y());
+  eigen_end.position_W.z() = altitude;
+
+  return createStartAndEndTextMarkers(eigen_start, eigen_end, frame_id, ns,
+                                      start_text, end_text);
+}
+
+void createStartAndEndTextMarkers(const mav_msgs::EigenTrajectoryPoint& start,
+                                   const mav_msgs::EigenTrajectoryPoint& end,
+                                   const std::string& frame_id,
+                                   const std::string& ns,
+                                   visualization_msgs::Marker* start_text,
+                                   visualization_msgs::Marker* end_text) {
+  CHECK_NOTNULL(start_text);
+  CHECK_NOTNULL(end_text);
+
+  start_text->header.frame_id = end_text->header.frame_id = frame_id;
+  start_text->header.stamp = end_text->header.stamp = ros::Time::now();
+  start_text->ns = ns + "_start_text";
+  start_text->ns = ns + "_end_text";
+  start_text->action = end_text->action = visualization_msgs::Marker::ADD;
+  start_text->type = end_text->type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+
+  geometry_msgs::PoseStamped start_stamped, end_stamped;
+  msgPoseStampedFromEigenTrajectoryPoint(start, &start_stamped);
+  msgPoseStampedFromEigenTrajectoryPoint(end, &end_stamped);
+
+  start_text->pose = start_stamped.pose;
+  end_text->pose = end_stamped.pose;
+
+  start_text->pose.orientation.w = end_text->pose.orientation.w = 1.0;
+
+  start_text->text = "S";
+  start_text->color = mav_visualization::Color::Black();
+
+  end_text->text = "G";
+  end_text->color = mav_visualization::Color::Black();
+
+  start_text->scale.x = end_text->scale.x = 2.0;
+  start_text->scale.y = end_text->scale.y = 2.0;
+  start_text->scale.z = end_text->scale.z = 0.2;
+}
+
 void polygon2FromPolygonMsg(const mav_planning_msgs::Polygon2D& msg,
                             Polygon_2* polygon) {
   CHECK_NOTNULL(polygon);
