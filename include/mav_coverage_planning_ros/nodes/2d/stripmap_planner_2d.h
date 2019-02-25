@@ -129,10 +129,11 @@ class StripmapPlanner2D : public BasePlanner2D {
     for (size_t i = 0; i < decomposition.size(); ++i) {
       visualization_msgs::MarkerArray decomposition_markers;
       std::string name = "decomposition_polygon_" + std::to_string(i);
+      const double kPolygonLineSize = 0.2;
       createPolygonMarkers(
           decomposition[i], settings_.altitude, settings_.global_frame_id, name,
-          mav_visualization::Color::Red(), mav_visualization::Color::Red(),
-          &decomposition_markers);
+          mav_visualization::Color::Gray(), mav_visualization::Color::Gray(),
+          kPolygonLineSize, kPolygonLineSize, &decomposition_markers);
       markers.markers.insert(markers.markers.end(),
                              decomposition_markers.markers.begin(),
                              decomposition_markers.markers.end());

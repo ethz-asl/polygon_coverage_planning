@@ -1,0 +1,88 @@
+# A mav_planning_msgs/PolygonWithHoles.msg to describe a simple environment that
+# resambles the ERL arena in Piombino.
+polygon:
+  header:
+    seq: 0
+    stamp:
+      secs: 0
+      nsecs: 0
+    frame_id: 'world'
+  altitude: 5.0
+  polygon:
+    hull:
+      points:
+      - x: 20.0
+        y: 0.0
+      - x: 80.0
+        y: 10.0
+      - x: 75.0
+        y: 40.0
+      - x: 65.0
+        y: 45.0
+      - x: 70.0
+        y: 20.0
+      - x: 45.0
+        y: 20.0
+      - x: 60.0
+        y: 30.0
+      - x: 60.0
+        y: 60.0
+      - x: 40.0
+        y: 70.0
+      - x: 30.0
+        y: 70.0
+      - x: 25.0
+        y: 60.0
+      - x: 25.0
+        y: 32.0
+      - x: 20.0
+        y: 35.0
+      - x: 15.0
+        y: 45.0
+      - x: 20.0
+        y: 70.0
+      - x: 10.0
+        y: 70.0
+      - x: -10.0
+        y: 60.0
+      - x: -5.0
+        y: 40.0
+    holes:
+      - points:
+        - x: 20.0
+          y: 22.5
+        - x: 30.0
+          y: 10.0
+        - x: 40.0
+          y: 22.5
+        - x: 30.0
+          y: 35.0
+        - x: 30.0
+          y: 22.5
+      - points:
+        - x: 50.0
+          y: 40.0
+        - x: 55.0
+          y: 40.0
+        - x: 55.0
+          y: 50.0
+        - x: 50.0
+          y: 50.0
+      - points:
+        - x: 5.0
+          y: 55.0
+        - x: 5.0
+          y: 53.0
+        - x: 7.0
+          y: 53.0
+        - x: 7.0
+          y: 55.0
+      - points:
+        - x: 5.0
+          y: 45.0
+        - x: 5.0
+          y: 43.0
+        - x: 7.0
+          y: 43.0
+        - x: 7.0
+          y: 45.0

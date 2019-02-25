@@ -37,9 +37,12 @@ int main(int argc, char** argv) {
   ros::Publisher pub = nh_private.advertise<visualization_msgs::MarkerArray>(
       "visualization", 1, true);
   visualization_msgs::MarkerArray polygon_markers;
+  const double kPolygonLineSize = 0.2;
+  const double kPolygonPointSize = 0.2;
   createPolygonMarkers(poly, altitude, global_frame_id, "polygon",
                        mav_visualization::Color::Blue(),
-                       mav_visualization::Color::Orange(), &polygon_markers);
+                       mav_visualization::Color::Orange(), kPolygonLineSize,
+                       kPolygonPointSize, &polygon_markers);
 
   // Publish waypoint list.
   ros::Publisher waypoints_pub =
@@ -69,10 +72,12 @@ int main(int argc, char** argv) {
     // The planned path:
     visualization_msgs::MarkerArray all_markers;
     visualization_msgs::Marker path_points, path_line_strips;
+    const double kPathLineSize = 0.1;
+    const double kPathPointSize = 0.2;
     createMarkers(waypoints, altitude, global_frame_id, "vertices_and_strip",
                   mav_visualization::Color::Red(),
-                  mav_visualization::Color::Green(), &path_points,
-                  &path_line_strips);
+                  mav_visualization::Color::Green(), kPathLineSize,
+                  kPathPointSize, &path_points, &path_line_strips);
     all_markers.markers.push_back(path_points);
     all_markers.markers.push_back(path_line_strips);
 

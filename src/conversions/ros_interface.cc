@@ -71,6 +71,8 @@ void createMarkers(const std::vector<Point_2>& vertices, double altitude,
                    const std::string& frame_id, const std::string& ns,
                    const mav_visualization::Color& points_color,
                    const mav_visualization::Color& lines_color,
+                   const double line_size,
+                   const double point_size,
                    visualization_msgs::Marker* points,
                    visualization_msgs::Marker* line_strip) {
   CHECK_NOTNULL(points);
@@ -90,9 +92,9 @@ void createMarkers(const std::vector<Point_2>& vertices, double altitude,
   points->type = visualization_msgs::Marker::POINTS;
   line_strip->type = visualization_msgs::Marker::LINE_STRIP;
 
-  points->scale.x = 0.2;
-  points->scale.y = 0.2;
-  line_strip->scale.x = 0.1;
+  points->scale.x = point_size;
+  points->scale.y = point_size;
+  line_strip->scale.x = line_size;
 
   points->color = points_color;
   line_strip->color = lines_color;
@@ -112,6 +114,7 @@ void createPolygonMarkers(const Polygon& polygon, double altitude,
                           const std::string& frame_id, const std::string& ns,
                           const mav_visualization::Color& polygon_color,
                           const mav_visualization::Color& hole_color,
+                          const double line_size, const double point_size,
                           visualization_msgs::MarkerArray* array) {
   CHECK_NOTNULL(array);
   array->markers.clear();
@@ -122,7 +125,8 @@ void createPolygonMarkers(const Polygon& polygon, double altitude,
   std::vector<Point_2> hull = polygon.getHullVertices();
   hull.push_back(hull.front());
   createMarkers(hull, altitude, frame_id, ns + "hull", polygon_color,
-                polygon_color, &hull_points, &hull_vertices);
+                polygon_color, line_size, point_size, &hull_points,
+                &hull_vertices);
   array->markers.push_back(hull_points);
   array->markers.push_back(hull_vertices);
 
@@ -133,20 +137,11 @@ void createPolygonMarkers(const Polygon& polygon, double altitude,
     visualization_msgs::Marker hole_points, hole_vertices;
     hole.push_back(hole.front());
     createMarkers(hole, altitude, frame_id, ns + "hole_" + std::to_string(i++),
-                  hole_color, hole_color, &hole_points, &hole_vertices);
+                  hole_color, hole_color, line_size, point_size, &hole_points,
+                  &hole_vertices);
     array->markers.push_back(hole_points);
     array->markers.push_back(hole_vertices);
   }
-}
-
-void createMarkers(const std::vector<Point_2>& vertices, double altitude,
-                   visualization_msgs::Marker* points,
-                   visualization_msgs::Marker* line_strip) {
-  CHECK_NOTNULL(points);
-  CHECK_NOTNULL(line_strip);
-  createMarkers(vertices, altitude, "world", "vertices_and_strip",
-                mav_visualization::Color::Red(),
-                mav_visualization::Color::Green(), points, line_strip);
 }
 
 void createStartAndEndPointMarkers(const Point_2& start, const Point_2& end,

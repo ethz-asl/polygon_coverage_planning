@@ -279,11 +279,14 @@ void BasePlanner::publishVisualization() {
   }
 
   // The polygon to cover:
+  const double kPolygonLineSize = 0.2;
+  const double kPolygonPointSize = 0.2;
   visualization_msgs::MarkerArray polygon;
   createPolygonMarkers(settings_.polygon, settings_.altitude,
                        settings_.global_frame_id, "polygon",
                        mav_visualization::Color::Blue(),
-                       mav_visualization::Color::Orange(), &polygon);
+                       mav_visualization::Color::Orange(), kPolygonLineSize,
+                       kPolygonPointSize, &polygon);
   markers.markers.insert(markers.markers.end(), polygon.markers.begin(),
                          polygon.markers.end());
 

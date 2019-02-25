@@ -15,8 +15,8 @@
 #include <mav_msgs/eigen_mav_msgs.h>
 #include <mav_visualization/helpers.h>
 
-#include <mav_coverage_planning_comm/cgal_definitions.h>
 #include <mav_2d_coverage_planning/geometry/polygon.h>
+#include <mav_coverage_planning_comm/cgal_definitions.h>
 
 namespace mav_coverage_planning {
 
@@ -43,6 +43,7 @@ void createMarkers(const std::vector<Point_2>& vertices, double altitude,
                    const std::string& frame_id, const std::string& ns,
                    const mav_visualization::Color& points_color,
                    const mav_visualization::Color& lines_color,
+                   const double line_size, const double point_size,
                    visualization_msgs::Marker* points,
                    visualization_msgs::Marker* line_strip);
 
@@ -50,11 +51,8 @@ void createPolygonMarkers(const Polygon& polygon, double altitude,
                           const std::string& frame_id, const std::string& ns,
                           const mav_visualization::Color& polygon_color,
                           const mav_visualization::Color& hole_color,
+                          const double line_size, const double point_size,
                           visualization_msgs::MarkerArray* array);
-
-void createMarkers(const std::vector<Point_2>& vertices, double altitude,
-                   visualization_msgs::Marker* points,
-                   visualization_msgs::Marker* line_strip);
 
 void createStartAndEndPointMarkers(const Point_2& start, const Point_2& end,
                                    double altitude, const std::string& frame_id,

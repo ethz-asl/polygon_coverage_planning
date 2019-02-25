@@ -257,10 +257,12 @@ bool BasePlanner2D::publishVisualization() {
 
   // The planned path:
   visualization_msgs::Marker path_points, path_line_strips;
+  const double kPathLineSize = 0.2;
+  const double kPathPointSize = 0.3;
   createMarkers(solution_, settings_.altitude, settings_.global_frame_id,
-                "vertices_and_strip", mav_visualization::Color::Red(),
-                mav_visualization::Color::Green(), &path_points,
-                &path_line_strips);
+                "vertices_and_strip", mav_visualization::Color::Gray(),
+                mav_visualization::Color::Gray(), kPathLineSize, kPathPointSize,
+                &path_points, &path_line_strips);
   markers.markers.push_back(path_points);
   markers.markers.push_back(path_line_strips);
 
@@ -273,11 +275,13 @@ bool BasePlanner2D::publishVisualization() {
   markers.markers.push_back(end_point);
 
   // The original polygon:
+  const double kPolygonLineSize = 0.4;
   visualization_msgs::MarkerArray polygon;
   createPolygonMarkers(settings_.polygon, settings_.altitude,
                        settings_.global_frame_id, "polygon",
-                       mav_visualization::Color::Blue(),
-                       mav_visualization::Color::Orange(), &polygon);
+                       mav_visualization::Color::Black(),
+                       mav_visualization::Color::Black(), kPolygonLineSize,
+                       kPolygonLineSize, &polygon);
   markers.markers.insert(markers.markers.end(), polygon.markers.begin(),
                          polygon.markers.end());
 
