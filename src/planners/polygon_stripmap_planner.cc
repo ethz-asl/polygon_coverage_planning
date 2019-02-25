@@ -108,6 +108,7 @@ bool PolygonStripmapPlanner::updateDecompositionAdjacency() {
   }
 
   // Check connectivity.
+  if (decomposition_.size() == 1) return decomposition_adjacency_.count(0) == 0;
   for (size_t i = 0; i < decomposition_.size(); ++i) {
     if (decomposition_adjacency_.find(i) == decomposition_adjacency_.end()) {
       return false;
