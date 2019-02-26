@@ -22,7 +22,7 @@ struct NodeProperty {
 struct EdgeProperty {};
 
 // Points-of-visibility pathfinding.
-// http://www.david-gouveia.com/portfolio/pathfinding-on-a-2d-polygonal-map/
+// https://www.david-gouveia.com/pathfinding-on-a-2d-polygonal-map
 class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
  public:
   // Creates an undirected, weighted visibility graph.

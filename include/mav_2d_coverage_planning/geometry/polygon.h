@@ -41,6 +41,9 @@ class Polygon {
 
   // Given a non-degenerate counter-clockwise weakly-simple polygon with
   // holes, compute the maximum offset polygon such that no edge collapses.
+  // Aichholzer, Oswin, et al. "A novel type of skeleton for polygons." J. UCS
+  // The Journal of Universal Computer Science. Springer, Berlin, Heidelberg,
+  // 1996. 752-761.
   bool computeOffsetPolygon(FT max_offset, Polygon* offset_polygon) const;
 
   // Offsets a specific polygon edge by cropping an along the edge infinitly
