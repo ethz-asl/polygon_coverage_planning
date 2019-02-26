@@ -71,7 +71,7 @@ bool PolygonStripmapPlanner::setup() {
     is_initialized_ = false;
   }
 
-  if (!offsetRectangularDecomposition()) {
+  if (settings_.offset_polygons && !offsetRectangularDecomposition()) {
     LOG(ERROR) << "Failed to offset rectangular decomposition.";
     is_initialized_ = false;
   }

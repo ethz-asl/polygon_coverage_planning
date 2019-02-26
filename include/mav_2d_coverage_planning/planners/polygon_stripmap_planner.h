@@ -18,6 +18,7 @@ class PolygonStripmapPlanner {
     PathCostFunctionType path_cost_function;
     std::shared_ptr<SensorModelBase> sensor_model;
     bool sweep_around_obstacles;
+    bool offset_polygons;
     DecompositionType decomposition_type;
   };
 
