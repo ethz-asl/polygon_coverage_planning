@@ -20,6 +20,7 @@
     <!-- Sweep planner specific parameter -->
     <param name="lateral_overlap" value="0.6" />
     <param name="sweep_around_obstacles" value="false" />
+    <param name="offset_polygons" value="true" />
     <!-- Decomposition type: 0, 1, 2, 3 [best, bcd, convex, trapezoidal]-->
     <param name="decomposition_type" value="3" />
     <!-- Sensor model: 0, 1 [line, frustum]-->

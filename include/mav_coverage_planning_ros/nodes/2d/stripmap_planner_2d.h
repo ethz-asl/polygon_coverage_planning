@@ -22,7 +22,8 @@ class StripmapPlanner2D : public BasePlanner2D {
                     const ros::NodeHandle& nh_private)
       : BasePlanner2D(nh, nh_private),
         decomposition_type_(DecompositionType::kBest),
-        sweep_around_obstacles_(false) {
+        sweep_around_obstacles_(false),
+        offset_polygons_(true) {
     // Parameters.
     double lateral_overlap = 0.0;
     if (!nh_private_.getParam("lateral_overlap", lateral_overlap)) {
@@ -37,6 +38,14 @@ class StripmapPlanner2D : public BasePlanner2D {
           "value of: "
           << sweep_around_obstacles_);
     }
+
+    if (!nh_private_.getParam("offset_polygons", offset_polygons_)) {
+      ROS_WARN_STREAM(
+          "Not defined if decomposition polygons should be offsetted. Using "
+          "default value of: "
+          << offset_polygons_);
+    }
+
     int decomposition_type_int = 0;
     if (!nh_private_.getParam("decomposition_type", decomposition_type_int)) {
       ROS_WARN_STREAM(
@@ -105,6 +114,7 @@ class StripmapPlanner2D : public BasePlanner2D {
     settings.path_cost_function = settings_.sweep_cost_function;
     settings.sensor_model = sensor_model_;
     settings.sweep_around_obstacles = sweep_around_obstacles_;
+    settings.offset_polygons = offset_polygons_;
     settings.decomposition_type = decomposition_type_;
 
     planner_.reset(new StripmapPlanner(settings));
@@ -129,7 +139,7 @@ class StripmapPlanner2D : public BasePlanner2D {
     for (size_t i = 0; i < decomposition.size(); ++i) {
       visualization_msgs::MarkerArray decomposition_markers;
       std::string name = "decomposition_polygon_" + std::to_string(i);
-      const double kPolygonLineSize = 0.2;
+      const double kPolygonLineSize = 0.02;
       createPolygonMarkers(
           decomposition[i], settings_.altitude, settings_.global_frame_id, name,
           mav_visualization::Color::Gray(), mav_visualization::Color::Gray(),
@@ -149,6 +159,7 @@ class StripmapPlanner2D : public BasePlanner2D {
   std::shared_ptr<SensorModelBase> sensor_model_;
   DecompositionType decomposition_type_;
   bool sweep_around_obstacles_;
+  bool offset_polygons_;
 };
 }  // namespace mav_coverage_planning
 
