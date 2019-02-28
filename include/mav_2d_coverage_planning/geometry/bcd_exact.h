@@ -15,9 +15,7 @@ PolygonWithHoles rotatePolygon(const PolygonWithHoles& polygon_in,
 void processEvent(const VertexConstCirculator& v, std::list<Segment_2>* L,
                   std::list<Polygon_2>* open_polygons,
                   std::vector<Polygon_2>* closed_polygons);
-typedef CGAL::cpp11::result_of<Intersect_2(Segment_2, Line_2)>::type
-    Intersection;
-std::vector<Intersection> getIntersections(const std::list<Segment_2>& L,
+std::vector<Point_2> getIntersections(const std::list<Segment_2>& L,
                                            const Line_2& l);
 }  // namespace mav_coverage_planning
 
