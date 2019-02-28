@@ -603,6 +603,11 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
   // Change orientation according to arguments.
   if (!counter_clockwise) polygon.reverse_orientation();
 
+  if (!CGAL::is_y_monotone_2(polygon.vertices_begin(), polygon.vertices_end())){
+    LOG(INFO) << "Polygon is not y-monotone.";
+    return false;
+  }
+
   // Transform polygon to have first vertex in origin and first edge aligned
   // with x-axis.
   CGAL::Aff_transformation_2<K> translation(
