@@ -72,6 +72,7 @@ Visualization Manager:
       Marker Topic: /stripmap_planner_2d/path_markers
       Name: MarkerArray
       Namespaces:
+        "": true
         decomposition_polygon_0hull: false
         decomposition_polygon_10hull: false
         decomposition_polygon_11hull: false
@@ -100,6 +101,7 @@ Visualization Manager:
         decomposition_polygon_8hull: false
         decomposition_polygon_9hull: false
         points_end: true
+        points_end_text: true
         points_start: true
         polygonhole_0: true
         polygonhole_1: true
@@ -107,6 +109,34 @@ Visualization Manager:
         polygonhole_3: true
         polygonhull: true
         vertices_and_strip: true
+      Queue Size: 100
+      Value: true
+    - Class: voxblox_rviz_plugin/VoxbloxMesh
+      Enabled: true
+      Name: VoxbloxMesh
+      Topic: /firefly/vb_coverage_planner_node/mesh
+      Unreliable: false
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /firefly/vb_coverage_planner_node/path_visualizers
+      Name: MarkerArray
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
+    - Class: voxblox_rviz_plugin/VoxbloxMesh
+      Enabled: true
+      Name: VoxbloxMesh
+      Topic: /firefly/voxblox_node/mesh
+      Unreliable: false
+      Value: true
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /firefly/vb_coverage_planner_node/normals_visualizers
+      Name: MarkerArray
+      Namespaces:
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -133,7 +163,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 0.00499999989
+      Angle: -0.0949999988
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
@@ -143,11 +173,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Scale: 12.2633066
+      Scale: 10.8712025
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 35.5525055
-      Y: 34.8155022
+      X: 30.1873875
+      Y: 35.7129173
     Saved: ~
 Window Geometry:
   Displays:

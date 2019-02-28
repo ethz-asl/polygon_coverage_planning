@@ -252,9 +252,7 @@ void createStartAndEndTextMarkers(const mav_msgs::EigenTrajectoryPoint& start,
   end_text->text = "G";
   end_text->color = mav_visualization::Color::Black();
 
-  start_text->scale.x = end_text->scale.x = 2.0;
-  start_text->scale.y = end_text->scale.y = 2.0;
-  start_text->scale.z = end_text->scale.z = 0.2;
+  start_text->scale.z = end_text->scale.z = 1.0;
 }
 
 void polygon2FromPolygonMsg(const mav_planning_msgs::Polygon2D& msg,
