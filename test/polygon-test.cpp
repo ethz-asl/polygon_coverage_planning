@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #include <boost/make_shared.hpp>
 
+#include "mav_2d_coverage_planning/geometry/bcd_exact.h"
 #include "mav_2d_coverage_planning/geometry/polygon.h"
 #include "mav_2d_coverage_planning/tests/test_helpers.h"
 
@@ -53,7 +54,6 @@ TEST(PolygonTest, ConvertPolygonWithHolesToPolygonWithoutHoles) {
   EXPECT_EQ(10, poly_without_holes.getPolygon().outer_boundary().size());
 }
 
-
 TEST(PolygonTest, ConvexDecomposition) {
   Polygon rectangle_in_rectangle(
       createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
@@ -69,8 +69,7 @@ TEST(PolygonTest, BCDecomposition) {
       createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
   std::vector<Polygon> bc_polygons;
   EXPECT_TRUE(
-      rectangle_in_rectangle.computeBCDFromPolygonWithHoles(
-          &bc_polygons));
+      rectangle_in_rectangle.computeBCDFromPolygonWithHoles(&bc_polygons));
   EXPECT_EQ(4, bc_polygons.size());
 }
 
@@ -292,6 +291,14 @@ TEST(PolygonTest, toMesh) {
 
   std::ofstream out("/tmp/rectangle_in_rectangle.off");
   out << mesh;
+}
+
+TEST(PolygonTest, BCDExact) {
+  PolygonWithHoles diamond(createDiamond<Polygon_2>());
+  std::vector<Polygon_2> bcd =
+      computeBCDExact(diamond, Direction_2(1,0));
+  EXPECT_EQ(bcd.size(), 1);
+  EXPECT_EQ(bcd[0].size(), diamond.outer_boundary().size());
 }
 
 int main(int argc, char** argv) {

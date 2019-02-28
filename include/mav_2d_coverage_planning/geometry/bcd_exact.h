@@ -7,7 +7,8 @@
 // decomposition." Autonomous Robots 9.3 (2000): 247-253.
 // https://www.cs.cmu.edu/~motionplanning/lecture/Chap6-CellDecomp_howie.pdf
 namespace mav_coverage_planning {
-std::vector<Polygon_2> computeBCD(const PolygonWithHoles& polygon_in);
+std::vector<Polygon_2> computeBCDExact(const PolygonWithHoles& polygon_in,
+                                       const Direction_2& dir);
 std::vector<VertexConstCirculator> getXSortedVertices(
     const PolygonWithHoles& p);
 PolygonWithHoles rotatePolygon(const PolygonWithHoles& polygon_in,

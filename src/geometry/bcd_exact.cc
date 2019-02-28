@@ -1,13 +1,16 @@
 #include <glog/logging.h>
 #include <vector>
 
-#include <mav_2d_coverage_planning/geometry/bcd_exact.h>
+#include "mav_2d_coverage_planning/geometry/bcd_exact.h"
 
 namespace mav_coverage_planning {
-std::vector<Polygon_2> computeBCD(const PolygonWithHoles& polygon_in,
-                                  const Direction_2& dir) {
+std::vector<Polygon_2> computeBCDExact(const PolygonWithHoles& polygon_in,
+                                       const Direction_2& dir) {
   // Rotate polygon to have direction aligned with x-axis.
-  PolygonWithHoles rotated_polygon = rotatePolygon(polygon_in, -dir);
+  PolygonWithHoles rotated_polygon = rotatePolygon(polygon_in, dir);
+  LOG(INFO) << "// Rotate polygon to have direction aligned with x-axis.";
+  LOG(INFO) << polygon_in;
+  LOG(INFO) << rotated_polygon;
 
   // Sort vertices by x value.
   std::vector<VertexConstCirculator> sorted_vertices =
@@ -18,7 +21,14 @@ std::vector<Polygon_2> computeBCD(const PolygonWithHoles& polygon_in,
   std::list<Polygon_2> open_polygons;
   std::vector<Polygon_2> closed_polygons;
   for (const VertexConstCirculator& v : sorted_vertices) {
+    LOG(INFO) << "Process event: " << *v;
     processEvent(v, &L, &open_polygons, &closed_polygons);
+  }
+
+  // Rotate back all polygons.
+  for (Polygon_2& p : closed_polygons) {
+    CGAL::Aff_transformation_2<K> rotation(CGAL::ROTATION, dir, 1, 1e9);
+    p = CGAL::transform(rotation, p);
   }
 
   return closed_polygons;
@@ -42,11 +52,11 @@ std::vector<VertexConstCirculator> getXSortedVertices(
     } while (++vh != hit->vertices_circulator());
   }
   // Sort.
-  Polygon_2::Traits::Compare_x_2 compare_x_2;
+  Polygon_2::Traits::Less_x_2 less_x_2;
   std::sort(sorted_vertices.begin(), sorted_vertices.end(),
-            [&compare_x_2](const VertexConstCirculator& a,
-                           const VertexConstCirculator& b) -> bool {
-              return compare_x_2(*a, *b);
+            [&less_x_2](const VertexConstCirculator& a,
+                        const VertexConstCirculator& b) -> bool {
+              return less_x_2(*a, *b);
             });
 
   return sorted_vertices;
@@ -55,6 +65,7 @@ std::vector<VertexConstCirculator> getXSortedVertices(
 PolygonWithHoles rotatePolygon(const PolygonWithHoles& polygon_in,
                                const Direction_2& dir) {
   CGAL::Aff_transformation_2<K> rotation(CGAL::ROTATION, dir, 1, 1e9);
+  rotation = rotation.inverse();
   PolygonWithHoles rotated_polygon = polygon_in;
   rotated_polygon.outer_boundary() =
       CGAL::transform(rotation, polygon_in.outer_boundary());
@@ -77,26 +88,32 @@ void processEvent(const VertexConstCirculator& v, std::list<Segment_2>* L,
   // Get adjacent edges.
   VertexConstCirculator v_prev = std::prev(v);
   VertexConstCirculator v_next = std::next(v);
+  LOG(INFO) << "v_prev: " << *v_prev;
+  LOG(INFO) << "v_next: " << *v_next;
 
-  Polygon_2::Traits::Compare_y_2 compare_y_2;
-  VertexConstCirculator v_lower =
-      compare_y_2(*v_prev, *v_next) ? v_prev : v_next;
-  VertexConstCirculator v_upper =
-      !compare_y_2(*v_prev, *v_next) ? v_prev : v_next;
+  Polygon_2::Traits::Less_y_2 less_y_2;
+  VertexConstCirculator v_lower = less_y_2(*v_prev, *v_next) ? v_prev : v_next;
+  VertexConstCirculator v_upper = v_lower == v_prev ? v_next : v_prev;
 
-  Polygon_2::Traits::Compare_x_2 compare_x_2;
+  LOG(INFO) << "v_lower: " << *v_lower;
+  LOG(INFO) << "v_upper: " << *v_upper;
 
-  if (compare_x_2(*v_lower, *v) && compare_x_2(*v_upper, *v)) {  // OUT
+  Polygon_2::Traits::Less_x_2 less_x_2;
+
+  if (less_x_2(*v_lower, *v) && less_x_2(*v_upper, *v)) {  // OUT
     Segment_2 e_lower(*v, *v_lower);
     Segment_2 e_upper(*v_upper, *v);
+    LOG(INFO) << "OUT";
+    LOG(INFO) << "e_lower: " << e_lower;
+    LOG(INFO) << "e_upper: " << e_upper;
     // Close two cells, open one.
     // Find cells to close.
     // The new vertex lies between the two intersections.
     size_t cell_id = 0;
     for (size_t i = 0; i < intersections.size() - 3; i = i + 2) {
-      Polygon_2::Traits::Compare_y_2 compare_y_2;
-      if (compare_y_2(intersections[i], *v) &&
-          !compare_y_2(intersections[i + 3], *v)) {
+      Polygon_2::Traits::Less_y_2 less_y_2;
+      if (less_y_2(intersections[i], *v) &&
+          !less_y_2(intersections[i + 3], *v)) {
         cell_id = i;
         break;
       }
@@ -127,9 +144,12 @@ void processEvent(const VertexConstCirculator& v, std::list<Segment_2>* L,
 
     open_polygons->erase(lower_cell);
     open_polygons->erase(upper_cell);
-  } else if (!compare_x_2(*v_lower, *v) && !compare_x_2(*v_upper, *v)) {  // IN
-    Segment_2 e_lower(*v_lower, *v);
-    Segment_2 e_upper(*v, *v_upper);
+  } else if (!less_x_2(*v_lower, *v) && !less_x_2(*v_upper, *v)) {  // IN
+    Segment_2 e_lower(*v, *v_lower);
+    Segment_2 e_upper(*v_upper, *v);
+    LOG(INFO) << "IN";
+    LOG(INFO) << "e_lower: " << e_lower;
+    LOG(INFO) << "e_upper: " << e_upper;
     // Initialization.
     if (L->empty()) {
       L->push_back(e_lower);
@@ -142,9 +162,9 @@ void processEvent(const VertexConstCirculator& v, std::list<Segment_2>* L,
       // The new vertex lies between the two intersections.
       size_t cell_id = 0;
       for (size_t i = 0; i < intersections.size() - 1; i = i + 2) {
-        Polygon_2::Traits::Compare_y_2 compare_y_2;
-        if (compare_y_2(intersections[i], *v) &&
-            !compare_y_2(intersections[i + 1], *v)) {
+        Polygon_2::Traits::Less_y_2 less_y_2;
+        if (less_y_2(intersections[i], *v) &&
+            !less_y_2(intersections[i + 1], *v)) {
           cell_id = i;
           break;
         }
@@ -175,20 +195,19 @@ void processEvent(const VertexConstCirculator& v, std::list<Segment_2>* L,
       // Close old cell.
       open_polygons->erase(current_cell);
     }
-  } else {
-    Segment_2 e_lower(*v_lower, *v);
-    Segment_2 e_upper(*v, *v_upper);
-    if (compare_x_2(*v_lower, *v) && !compare_x_2(*v_upper, *v)) {
-      e_lower = e_lower.opposite();
-      e_upper = e_upper.opposite();
-    }
+  } else if (less_x_2(*v_lower, *v) && !less_x_2(*v_upper, *v)) {  // MIDDLE 1
+    LOG(INFO) << "MIDDLE 1";
+    Segment_2 e_lower(*v, *v_lower);
+    Segment_2 e_upper(*v_upper, *v);
+    LOG(INFO) << "e_lower: " << e_lower;
+    LOG(INFO) << "e_upper: " << e_upper;
     // Find cell to update.
     size_t cell_id = 0;
     for (size_t i = 0; i < intersections.size(); ++i) {
       if (intersections[i] == *v) {
-        cell_id = i;
         break;
       }
+      if (((i + 1) % 2) == 0) cell_id++;
     }
     // Update cell.
     std::list<Polygon_2>::iterator update_cell =
@@ -200,6 +219,30 @@ void processEvent(const VertexConstCirculator& v, std::list<Segment_2>* L,
         std::find(L->begin(), L->end(), e_lower);
     L->insert(e_lower_it, e_upper);
     L->erase(e_lower_it);
+  } else {  // MIDDLE 2
+    LOG(INFO) << "MIDDLE 2";
+    Segment_2 e_lower(*v_lower, *v);
+    Segment_2 e_upper(*v, *v_upper);
+    LOG(INFO) << "e_lower: " << e_lower;
+    LOG(INFO) << "e_upper: " << e_upper;
+    // Find cell to update.
+    size_t cell_id = 0;
+    for (size_t i = 0; i < intersections.size(); ++i) {
+      if (intersections[i] == *v) {
+        break;
+      }
+      if (((i + 1) % 2) == 0) cell_id++;
+    }
+    // Update cell.
+    std::list<Polygon_2>::iterator update_cell =
+        std::next(open_polygons->begin(), cell_id);
+    update_cell->push_back(*v);
+
+    // Delete e_upper, insert e_lower.
+    std::list<Segment_2>::iterator e_upper_it =
+        std::find(L->begin(), L->end(), e_upper);
+    L->insert(e_upper_it, e_lower);
+    L->erase(e_upper_it);
   }
 }
 
