@@ -195,57 +195,55 @@ void processEvent(const VertexConstCirculator& v, std::list<Segment_2>* L,
       // Close old cell.
       open_polygons->erase(current_cell);
     }
-  } else if (less_x_2(*v_lower, *v) && !less_x_2(*v_upper, *v)) {  // MIDDLE 1
-    LOG(INFO) << "MIDDLE 1";
-    Segment_2 e_lower(*v, *v_lower);
-    Segment_2 e_upper(*v_upper, *v);
-    LOG(INFO) << "e_lower: " << e_lower;
-    LOG(INFO) << "e_upper: " << e_upper;
-    // Find cell to update.
-    size_t cell_id = 0;
+  } else {
+    LOG(INFO) << "MIDDLE";
+    // Find edge to update.
+    size_t edge_id = 0;
     for (size_t i = 0; i < intersections.size(); ++i) {
       if (intersections[i] == *v) {
+        edge_id = i;
         break;
       }
-      if (((i + 1) % 2) == 0) cell_id++;
     }
-    // Update cell.
-    std::list<Polygon_2>::iterator update_cell =
-        std::next(open_polygons->begin(), cell_id);
-    update_cell->push_back(*v);
+    std::list<Segment_2>::iterator edge = std::next(L->begin(), edge_id);
+    std::list<Polygon_2>::iterator cell =
+        std::next(open_polygons->begin(), edge_id / 2);
 
-    // Delete e_lower, insert e_upper.
-    std::list<Segment_2>::iterator e_lower_it =
-        std::find(L->begin(), L->end(), e_lower);
-    L->insert(e_lower_it, e_upper);
-    L->erase(e_lower_it);
-  } else {  // MIDDLE 2
-    LOG(INFO) << "MIDDLE 2";
-    Segment_2 e_lower(*v_lower, *v);
-    Segment_2 e_upper(*v, *v_upper);
-    LOG(INFO) << "e_lower: " << e_lower;
-    LOG(INFO) << "e_upper: " << e_upper;
-    // Find cell to update.
-    size_t cell_id = 0;
-    for (size_t i = 0; i < intersections.size(); ++i) {
-      if (intersections[i] == *v) {
-        break;
-      }
-      if (((i + 1) % 2) == 0) cell_id++;
+    // Identify e_lower and e_upper.
+    Segment_2 edge_1(*v_prev, *v);
+    Segment_2 edge_2(*v_next, *v);
+    Segment_2 e_lower;
+    Segment_2 e_upper;
+    if ((edge_1 == *edge) || (edge_2.opposite() == *edge)) {
+      e_lower = edge_1;
+      e_upper = edge_2.opposite();
+    } else if ((edge_2 == *edge) || (edge_1.opposite() == *edge)) {
+      e_lower = edge_2;
+      e_upper = edge_1.opposite();
+    } else {
+      CHECK(false) << "Finding e_lower and e_upper failed.";
     }
-    // Update cell.
-    std::list<Polygon_2>::iterator update_cell =
-        std::next(open_polygons->begin(), cell_id);
-    update_cell->push_back(*v);
 
-    // Delete e_upper, insert e_lower.
-    std::list<Segment_2>::iterator e_upper_it =
-        std::find(L->begin(), L->end(), e_upper);
-    L->insert(e_upper_it, e_lower);
-    L->erase(e_upper_it);
+    // Case 1: delete e_lower from list and insert e_upper.
+    // Insert new vertex at end.
+    if ((edge_id % 2) == 0) {
+      // Update cell.
+      cell->push_back(*v);
+      // Update edge.
+      L->insert(edge, e_upper);
+      L->erase(edge);
+    }
+    // Case 2: delete e_upper from list and insert e_lower
+    // Insert new vertex at begin.
+    else {
+      // Update cell.
+      cell->insert(cell->vertices_begin(), *v);
+      // Update edge.
+      L->insert(edge, e_lower);
+      L->erase(edge);
+    }
   }
 }
-
 std::vector<Point_2> getIntersections(const std::list<Segment_2>& L,
                                       const Line_2& l) {
   typedef CGAL::cpp11::result_of<Intersect_2(Segment_2, Line_2)>::type
