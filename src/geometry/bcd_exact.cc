@@ -23,6 +23,10 @@ std::vector<Polygon_2> computeBCDExact(const PolygonWithHoles& polygon_in,
   for (const VertexConstCirculator& v : sorted_vertices) {
     LOG(INFO) << "Process event: " << *v;
     processEvent(v, &L, &open_polygons, &closed_polygons);
+    LOG(INFO) << "L: ";
+    for (std::list<Segment_2>::iterator it = L.begin(); it != L.end(); ++it) {
+      LOG(INFO) << *it;
+    }
   }
 
   // Rotate back all polygons.
@@ -101,49 +105,59 @@ void processEvent(const VertexConstCirculator& v, std::list<Segment_2>* L,
   Polygon_2::Traits::Less_x_2 less_x_2;
 
   if (less_x_2(*v_lower, *v) && less_x_2(*v_upper, *v)) {  // OUT
-    Segment_2 e_lower(*v, *v_lower);
-    Segment_2 e_upper(*v_upper, *v);
-    LOG(INFO) << "OUT";
-    LOG(INFO) << "e_lower: " << e_lower;
-    LOG(INFO) << "e_upper: " << e_upper;
-    // Close two cells, open one.
-    // Find cells to close.
-    // The new vertex lies between the two intersections.
-    size_t cell_id = 0;
-    for (size_t i = 0; i < intersections.size() - 3; i = i + 2) {
-      Polygon_2::Traits::Less_y_2 less_y_2;
-      if (less_y_2(intersections[i], *v) &&
-          !less_y_2(intersections[i + 3], *v)) {
-        cell_id = i;
-        break;
+    // Termination.
+    if (L->size() == 2) {
+      LOG(INFO) << "Termination.";
+      CHECK(open_polygons->size() == 1);
+      open_polygons->front().push_back(*v);
+      closed_polygons->push_back(open_polygons->front());
+      open_polygons->clear();
+      L->clear();
+    } else {
+      Segment_2 e_lower(*v, *v_lower);
+      Segment_2 e_upper(*v_upper, *v);
+      LOG(INFO) << "OUT";
+      LOG(INFO) << "e_lower: " << e_lower;
+      LOG(INFO) << "e_upper: " << e_upper;
+      // Close two cells, open one.
+      // Find cells to close.
+      // The new vertex lies between the two intersections.
+      size_t cell_id = 0;
+      for (size_t i = 0; i < intersections.size() - 3; i = i + 2) {
+        Polygon_2::Traits::Less_y_2 less_y_2;
+        if (less_y_2(intersections[i], *v) &&
+            !less_y_2(intersections[i + 3], *v)) {
+          cell_id = i;
+          break;
+        }
       }
+
+      // Close lower cell.
+      std::list<Polygon_2>::iterator lower_cell =
+          std::next(open_polygons->begin(), cell_id);
+      lower_cell->push_back(intersections[cell_id]);
+      lower_cell->push_back(intersections[cell_id + 1]);
+      closed_polygons->push_back(*lower_cell);
+      // Close upper cell.
+      std::list<Polygon_2>::iterator upper_cell =
+          std::next(open_polygons->begin(), cell_id + 1);
+      upper_cell->push_back(intersections[cell_id + 3]);
+      upper_cell->push_back(intersections[cell_id + 1]);
+      closed_polygons->push_back(*upper_cell);
+
+      // Delete e_lower and e_upper from list.
+      L->remove(e_lower);
+      L->remove(e_upper);
+
+      // Open one new cell.
+      std::list<Polygon_2>::iterator new_polygon =
+          open_polygons->insert(lower_cell, Polygon_2());
+      new_polygon->push_back(intersections[cell_id + 3]);
+      new_polygon->push_back(intersections[cell_id]);
+
+      open_polygons->erase(lower_cell);
+      open_polygons->erase(upper_cell);
     }
-
-    // Close lower cell.
-    std::list<Polygon_2>::iterator lower_cell =
-        std::next(open_polygons->begin(), cell_id);
-    lower_cell->push_back(intersections[cell_id]);
-    lower_cell->push_back(intersections[cell_id + 1]);
-    closed_polygons->push_back(*lower_cell);
-    // Close upper cell.
-    std::list<Polygon_2>::iterator upper_cell =
-        std::next(open_polygons->begin(), cell_id + 1);
-    upper_cell->push_back(intersections[cell_id + 3]);
-    upper_cell->push_back(intersections[cell_id + 1]);
-    closed_polygons->push_back(*upper_cell);
-
-    // Delete e_lower and e_upper from list.
-    L->remove(e_lower);
-    L->remove(e_upper);
-
-    // Open one new cell.
-    std::list<Polygon_2>::iterator new_polygon =
-        open_polygons->insert(lower_cell, Polygon_2());
-    new_polygon->push_back(intersections[cell_id + 3]);
-    new_polygon->push_back(intersections[cell_id]);
-
-    open_polygons->erase(lower_cell);
-    open_polygons->erase(upper_cell);
   } else if (!less_x_2(*v_lower, *v) && !less_x_2(*v_upper, *v)) {  // IN
     Segment_2 e_lower(*v, *v_lower);
     Segment_2 e_upper(*v_upper, *v);
