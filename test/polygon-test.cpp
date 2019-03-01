@@ -295,10 +295,14 @@ TEST(PolygonTest, toMesh) {
 
 TEST(PolygonTest, BCDExact) {
   PolygonWithHoles diamond(createDiamond<Polygon_2>());
-  std::vector<Polygon_2> bcd =
-      computeBCDExact(diamond, Direction_2(1,0));
+  std::vector<Polygon_2> bcd = computeBCDExact(diamond, Direction_2(1, 0));
   EXPECT_EQ(bcd.size(), 1);
   EXPECT_EQ(bcd[0].size(), diamond.outer_boundary().size());
+
+  PolygonWithHoles rectangle_in_rectangle(
+      createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
+  bcd = computeBCDExact(rectangle_in_rectangle, Direction_2(1, 0));
+  EXPECT_EQ(bcd.size(), 4);
 }
 
 int main(int argc, char** argv) {

@@ -20,9 +20,11 @@ std::vector<Polygon_2> computeBCDExact(const PolygonWithHoles& polygon_in,
   std::list<Segment_2> L;
   std::list<Polygon_2> open_polygons;
   std::vector<Polygon_2> closed_polygons;
+  std::vector<Point_2> processed_vertices;
   for (const VertexConstCirculator& v : sorted_vertices) {
     LOG(INFO) << "Process event: " << *v;
-    processEvent(v, &L, &open_polygons, &closed_polygons);
+    processEvent(v, processed_vertices, &L, &open_polygons, &closed_polygons);
+    processed_vertices.push_back(*v);
     LOG(INFO) << "L: ";
     for (std::list<Segment_2>::iterator it = L.begin(); it != L.end(); ++it) {
       LOG(INFO) << *it;
@@ -82,12 +84,14 @@ PolygonWithHoles rotatePolygon(const PolygonWithHoles& polygon_in,
   return rotated_polygon;
 }
 
-void processEvent(const VertexConstCirculator& v, std::list<Segment_2>* L,
-                  std::list<Polygon_2>* open_polygons,
+void processEvent(const VertexConstCirculator& v,
+                  const std::vector<Point_2>& processed_vertices,
+                  std::list<Segment_2>* L, std::list<Polygon_2>* open_polygons,
                   std::vector<Polygon_2>* closed_polygons) {
   // Compute intersection.
   Line_2 l(*v, Direction_2(0, 1));
-  std::vector<Point_2> intersections = getIntersections(*L, l);
+  std::vector<Point_2> intersections =
+      getIntersections(processed_vertices, *L, l);
 
   // Get adjacent edges.
   VertexConstCirculator v_prev = std::prev(v);
@@ -158,7 +162,17 @@ void processEvent(const VertexConstCirculator& v, std::list<Segment_2>* L,
       open_polygons->erase(lower_cell);
       open_polygons->erase(upper_cell);
     }
-  } else if (!less_x_2(*v_lower, *v) && !less_x_2(*v_upper, *v)) {  // IN
+  } else if (!less_x_2(*v_lower, *v) && !less_x_2(*v_upper, *v) &&
+             std::find(L->begin(), L->end(), Segment_2(*v_lower, *v)) ==
+                 L->end() &&
+             std::find(L->begin(), L->end(), Segment_2(*v, *v_lower)) ==
+                 L->end() &&
+             std::find(L->begin(), L->end(), Segment_2(*v_upper, *v)) ==
+                 L->end() &&
+             std::find(L->begin(), L->end(), Segment_2(*v, *v_upper)) ==
+                 L->end()) {
+    // IN
+    // All the find statements are to handle perpendicular edges.
     Segment_2 e_lower(*v, *v_lower);
     Segment_2 e_upper(*v_upper, *v);
     LOG(INFO) << "IN";
@@ -258,8 +272,9 @@ void processEvent(const VertexConstCirculator& v, std::list<Segment_2>* L,
     }
   }
 }
-std::vector<Point_2> getIntersections(const std::list<Segment_2>& L,
-                                      const Line_2& l) {
+std::vector<Point_2> getIntersections(
+    const std::vector<Point_2>& processed_vertices,
+    const std::list<Segment_2>& L, const Line_2& l) {
   typedef CGAL::cpp11::result_of<Intersect_2(Segment_2, Line_2)>::type
       Intersection;
 
@@ -270,9 +285,22 @@ std::vector<Point_2> getIntersections(const std::list<Segment_2>& L,
     Intersection result = CGAL::intersection(*it, l);
     if (result) {
       if (const Segment_2* s = boost::get<Segment_2>(&*result)) {
-        // TODO(rikba): Handle this case!!
-        LOG(ERROR) << "Segment intersection!";
-        *(intersection++) = s->source();
+        if ((std::find(processed_vertices.begin(), processed_vertices.end(),
+                       s->source()) == processed_vertices.end()) &&
+            (std::find(processed_vertices.begin(), processed_vertices.end(),
+                       s->target()) != processed_vertices.end()))
+          *(intersection++) = s->source();
+        else if ((std::find(processed_vertices.begin(),
+                            processed_vertices.end(),
+                            s->target()) == processed_vertices.end()) &&
+                 (std::find(processed_vertices.begin(),
+                            processed_vertices.end(),
+                            s->source()) != processed_vertices.end()))
+          *(intersection++) = s->target();
+        else {
+          CHECK(false) << "Unhandled case segment intersection.";
+        }
+        LOG(ERROR) << "Segment intersection! " << *std::prev(intersection);
       } else {
         const Point_2* p = boost::get<Point_2>(&*result);
         *(intersection++) = *p;
