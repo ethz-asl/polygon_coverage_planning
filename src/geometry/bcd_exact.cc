@@ -1,6 +1,8 @@
 #include <glog/logging.h>
 #include <vector>
 
+#include <CGAL/Boolean_set_operations_2.h>
+
 #include "mav_2d_coverage_planning/geometry/bcd_exact.h"
 
 namespace mav_coverage_planning {
@@ -8,6 +10,7 @@ std::vector<Polygon_2> computeBCDExact(const PolygonWithHoles& polygon_in,
                                        const Direction_2& dir) {
   // Rotate polygon to have direction aligned with x-axis.
   PolygonWithHoles rotated_polygon = rotatePolygon(polygon_in, dir);
+  sortPolygon(&rotated_polygon);
   LOG(INFO) << "// Rotate polygon to have direction aligned with x-axis.";
   LOG(INFO) << polygon_in;
   LOG(INFO) << rotated_polygon;
@@ -27,7 +30,8 @@ std::vector<Polygon_2> computeBCDExact(const PolygonWithHoles& polygon_in,
     if (std::find(processed_vertices.begin(), processed_vertices.end(), *v) !=
         processed_vertices.end())
       continue;
-    processEvent(v, &processed_vertices, &L, &open_polygons, &closed_polygons);
+    processEvent(rotated_polygon, v, &processed_vertices, &L, &open_polygons,
+                 &closed_polygons);
     LOG(INFO) << "L: ";
     for (std::list<Segment_2>::iterator it = L.begin(); it != L.end(); ++it) {
       LOG(INFO) << *it;
@@ -87,7 +91,7 @@ PolygonWithHoles rotatePolygon(const PolygonWithHoles& polygon_in,
   return rotated_polygon;
 }
 
-void processEvent(const VertexConstCirculator& v,
+void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
                   std::vector<Point_2>* processed_vertices,
                   std::list<Segment_2>* L, std::list<Polygon_2>* open_polygons,
                   std::vector<Polygon_2>* closed_polygons) {
@@ -183,47 +187,54 @@ void processEvent(const VertexConstCirculator& v,
              !less_x_2(e_upper.target(), e_upper.source())) {
     // IN
     LOG(INFO) << "IN";
-    // Initialization.
-    if (L->empty()) {
-      L->push_back(e_lower);
-      L->push_back(e_upper);
-      open_polygons->push_back(Polygon_2());
-      open_polygons->front().push_back(e_upper.source());
-      Polygon_2::Traits::Equal_2 eq_2;
-      if (!eq_2(e_lower.source(), e_upper.source())) {
-        open_polygons->front().push_back(e_lower.source());
-      }
-    } else {
-      // Close one cell, open two.
-      // Find edge to update.
-      size_t e_LOWER_id = 0;
-      for (size_t i = 0; i < intersections.size() - 1; i = i + 2) {
-        if (less_y_2(intersections[i], e_lower.source()) &&
-            less_y_2(e_upper.source(), intersections[i + 1])) {
-          e_LOWER_id = i;
-          break;
-        }
-      }
-      std::list<Segment_2>::iterator e_LOWER =
-          std::next(L->begin(), e_LOWER_id);
-      std::list<Polygon_2>::iterator cell =
-          std::next(open_polygons->begin(), e_LOWER_id / 2);
+    // Determine whether we open one or close one and open two.
+    Polygon_2 in_polygon;
+    in_polygon.push_back(e_lower.source());
+    in_polygon.push_back(e_lower.target());
+    in_polygon.push_back(e_upper.target());
+    bool open_one = CGAL::do_intersect(pwh, in_polygon);
+    LOG(INFO) << "open_one: " << open_one;
 
-      // Close this cell.
-      cell->push_back(intersections[e_LOWER_id]);
-      cell->push_back(intersections[e_LOWER_id + 1]);
-      closed_polygons->push_back(*cell);
+    // Find edge to update.
+    size_t e_LOWER_id = 0;
+    for (size_t i = 0; i < intersections.size() - 1; i = i + 2) {
+      if (intersections.empty()) break;
+      if (less_y_2(intersections[i], e_lower.source()) &&
+          less_y_2(e_upper.source(), intersections[i + 1])) {
+        e_LOWER_id = i;
+        break;
+      }
+    }
+    std::list<Segment_2>::iterator e_LOWER = std::next(L->begin(), e_LOWER_id);
+    std::list<Polygon_2>::iterator cell =
+        std::next(open_polygons->begin(), e_LOWER_id / 2);
 
-      // Add e_lower and e_upper
+    // Add e_lower and e_upper
+    if (e_LOWER != L->end()) {
       std::list<Segment_2>::iterator e_lower_it =
           L->insert(std::next(e_LOWER), e_lower);
       L->insert(std::next(e_lower_it), e_upper);
+    } else {
+      std::list<Segment_2>::iterator e_lower_it = L->insert(e_LOWER, e_lower);
+      L->insert(std::next(e_lower_it), e_upper);
+    }
 
+    // Add new cell.
+    std::list<Polygon_2>::iterator new_polygon =
+        open_polygons->insert(cell, Polygon_2());
+    if (open_one) {
+      new_polygon->push_back(e_upper.source());
+      Polygon_2::Traits::Equal_2 eq_2;
+      if (!eq_2(e_lower.source(), e_upper.source())) {
+        new_polygon->push_back(e_lower.source());
+      }
+    } else {
+      // Close one cell.
+      cell->push_back(intersections[e_LOWER_id]);
+      cell->push_back(intersections[e_LOWER_id + 1]);
+      closed_polygons->push_back(*cell);
       // Open two new cells
       // Lower polygon.
-      std::list<Polygon_2>::iterator new_polygon =
-          open_polygons->insert(cell, Polygon_2());
-
       new_polygon->push_back(e_lower.source());
       new_polygon->push_back(intersections[e_LOWER_id]);
 
@@ -234,6 +245,7 @@ void processEvent(const VertexConstCirculator& v,
       // Close old cell.
       open_polygons->erase(cell);
     }
+
   } else {
     LOG(INFO) << "MIDDLE";
     // Find edge to update.
@@ -296,6 +308,15 @@ std::vector<Point_2> getIntersections(const std::list<Segment_2>& L,
   }
 
   return intersections;
-}  // namespace mav_coverage_planning
+}
+
+void sortPolygon(PolygonWithHoles* pwh) {
+  if (pwh->outer_boundary().is_clockwise_oriented())
+    pwh->outer_boundary().reverse_orientation();
+
+  for (PolygonWithHoles::Hole_iterator hi = pwh->holes_begin();
+       hi != pwh->holes_end(); ++hi)
+    if (hi->is_counterclockwise_oriented()) hi->reverse_orientation();
+}
 
 }  // namespace mav_coverage_planning
