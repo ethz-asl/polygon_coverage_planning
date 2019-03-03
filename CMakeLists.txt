@@ -10,6 +10,7 @@ include(${CGAL_USE_FILE})
 add_definitions(-std=c++11)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+# set(CMAKE_BUILD_TYPE Debug)
 
 # TODO(rikba): Make catkin package.
 find_package(PkgConfig)

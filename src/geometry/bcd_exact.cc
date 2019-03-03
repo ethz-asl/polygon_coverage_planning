@@ -23,8 +23,11 @@ std::vector<Polygon_2> computeBCDExact(const PolygonWithHoles& polygon_in,
   std::vector<Point_2> processed_vertices;
   for (const VertexConstCirculator& v : sorted_vertices) {
     LOG(INFO) << "Process event: " << *v;
-    processEvent(v, processed_vertices, &L, &open_polygons, &closed_polygons);
-    processed_vertices.push_back(*v);
+    // v already processed.
+    if (std::find(processed_vertices.begin(), processed_vertices.end(), *v) !=
+        processed_vertices.end())
+      continue;
+    processEvent(v, &processed_vertices, &L, &open_polygons, &closed_polygons);
     LOG(INFO) << "L: ";
     for (std::list<Segment_2>::iterator it = L.begin(); it != L.end(); ++it) {
       LOG(INFO) << *it;
@@ -85,196 +88,193 @@ PolygonWithHoles rotatePolygon(const PolygonWithHoles& polygon_in,
 }
 
 void processEvent(const VertexConstCirculator& v,
-                  const std::vector<Point_2>& processed_vertices,
+                  std::vector<Point_2>* processed_vertices,
                   std::list<Segment_2>* L, std::list<Polygon_2>* open_polygons,
                   std::vector<Polygon_2>* closed_polygons) {
   // Compute intersection.
   Line_2 l(*v, Direction_2(0, 1));
-  std::vector<Point_2> intersections =
-      getIntersections(processed_vertices, *L, l);
+  std::vector<Point_2> intersections = getIntersections(*L, l);
 
-  // Get adjacent edges.
-  VertexConstCirculator v_prev = std::prev(v);
-  VertexConstCirculator v_next = std::next(v);
-  LOG(INFO) << "v_prev: " << *v_prev;
-  LOG(INFO) << "v_next: " << *v_next;
+  // Get e_lower and e_upper.
+  Segment_2 e_prev(*v, *std::prev(v));
+  Segment_2 e_next(*v, *std::next(v));
+  // Catch vertical edges.
+  Polygon_2::Traits::Equal_x_2 eq_x_2;
+  if (eq_x_2(e_prev.source(), e_prev.target())) {
+    e_prev = Segment_2(*std::prev(v), *std::prev(v, 2));
+  } else if (eq_x_2(e_next.source(), e_next.target())) {
+    e_next = Segment_2(*std::next(v), *std::next(v, 2));
+  }
 
   Polygon_2::Traits::Less_y_2 less_y_2;
-  VertexConstCirculator v_lower = less_y_2(*v_prev, *v_next) ? v_prev : v_next;
-  VertexConstCirculator v_upper = v_lower == v_prev ? v_next : v_prev;
+  Segment_2 e_lower =
+      less_y_2(e_prev.target(), e_next.target()) ? e_prev : e_next;
+  Segment_2 e_upper = e_lower == e_prev ? e_next : e_prev;
 
-  LOG(INFO) << "v_lower: " << *v_lower;
-  LOG(INFO) << "v_upper: " << *v_upper;
+  LOG(INFO) << "e_lower: " << e_lower;
+  LOG(INFO) << "e_upper: " << e_upper;
 
   Polygon_2::Traits::Less_x_2 less_x_2;
-
-  if (less_x_2(*v_lower, *v) && less_x_2(*v_upper, *v)) {  // OUT
+  if (less_x_2(e_lower.target(), e_lower.source()) &&
+      less_x_2(e_upper.target(), e_upper.source())) {  // OUT
     // Termination.
     if (L->size() == 2) {
       LOG(INFO) << "Termination.";
       CHECK(open_polygons->size() == 1);
-      open_polygons->front().push_back(*v);
+      open_polygons->front().push_back(e_lower.source());
+      Polygon_2::Traits::Equal_2 eq_2;
+      if (!eq_2(e_lower.source(), e_upper.source())) {
+        open_polygons->front().push_back(e_upper.source());
+      }
       closed_polygons->push_back(open_polygons->front());
       open_polygons->clear();
       L->clear();
     } else {
-      Segment_2 e_lower(*v, *v_lower);
-      Segment_2 e_upper(*v_upper, *v);
       LOG(INFO) << "OUT";
-      LOG(INFO) << "e_lower: " << e_lower;
-      LOG(INFO) << "e_upper: " << e_upper;
-      // Close two cells, open one.
-      // Find cells to close.
-      // The new vertex lies between the two intersections.
-      size_t cell_id = 0;
-      for (size_t i = 0; i < intersections.size() - 3; i = i + 2) {
-        Polygon_2::Traits::Less_y_2 less_y_2;
-        if (less_y_2(intersections[i], *v) &&
-            !less_y_2(intersections[i + 3], *v)) {
-          cell_id = i;
+      // Find edges to remove.
+      std::list<Segment_2>::iterator e_lower_it = L->begin();
+      CHECK(!L->empty());
+      size_t e_lower_id = 0;
+      for (; e_lower_it != L->end(); ++e_lower_it) {
+        if (*e_lower_it == e_lower || *e_lower_it == e_lower.opposite()) {
           break;
         }
+        e_lower_id++;
       }
+      std::list<Segment_2>::iterator e_upper_it = std::next(e_lower_it);
+      size_t e_upper_id = e_lower_id + 1;
+      std::cout << "e_lower_id: " << e_lower_id;
+      std::cout << "e_upper_id: " << e_upper_id;
+
+      // Close two cells, open one.
+      size_t lower_cell_id = e_lower_id / 2;
+      size_t upper_cell_id = e_upper_id / 2;
+      std::cout << "lower_cell_id: " << lower_cell_id;
+      std::cout << "upper_cell_id: " << upper_cell_id;
 
       // Close lower cell.
+      CHECK(intersections.size() > e_upper_id + 1);
       std::list<Polygon_2>::iterator lower_cell =
-          std::next(open_polygons->begin(), cell_id);
-      lower_cell->push_back(intersections[cell_id]);
-      lower_cell->push_back(intersections[cell_id + 1]);
+          std::next(open_polygons->begin(), lower_cell_id);
+      lower_cell->push_back(intersections[e_lower_id - 1]);
+      lower_cell->push_back(intersections[e_lower_id]);
       closed_polygons->push_back(*lower_cell);
       // Close upper cell.
       std::list<Polygon_2>::iterator upper_cell =
-          std::next(open_polygons->begin(), cell_id + 1);
-      upper_cell->push_back(intersections[cell_id + 3]);
-      upper_cell->push_back(intersections[cell_id + 1]);
+          std::next(open_polygons->begin(), upper_cell_id);
+      upper_cell->push_back(intersections[e_upper_id]);
+      upper_cell->push_back(intersections[e_upper_id + 1]);
       closed_polygons->push_back(*upper_cell);
 
       // Delete e_lower and e_upper from list.
-      L->remove(e_lower);
-      L->remove(e_upper);
+      L->erase(e_lower_it);
+      L->erase(e_upper_it);
 
       // Open one new cell.
       std::list<Polygon_2>::iterator new_polygon =
           open_polygons->insert(lower_cell, Polygon_2());
-      new_polygon->push_back(intersections[cell_id + 3]);
-      new_polygon->push_back(intersections[cell_id]);
+      new_polygon->push_back(intersections[e_upper_id + 1]);
+      new_polygon->push_back(intersections[e_lower_id - 1]);
 
       open_polygons->erase(lower_cell);
       open_polygons->erase(upper_cell);
     }
-  } else if (!less_x_2(*v_lower, *v) && !less_x_2(*v_upper, *v) &&
-             std::find(L->begin(), L->end(), Segment_2(*v_lower, *v)) ==
-                 L->end() &&
-             std::find(L->begin(), L->end(), Segment_2(*v, *v_lower)) ==
-                 L->end() &&
-             std::find(L->begin(), L->end(), Segment_2(*v_upper, *v)) ==
-                 L->end() &&
-             std::find(L->begin(), L->end(), Segment_2(*v, *v_upper)) ==
-                 L->end()) {
+  } else if (!less_x_2(e_lower.target(), e_lower.source()) &&
+             !less_x_2(e_upper.target(), e_upper.source())) {
     // IN
-    // All the find statements are to handle perpendicular edges.
-    Segment_2 e_lower(*v, *v_lower);
-    Segment_2 e_upper(*v_upper, *v);
     LOG(INFO) << "IN";
-    LOG(INFO) << "e_lower: " << e_lower;
-    LOG(INFO) << "e_upper: " << e_upper;
     // Initialization.
     if (L->empty()) {
       L->push_back(e_lower);
       L->push_back(e_upper);
       open_polygons->push_back(Polygon_2());
-      open_polygons->front().push_back(*v);
+      open_polygons->front().push_back(e_upper.source());
+      Polygon_2::Traits::Equal_2 eq_2;
+      if (!eq_2(e_lower.source(), e_upper.source())) {
+        open_polygons->front().push_back(e_lower.source());
+      }
     } else {
       // Close one cell, open two.
-      // Find position where to insert new edges.
-      // The new vertex lies between the two intersections.
-      size_t cell_id = 0;
+      // Find edge to update.
+      size_t e_LOWER_id = 0;
       for (size_t i = 0; i < intersections.size() - 1; i = i + 2) {
-        Polygon_2::Traits::Less_y_2 less_y_2;
-        if (less_y_2(intersections[i], *v) &&
-            !less_y_2(intersections[i + 1], *v)) {
-          cell_id = i;
+        if (less_y_2(intersections[i], e_lower.source()) &&
+            less_y_2(e_upper.source(), intersections[i + 1])) {
+          e_LOWER_id = i;
           break;
         }
       }
+      std::list<Segment_2>::iterator e_LOWER =
+          std::next(L->begin(), e_LOWER_id);
+      std::list<Polygon_2>::iterator cell =
+          std::next(open_polygons->begin(), e_LOWER_id / 2);
+
       // Close this cell.
-      std::list<Polygon_2>::iterator current_cell =
-          std::next(open_polygons->begin(), cell_id);
-      current_cell->push_back(intersections[cell_id]);
-      current_cell->push_back(intersections[cell_id + 1]);
-      closed_polygons->push_back(*current_cell);
+      cell->push_back(intersections[e_LOWER_id]);
+      cell->push_back(intersections[e_LOWER_id + 1]);
+      closed_polygons->push_back(*cell);
 
       // Add e_lower and e_upper
-      std::list<Segment_2>::iterator inserter;
-      inserter = std::next(L->begin(), cell_id + 1);
-      inserter = L->insert(inserter, e_upper);
-      inserter = L->insert(inserter, e_lower);
+      std::list<Segment_2>::iterator e_lower_it =
+          L->insert(std::next(e_LOWER), e_lower);
+      L->insert(std::next(e_lower_it), e_upper);
 
       // Open two new cells
       // Lower polygon.
       std::list<Polygon_2>::iterator new_polygon =
-          open_polygons->insert(current_cell, Polygon_2());
-      new_polygon->push_back(*v);
-      new_polygon->push_back(intersections[cell_id]);
+          open_polygons->insert(cell, Polygon_2());
+
+      new_polygon->push_back(e_lower.source());
+      new_polygon->push_back(intersections[e_LOWER_id]);
+
       // Upper polygon.
-      new_polygon = open_polygons->insert(current_cell, Polygon_2());
-      new_polygon->push_back(intersections[cell_id + 1]);
-      new_polygon->push_back(*v);
+      new_polygon = open_polygons->insert(cell, Polygon_2());
+      new_polygon->push_back(intersections[e_LOWER_id + 1]);
+      new_polygon->push_back(e_upper.source());
       // Close old cell.
-      open_polygons->erase(current_cell);
+      open_polygons->erase(cell);
     }
   } else {
     LOG(INFO) << "MIDDLE";
     // Find edge to update.
+    std::list<Segment_2>::iterator old_e_it = L->begin();
+    Segment_2 new_edge;
     size_t edge_id = 0;
-    for (size_t i = 0; i < intersections.size(); ++i) {
-      if (intersections[i] == *v) {
-        edge_id = i;
+    for (; old_e_it != L->end(); ++old_e_it) {
+      if (*old_e_it == e_upper || *old_e_it == e_upper.opposite()) {
+        new_edge = e_lower;
+        break;
+      } else if (*old_e_it == e_lower || *old_e_it == e_lower.opposite()) {
+        new_edge = e_upper;
         break;
       }
+      edge_id++;
     }
-    std::list<Segment_2>::iterator edge = std::next(L->begin(), edge_id);
+
+    // Update cell with new vertex.
+    size_t cell_id = edge_id / 2;
     std::list<Polygon_2>::iterator cell =
-        std::next(open_polygons->begin(), edge_id / 2);
+        std::next(open_polygons->begin(), cell_id);
 
-    // Identify e_lower and e_upper.
-    Segment_2 edge_1(*v_prev, *v);
-    Segment_2 edge_2(*v_next, *v);
-    Segment_2 e_lower;
-    Segment_2 e_upper;
-    if ((edge_1 == *edge) || (edge_2.opposite() == *edge)) {
-      e_lower = edge_1;
-      e_upper = edge_2.opposite();
-    } else if ((edge_2 == *edge) || (edge_1.opposite() == *edge)) {
-      e_lower = edge_2;
-      e_upper = edge_1.opposite();
-    } else {
-      CHECK(false) << "Finding e_lower and e_upper failed.";
-    }
-
-    // Case 1: delete e_lower from list and insert e_upper.
-    // Insert new vertex at end.
     if ((edge_id % 2) == 0) {
-      // Update cell.
-      cell->push_back(*v);
-      // Update edge.
-      L->insert(edge, e_upper);
-      L->erase(edge);
+      // Case 1: Insert new vertex at end.
+      cell->push_back(new_edge.source());
+    } else {
+      // Case 2: Insert new vertex at begin.
+      cell->insert(cell->vertices_begin(), new_edge.source());
     }
-    // Case 2: delete e_upper from list and insert e_lower
-    // Insert new vertex at begin.
-    else {
-      // Update cell.
-      cell->insert(cell->vertices_begin(), *v);
-      // Update edge.
-      L->insert(edge, e_lower);
-      L->erase(edge);
-    }
+    // Update edge.
+    L->insert(old_e_it, new_edge);
+    L->erase(old_e_it);
+  }
+  processed_vertices->push_back(e_lower.source());
+  Polygon_2::Traits::Equal_2 eq_2;
+  if (!eq_2(e_lower.source(), e_upper.source())) {
+    processed_vertices->push_back(e_upper.source());
   }
 }
-std::vector<Point_2> getIntersections(
-    const std::vector<Point_2>& processed_vertices,
-    const std::list<Segment_2>& L, const Line_2& l) {
+std::vector<Point_2> getIntersections(const std::list<Segment_2>& L,
+                                      const Line_2& l) {
   typedef CGAL::cpp11::result_of<Intersect_2(Segment_2, Line_2)>::type
       Intersection;
 
@@ -284,23 +284,8 @@ std::vector<Point_2> getIntersections(
        ++it) {
     Intersection result = CGAL::intersection(*it, l);
     if (result) {
-      if (const Segment_2* s = boost::get<Segment_2>(&*result)) {
-        if ((std::find(processed_vertices.begin(), processed_vertices.end(),
-                       s->source()) == processed_vertices.end()) &&
-            (std::find(processed_vertices.begin(), processed_vertices.end(),
-                       s->target()) != processed_vertices.end()))
-          *(intersection++) = s->source();
-        else if ((std::find(processed_vertices.begin(),
-                            processed_vertices.end(),
-                            s->target()) == processed_vertices.end()) &&
-                 (std::find(processed_vertices.begin(),
-                            processed_vertices.end(),
-                            s->source()) != processed_vertices.end()))
-          *(intersection++) = s->target();
-        else {
-          CHECK(false) << "Unhandled case segment intersection.";
-        }
-        LOG(ERROR) << "Segment intersection! " << *std::prev(intersection);
+      if (boost::get<Segment_2>(&*result)) {
+        CHECK(false) << "Vertical intersection.";
       } else {
         const Point_2* p = boost::get<Point_2>(&*result);
         *(intersection++) = *p;
@@ -311,6 +296,6 @@ std::vector<Point_2> getIntersections(
   }
 
   return intersections;
-}
+}  // namespace mav_coverage_planning
 
 }  // namespace mav_coverage_planning
