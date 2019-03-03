@@ -121,40 +121,46 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
   Polygon_2::Traits::Less_x_2 less_x_2;
   if (less_x_2(e_lower.target(), e_lower.source()) &&
       less_x_2(e_upper.target(), e_upper.source())) {  // OUT
-    // Termination.
-    if (L->size() == 2) {
-      LOG(INFO) << "Termination.";
-      CHECK(open_polygons->size() == 1);
-      open_polygons->front().push_back(e_lower.source());
+    LOG(INFO) << "OUT";
+    // Determine whether we close one or close two and open one.
+    Polygon_2 out_polygon;
+    out_polygon.push_back(e_lower.target());
+    out_polygon.push_back(e_lower.source());
+    out_polygon.push_back(e_upper.target());
+    bool close_one = CGAL::do_intersect(pwh, out_polygon);
+    LOG(INFO) << "close_one: " << close_one;
+
+    // Find edges to remove.
+    std::list<Segment_2>::iterator e_lower_it = L->begin();
+    size_t e_lower_id = 0;
+    for (; e_lower_it != L->end(); ++e_lower_it) {
+      if (*e_lower_it == e_lower || *e_lower_it == e_lower.opposite()) {
+        break;
+      }
+      e_lower_id++;
+    }
+
+    std::list<Segment_2>::iterator e_upper_it = std::next(e_lower_it);
+    size_t e_upper_id = e_lower_id + 1;
+    size_t lower_cell_id = e_lower_id / 2;
+    size_t upper_cell_id = e_upper_id / 2;
+
+    if (close_one) {
+      CHECK_EQ(lower_cell_id, upper_cell_id);
+      std::list<Polygon_2>::iterator cell =
+          std::next(open_polygons->begin(), lower_cell_id);
+      cell->push_back(e_lower.source());
       Polygon_2::Traits::Equal_2 eq_2;
       if (!eq_2(e_lower.source(), e_upper.source())) {
-        open_polygons->front().push_back(e_upper.source());
+        cell->push_back(e_upper.source());
       }
-      closed_polygons->push_back(open_polygons->front());
-      open_polygons->clear();
-      L->clear();
+      closed_polygons->push_back(*cell);
+      L->erase(e_lower_it);
+      L->erase(e_upper_it);
+      open_polygons->erase(cell);
     } else {
-      LOG(INFO) << "OUT";
-      // Find edges to remove.
-      std::list<Segment_2>::iterator e_lower_it = L->begin();
-      CHECK(!L->empty());
-      size_t e_lower_id = 0;
-      for (; e_lower_it != L->end(); ++e_lower_it) {
-        if (*e_lower_it == e_lower || *e_lower_it == e_lower.opposite()) {
-          break;
-        }
-        e_lower_id++;
-      }
-      std::list<Segment_2>::iterator e_upper_it = std::next(e_lower_it);
-      size_t e_upper_id = e_lower_id + 1;
-      std::cout << "e_lower_id: " << e_lower_id;
-      std::cout << "e_upper_id: " << e_upper_id;
-
+      CHECK_NE(lower_cell_id, upper_cell_id);
       // Close two cells, open one.
-      size_t lower_cell_id = e_lower_id / 2;
-      size_t upper_cell_id = e_upper_id / 2;
-      std::cout << "lower_cell_id: " << lower_cell_id;
-      std::cout << "upper_cell_id: " << upper_cell_id;
 
       // Close lower cell.
       CHECK(intersections.size() > e_upper_id + 1);
