@@ -8,6 +8,7 @@
 #include "mav_2d_coverage_planning/geometry/polygon.h"
 #include "mav_2d_coverage_planning/tests/test_helpers.h"
 
+#include <CGAL/is_y_monotone_2.h>
 #include <mav_coverage_planning_comm/eigen_conversions.h>
 
 using namespace mav_coverage_planning;
@@ -294,15 +295,38 @@ TEST(PolygonTest, toMesh) {
 }
 
 TEST(PolygonTest, BCDExact) {
+  // Diamond.
   PolygonWithHoles diamond(createDiamond<Polygon_2>());
+  FT expected_area = diamond.outer_boundary().area();
   std::vector<Polygon_2> bcd = computeBCDExact(diamond, Direction_2(1, 0));
   EXPECT_EQ(bcd.size(), 1);
   EXPECT_EQ(bcd[0].size(), diamond.outer_boundary().size());
+  FT area = 0.0;
+  for (const Polygon_2& p : bcd) {
+    EXPECT_TRUE(CGAL::is_y_monotone_2(p.vertices_begin(), p.vertices_end()));
+    EXPECT_EQ(p.size(), 4);
+    area += p.area();
+  }
+  EXPECT_EQ(area, expected_area);
 
+  // Rectangle in rectangle.
   PolygonWithHoles rectangle_in_rectangle(
       createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
+  expected_area = rectangle_in_rectangle.outer_boundary().area();
+  for (PolygonWithHoles::Hole_const_iterator hit =
+           rectangle_in_rectangle.holes_begin();
+       hit != rectangle_in_rectangle.holes_end(); ++hit) {
+    expected_area -= hit->area();
+  }
   bcd = computeBCDExact(rectangle_in_rectangle, Direction_2(1, 0));
   EXPECT_EQ(bcd.size(), 4);
+  area = 0.0;
+  for (const Polygon_2& p : bcd) {
+    EXPECT_TRUE(CGAL::is_y_monotone_2(p.vertices_begin(), p.vertices_end()));
+    EXPECT_EQ(p.size(), 4);
+    area += p.area();
+  }
+  EXPECT_EQ(area, expected_area);
 }
 
 int main(int argc, char** argv) {
