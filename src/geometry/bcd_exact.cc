@@ -1,8 +1,6 @@
 #include <glog/logging.h>
 #include <vector>
 
-#include <CGAL/Boolean_set_operations_2.h>
-
 #include "mav_2d_coverage_planning/geometry/bcd_exact.h"
 
 namespace mav_coverage_planning {
@@ -28,12 +26,18 @@ std::vector<Polygon_2> computeBCDExact(const PolygonWithHoles& polygon_in,
       continue;
     processEvent(rotated_polygon, v, &processed_vertices, &L, &open_polygons,
                  &closed_polygons);
+    LOG(INFO) << "L.";
+    for (std::list<Segment_2>::iterator it = L.begin(); it != L.end(); ++it) {
+      LOG(INFO) << *it;
+    }
   }
 
+  LOG(INFO) << "Polygons.";
   // Rotate back all polygons.
   for (Polygon_2& p : closed_polygons) {
     CGAL::Aff_transformation_2<K> rotation(CGAL::ROTATION, dir, 1, 1e9);
     p = CGAL::transform(rotation, p);
+    LOG(INFO) << p;
   }
 
   return closed_polygons;
@@ -87,6 +91,9 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
                   std::vector<Point_2>* processed_vertices,
                   std::list<Segment_2>* L, std::list<Polygon_2>* open_polygons,
                   std::vector<Polygon_2>* closed_polygons) {
+  Polygon_2::Traits::Equal_2 eq_2;
+
+  LOG(INFO) << "Event: " << *v;
   // Compute intersection.
   Line_2 l(*v, Direction_2(0, 1));
   std::vector<Point_2> intersections = getIntersections(*L, l);
@@ -110,12 +117,9 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
   Polygon_2::Traits::Less_x_2 less_x_2;
   if (less_x_2(e_lower.target(), e_lower.source()) &&
       less_x_2(e_upper.target(), e_upper.source())) {  // OUT
+    LOG(INFO) << "OUT";
     // Determine whether we close one or close two and open one.
-    Polygon_2 out_polygon;
-    out_polygon.push_back(e_lower.target());
-    out_polygon.push_back(e_lower.source());
-    out_polygon.push_back(e_upper.target());
-    bool close_one = CGAL::do_intersect(pwh, out_polygon);
+    bool close_one = hasOnPolygon(pwh, e_upper);
 
     // Find edges to remove.
     std::list<Segment_2>::iterator e_lower_it = L->begin();
@@ -133,7 +137,7 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
     size_t upper_cell_id = e_upper_id / 2;
 
     if (close_one) {
-      CHECK_EQ(lower_cell_id, upper_cell_id);
+      LOG(INFO) << "Close one.";
       std::list<Polygon_2>::iterator cell =
           std::next(open_polygons->begin(), lower_cell_id);
       cell->push_back(e_lower.source());
@@ -146,9 +150,8 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       L->erase(e_upper_it);
       open_polygons->erase(cell);
     } else {
-      CHECK_NE(lower_cell_id, upper_cell_id);
+      LOG(INFO) << "Close two cells, open one.";
       // Close two cells, open one.
-
       // Close lower cell.
       CHECK(intersections.size() > e_upper_id + 1);
       std::list<Polygon_2>::iterator lower_cell =
@@ -179,12 +182,9 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
   } else if (!less_x_2(e_lower.target(), e_lower.source()) &&
              !less_x_2(e_upper.target(), e_upper.source())) {
     // IN
+    LOG(INFO) << "IN";
     // Determine whether we open one or close one and open two.
-    Polygon_2 in_polygon;
-    in_polygon.push_back(e_lower.source());
-    in_polygon.push_back(e_lower.target());
-    in_polygon.push_back(e_upper.target());
-    bool open_one = CGAL::do_intersect(pwh, in_polygon);
+    bool open_one = hasOnPolygon(pwh, e_lower);
 
     // Find edge to update.
     size_t e_LOWER_id = 0;
@@ -203,6 +203,7 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       }
     }
     if (open_one) {
+      LOG(INFO) << "Open one.";
       // Add one new cell above e_UPPER.
       std::list<Segment_2>::iterator e_UPPER = L->begin();
       std::list<Polygon_2>::iterator open_cell = open_polygons->begin();
@@ -229,6 +230,7 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
         open_polygon->push_back(e_lower.source());
       }
     } else {
+      LOG(INFO) << "Close one, open two.";
       // Add new polygon between e_LOWER and e_UPPER.
       std::list<Segment_2>::iterator e_LOWER =
           std::next(L->begin(), e_LOWER_id);
@@ -261,6 +263,15 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       open_polygons->erase(cell);
     }
   } else {
+    LOG(INFO) << "MIDDLE.";
+    // Correct vertical edges.
+    // Get e_lower and e_upper.
+    e_prev = Segment_2(*v, *std::prev(v));
+    e_next = Segment_2(*v, *std::next(v));
+    Polygon_2::Traits::Less_y_2 less_y_2;
+    e_lower = less_y_2(e_prev.target(), e_next.target()) ? e_prev : e_next;
+    e_upper = e_lower == e_prev ? e_next : e_prev;
+
     // Find edge to update.
     std::list<Segment_2>::iterator old_e_it = L->begin();
     Segment_2 new_edge;
@@ -293,7 +304,6 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
     L->erase(old_e_it);
   }
   processed_vertices->push_back(e_lower.source());
-  Polygon_2::Traits::Equal_2 eq_2;
   if (!eq_2(e_lower.source(), e_upper.source())) {
     processed_vertices->push_back(e_upper.source());
   }
@@ -310,7 +320,7 @@ std::vector<Point_2> getIntersections(const std::list<Segment_2>& L,
     Intersection result = CGAL::intersection(*it, l);
     if (result) {
       if (boost::get<Segment_2>(&*result)) {
-        CHECK(false) << "Vertical intersection.";
+        *(intersection++) = it->target();
       } else {
         const Point_2* p = boost::get<Point_2>(&*result);
         *(intersection++) = *p;
@@ -347,7 +357,28 @@ bool cleanupPolygon(Polygon_2* poly) {
     } while (vit != poly->vertices_circulator());
   }
 
+  if (poly->is_simple() && poly->area() != 0.0) {
+    LOG(INFO) << "Adding polygon: " << *poly;
+  }
   return poly->is_simple() && poly->area() != 0.0;
+}
+
+bool hasOnPolygon(const PolygonWithHoles& pwh, const Segment_2& seg) {
+  Polygon_2::Traits::Equal_2 eq_2;
+  for (Polygon_2::Edge_const_iterator e = pwh.outer_boundary().edges_begin();
+       e != pwh.outer_boundary().edges_end(); ++e) {
+    if (eq_2(*e, seg)) return true;
+  }
+
+  for (PolygonWithHoles::Hole_const_iterator hit = pwh.holes_begin();
+       hit != pwh.holes_end(); ++hit) {
+    for (Polygon_2::Edge_const_iterator e = hit->edges_begin();
+         e != hit->edges_end(); ++e) {
+      if (eq_2(*e, seg)) return true;
+    }
+  }
+
+  return false;
 }
 
 }  // namespace mav_coverage_planning
