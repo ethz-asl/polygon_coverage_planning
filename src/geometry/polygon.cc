@@ -20,6 +20,7 @@
 #include <boost/make_shared.hpp>
 
 #include "mav_2d_coverage_planning/geometry/polygon_triangulation.h"
+#include "mav_2d_coverage_planning/geometry/bcd_exact.h"
 
 namespace mav_coverage_planning {
 
@@ -439,10 +440,11 @@ bool Polygon::computeBCDFromPolygonWithHoles(
   bcd_polygons->clear();
 
   BCD bcd(polygon_);
-  std::vector<Polygon_2> polygons;
-  if (!bcd.computeBCDFromPolygonWithHoles(&polygons)) return false;
-  bcd_polygons->reserve(polygons.size());
-  for (const Polygon_2& p : polygons) bcd_polygons->emplace_back(p);
+  std::vector<Polygon_2> polygons = computeBCDExact(polygon_, Direction_2(1,0));
+
+  for (const Polygon_2& p : polygons) {
+    bcd_polygons->emplace_back(p);
+  }
 
   return true;
 }
