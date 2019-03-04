@@ -65,11 +65,11 @@ std::vector<VertexConstCirculator> getXSortedVertices(
     } while (++vh != hit->vertices_circulator());
   }
   // Sort.
-  Polygon_2::Traits::Less_x_2 less_x_2;
+  Polygon_2::Traits::Less_xy_2 less_xy_2;
   std::sort(sorted_vertices.begin(), sorted_vertices.end(),
-            [&less_x_2](const VertexConstCirculator& a,
+            [&less_xy_2](const VertexConstCirculator& a,
                         const VertexConstCirculator& b) -> bool {
-              return less_x_2(*a, *b);
+              return less_xy_2(*a, *b);
             });
 
   return sorted_vertices;
@@ -154,7 +154,9 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       if (!eq_2(e_lower.source(), e_upper.source())) {
         cell->push_back(e_upper.source());
       }
-      closed_polygons->push_back(*cell);
+      LOG(INFO) << "Close one cell: " << *cell;
+      if (cell->is_simple())
+        closed_polygons->push_back(*cell);
       L->erase(e_lower_it);
       L->erase(e_upper_it);
       open_polygons->erase(cell);
@@ -168,13 +170,18 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
           std::next(open_polygons->begin(), lower_cell_id);
       lower_cell->push_back(intersections[e_lower_id - 1]);
       lower_cell->push_back(intersections[e_lower_id]);
-      closed_polygons->push_back(*lower_cell);
+      LOG(INFO) << "Close one lower_cell: " << *lower_cell;
+      LOG(INFO) << "Close one lower_cell is simple: " << lower_cell->is_simple();
+      if (lower_cell->is_simple())
+        closed_polygons->push_back(*lower_cell);
       // Close upper cell.
       std::list<Polygon_2>::iterator upper_cell =
           std::next(open_polygons->begin(), upper_cell_id);
       upper_cell->push_back(intersections[e_upper_id]);
       upper_cell->push_back(intersections[e_upper_id + 1]);
-      closed_polygons->push_back(*upper_cell);
+      LOG(INFO) << "Close one upper_cell: " << *upper_cell;
+      if (upper_cell->is_simple())
+        closed_polygons->push_back(*upper_cell);
 
       // Delete e_lower and e_upper from list.
       L->erase(e_lower_it);
@@ -205,40 +212,66 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
     size_t e_LOWER_id = 0;
     for (size_t i = 0; i < intersections.size() - 1; i = i + 2) {
       if (intersections.empty()) break;
-      if (less_y_2(intersections[i], e_lower.source()) &&
-          less_y_2(e_upper.source(), intersections[i + 1])) {
-        e_LOWER_id = i;
-        break;
+      if (open_one) {
+        if (less_y_2(intersections[i], e_lower.source()) &&
+            less_y_2(intersections[i+1], e_upper.source())) {
+          e_LOWER_id = i;
+        }
+      } else {
+        if (less_y_2(intersections[i], e_lower.source()) &&
+            less_y_2(e_upper.source(), intersections[i + 1])) {
+          e_LOWER_id = i;
+        }
       }
     }
-    std::list<Segment_2>::iterator e_LOWER = std::next(L->begin(), e_LOWER_id);
-    std::list<Polygon_2>::iterator cell =
-        std::next(open_polygons->begin(), e_LOWER_id / 2);
+    if (open_one) {
+      // Add one new cell above e_UPPER.
+      std::list<Segment_2>::iterator e_UPPER = L->begin();
+      std::list<Polygon_2>::iterator open_cell = open_polygons->begin();
+      if (!L->empty()) {
+        e_UPPER = std::next(e_UPPER, e_LOWER_id + 1);
+        open_cell = std::next(open_cell, e_LOWER_id / 2 + 1);
+      }
+      // Update edge list.
+      if (L->empty()) {
+        L->insert(L->end(), e_lower);
+        L->insert(L->end(), e_upper);
+      } else {
+        std::list<Segment_2>::iterator inserter = std::next(e_UPPER);
+        L->insert(inserter, e_lower);
+        L->insert(inserter, e_upper);
+      }
 
-    // Add e_lower and e_upper
-    if (e_LOWER != L->end()) {
+      // Create new polygon.
+      std::list<Polygon_2>::iterator open_polygon =
+          open_polygons->insert(open_cell, Polygon_2());
+      open_polygon->push_back(e_upper.source());
+      Polygon_2::Traits::Equal_2 eq_2;
+      if (!eq_2(e_lower.source(), e_upper.source())) {
+        open_polygon->push_back(e_lower.source());
+      }
+    } else {
+      // Add new polygon between e_LOWER and e_UPPER.
+      std::list<Segment_2>::iterator e_LOWER =
+          std::next(L->begin(), e_LOWER_id);
+      std::list<Polygon_2>::iterator cell =
+          std::next(open_polygons->begin(), e_LOWER_id / 2);
+
+      // Add e_lower and e_upper
       std::list<Segment_2>::iterator e_lower_it =
           L->insert(std::next(e_LOWER), e_lower);
       L->insert(std::next(e_lower_it), e_upper);
-    } else {
-      std::list<Segment_2>::iterator e_lower_it = L->insert(e_LOWER, e_lower);
-      L->insert(std::next(e_lower_it), e_upper);
-    }
 
-    // Add new cell.
-    std::list<Polygon_2>::iterator new_polygon =
-        open_polygons->insert(cell, Polygon_2());
-    if (open_one) {
-      new_polygon->push_back(e_upper.source());
-      Polygon_2::Traits::Equal_2 eq_2;
-      if (!eq_2(e_lower.source(), e_upper.source())) {
-        new_polygon->push_back(e_lower.source());
-      }
-    } else {
+      // Add new cell.
+      std::list<Polygon_2>::iterator new_polygon =
+          open_polygons->insert(cell, Polygon_2());
+
       // Close one cell.
       cell->push_back(intersections[e_LOWER_id]);
       cell->push_back(intersections[e_LOWER_id + 1]);
-      closed_polygons->push_back(*cell);
+      LOG(INFO) << "IN closing one: " << *cell;
+      if (cell->is_simple())
+        closed_polygons->push_back(*cell);
       // Open two new cells
       // Lower polygon.
       new_polygon->push_back(e_lower.source());
@@ -251,7 +284,6 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       // Close old cell.
       open_polygons->erase(cell);
     }
-
   } else {
     LOG(INFO) << "MIDDLE";
     // Find edge to update.
