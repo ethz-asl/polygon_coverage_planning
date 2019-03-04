@@ -68,7 +68,7 @@ std::vector<VertexConstCirculator> getXSortedVertices(
   Polygon_2::Traits::Less_xy_2 less_xy_2;
   std::sort(sorted_vertices.begin(), sorted_vertices.end(),
             [&less_xy_2](const VertexConstCirculator& a,
-                        const VertexConstCirculator& b) -> bool {
+                         const VertexConstCirculator& b) -> bool {
               return less_xy_2(*a, *b);
             });
 
@@ -155,8 +155,7 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
         cell->push_back(e_upper.source());
       }
       LOG(INFO) << "Close one cell: " << *cell;
-      if (cell->is_simple())
-        closed_polygons->push_back(*cell);
+      if (cleanupPolygon(&*cell)) closed_polygons->push_back(*cell);
       L->erase(e_lower_it);
       L->erase(e_upper_it);
       open_polygons->erase(cell);
@@ -171,17 +170,16 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       lower_cell->push_back(intersections[e_lower_id - 1]);
       lower_cell->push_back(intersections[e_lower_id]);
       LOG(INFO) << "Close one lower_cell: " << *lower_cell;
-      LOG(INFO) << "Close one lower_cell is simple: " << lower_cell->is_simple();
-      if (lower_cell->is_simple())
-        closed_polygons->push_back(*lower_cell);
+      LOG(INFO) << "Close one lower_cell is simple: "
+                << lower_cell->is_simple();
+      if (cleanupPolygon(&*lower_cell)) closed_polygons->push_back(*lower_cell);
       // Close upper cell.
       std::list<Polygon_2>::iterator upper_cell =
           std::next(open_polygons->begin(), upper_cell_id);
       upper_cell->push_back(intersections[e_upper_id]);
       upper_cell->push_back(intersections[e_upper_id + 1]);
       LOG(INFO) << "Close one upper_cell: " << *upper_cell;
-      if (upper_cell->is_simple())
-        closed_polygons->push_back(*upper_cell);
+      if (cleanupPolygon(&*upper_cell)) closed_polygons->push_back(*upper_cell);
 
       // Delete e_lower and e_upper from list.
       L->erase(e_lower_it);
@@ -214,7 +212,7 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       if (intersections.empty()) break;
       if (open_one) {
         if (less_y_2(intersections[i], e_lower.source()) &&
-            less_y_2(intersections[i+1], e_upper.source())) {
+            less_y_2(intersections[i + 1], e_upper.source())) {
           e_LOWER_id = i;
         }
       } else {
@@ -270,8 +268,7 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       cell->push_back(intersections[e_LOWER_id]);
       cell->push_back(intersections[e_LOWER_id + 1]);
       LOG(INFO) << "IN closing one: " << *cell;
-      if (cell->is_simple())
-        closed_polygons->push_back(*cell);
+      if (cleanupPolygon(&*cell)) closed_polygons->push_back(*cell);
       // Open two new cells
       // Lower polygon.
       new_polygon->push_back(e_lower.source());
@@ -355,6 +352,26 @@ void sortPolygon(PolygonWithHoles* pwh) {
   for (PolygonWithHoles::Hole_iterator hi = pwh->holes_begin();
        hi != pwh->holes_end(); ++hi)
     if (hi->is_counterclockwise_oriented()) hi->reverse_orientation();
+}
+
+bool cleanupPolygon(Polygon_2* poly) {
+  Polygon_2::Traits::Equal_2 eq_2;
+  bool erase_one = true;
+  while (erase_one) {
+    Polygon_2::Vertex_circulator vit = poly->vertices_circulator();
+    erase_one = false;
+    do {
+      if (eq_2(*vit, *std::next(vit))) {
+        poly->erase(vit++);
+        erase_one = true;
+      } else
+        vit++;
+    } while (vit != poly->vertices_circulator());
+  }
+
+  LOG(INFO) << "poly: " << *poly;
+  LOG(INFO) << "is simple: " << poly->is_simple();
+  return poly->is_simple() && poly->area() != 0.0;
 }
 
 }  // namespace mav_coverage_planning
