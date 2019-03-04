@@ -4,13 +4,13 @@
 #include <glog/logging.h>
 #include <cstdlib>
 
+#include <CGAL/Kernel/global_functions.h>
 #include <CGAL/Random.h>
 #include <CGAL/algorithm.h>
 #include <CGAL/point_generators_2.h>
 #include <CGAL/point_generators_3.h>
 #include <CGAL/random_polygon_2.h>
 #include <mav_coverage_planning_comm/cgal_definitions.h>
-#include <CGAL/Kernel/global_functions.h>
 
 namespace mav_coverage_planning {
 
@@ -61,6 +61,53 @@ Polygon createBCDCell() {
   bcd_cell.push_back(typename Polygon::Point_2(3.5, 9.1));
 
   return bcd_cell;
+}
+
+template <class Polygon, class PolygonWithHoles>
+PolygonWithHoles createUltimateBCDTest() {
+  typedef typename Polygon::Point_2 Point_2;
+
+  Polygon outer;
+  outer.push_back(Point_2(0.0, 0.0));
+  outer.push_back(Point_2(11.0, 0.0));
+  outer.push_back(Point_2(11.0, 1.0));
+  outer.push_back(Point_2(10.0, 1.0));
+  outer.push_back(Point_2(11.0, 2.0));
+  outer.push_back(Point_2(10.0, 3.0));
+  outer.push_back(Point_2(10.0, 4.0));
+  outer.push_back(Point_2(11.0, 4.0));
+  outer.push_back(Point_2(11.0, 5.0));
+  outer.push_back(Point_2(7.0, 6.0));
+  outer.push_back(Point_2(0.0, 5.0));
+  outer.push_back(Point_2(0.0, 3.0));
+  outer.push_back(Point_2(1.0, 3.0));
+  outer.push_back(Point_2(1.0, 2.0));
+  outer.push_back(Point_2(0.0, 2.0));
+  outer.push_back(Point_2(1.0, 1.0));
+  PolygonWithHoles pwh(outer);
+
+  Polygon hole;
+  hole.push_back(Point_2(1.0, 5.0));
+  hole.push_back(Point_2(2.0, 5.0));
+  hole.push_back(Point_2(2.0, 4.0));
+  hole.push_back(Point_2(1.0, 4.0));
+  pwh.add_hole(hole);
+
+  hole = Polygon();
+  hole.push_back(Point_2(3.0, 4.0));
+  hole.push_back(Point_2(4.0, 5.0));
+  hole.push_back(Point_2(5.0, 4.0));
+  hole.push_back(Point_2(5.0, 3.0));
+  pwh.add_hole(hole);
+
+  hole = Polygon();
+  hole.push_back(Point_2(5.0, 2.0));
+  hole.push_back(Point_2(7.0, 2.0));
+  hole.push_back(Point_2(7.0, 1.0));
+  hole.push_back(Point_2(5.0, 1.0));
+  pwh.add_hole(hole);
+
+  return pwh;
 }
 
 template <class Polygon, class PolygonWithHoles>

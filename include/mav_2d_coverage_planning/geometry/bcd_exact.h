@@ -20,7 +20,8 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
                   std::vector<Polygon_2>* closed_polygons);
 std::vector<Point_2> getIntersections(const std::list<Segment_2>& L,
                                       const Line_2& l);
-// Removes duplicate vertices. Returns if resulting polygon is simple and has some area.
+// Removes duplicate vertices. Returns if resulting polygon is simple and has
+// some area.
 bool cleanupPolygon(Polygon_2* poly);
 }  // namespace mav_coverage_planning
 
