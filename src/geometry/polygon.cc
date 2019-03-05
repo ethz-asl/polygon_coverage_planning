@@ -605,11 +605,6 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
   // Change orientation according to arguments.
   if (!counter_clockwise) polygon.reverse_orientation();
 
-  if (!CGAL::is_y_monotone_2(polygon.vertices_begin(), polygon.vertices_end())){
-    LOG(INFO) << "Polygon is not y-monotone.";
-    return false;
-  }
-
   // Transform polygon to have first vertex in origin and first edge aligned
   // with x-axis.
   CGAL::Aff_transformation_2<K> translation(
@@ -659,6 +654,9 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
   // y-direction with every new sweep.
   CGAL::Aff_transformation_2<K> sweep_mask_trafo(CGAL::TRANSLATION,
                                                  Vector_2(0.0, sweep_distance));
+  // We start sweeping the mask at the outermost polygon point.
+  CGAL::Aff_transformation_2<K> initial_offset(
+      CGAL::TRANSLATION, Vector_2(0.0, polygon.bbox().ymin()));
 
   bool sweep_is_cc = true;  // Toggle.
   // Initially clockwise sweeps get handled slightly different.
@@ -667,7 +665,10 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
     sweep_mask = CGAL::transform(sweep_mask_trafo, sweep_mask);
     sweep_mask.reverse_orientation();
     sweep_is_cc = !sweep_is_cc;
+    initial_offset = CGAL::Aff_transformation_2<K>(
+        CGAL::TRANSLATION, Vector_2(0.0, polygon.bbox().ymax()));
   }
+  sweep_mask = CGAL::transform(initial_offset, sweep_mask);
 
   for (int i = 0; i < num_sweeps - 1; ++i) {
     // Find intersection between sweep mask and polygon that includes the sweep
