@@ -21,6 +21,7 @@
 
 #include "mav_2d_coverage_planning/geometry/polygon_triangulation.h"
 #include "mav_2d_coverage_planning/geometry/bcd_exact.h"
+#include "mav_2d_coverage_planning/geometry/is_approx_y_monotone_2.h"
 
 namespace mav_coverage_planning {
 
@@ -617,6 +618,16 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
   rotation = rotation.inverse();
   polygon = CGAL::transform(rotation, polygon);
 
+  if (!CGAL::is_approx_y_monotone_2(polygon.vertices_begin(),
+                                    polygon.vertices_end())) {
+    DLOG(INFO) << "Polygon is not y-monotone.";
+    return false;
+  }
+
+  // TODO(rikba): Do not calculate sweeps if origin edge is not at south or
+  // north and a parallel edge at south or north exists.
+
+
   // Compute sweep distance for equally spaced sweeps.
   double polygon_length = polygon.bbox().ymax() - polygon.bbox().ymin();
   int num_sweeps =
@@ -677,11 +688,11 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
     CGAL::intersection(polygon, sweep_mask, std::back_inserter(intersections));
     // Some assertions.
     if (intersections.size() != 1) {
-      DLOG(INFO) << "Number of mask intersections is not 1.";
+      LOG(WARNING) << "Number of mask intersections is not 1.";
       return false;
     }
     if (intersections.front().number_of_holes() != 0) {
-      DLOG(INFO) << "Intersection has holes.";
+      LOG(WARNING) << "Intersection has holes.";
       return false;
     }
 
