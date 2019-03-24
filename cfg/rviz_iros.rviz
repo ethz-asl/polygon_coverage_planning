@@ -74,48 +74,13 @@ Visualization Manager:
       Namespaces:
         "": true
         decomposition_polygon_0hull: false
-        decomposition_polygon_10hull: false
-        decomposition_polygon_11hull: false
-        decomposition_polygon_12hull: false
-        decomposition_polygon_13hull: false
-        decomposition_polygon_14hull: false
-        decomposition_polygon_15hull: false
-        decomposition_polygon_16hull: false
-        decomposition_polygon_17hull: false
-        decomposition_polygon_18hull: false
-        decomposition_polygon_19hull: false
         decomposition_polygon_1hull: false
-        decomposition_polygon_20hull: false
-        decomposition_polygon_21hull: false
-        decomposition_polygon_22hull: false
-        decomposition_polygon_23hull: false
-        decomposition_polygon_24hull: false
-        decomposition_polygon_25hull: false
-        decomposition_polygon_26hull: false
-        decomposition_polygon_2hull: false
-        decomposition_polygon_3hull: false
-        decomposition_polygon_4hull: false
-        decomposition_polygon_5hull: false
-        decomposition_polygon_6hull: false
-        decomposition_polygon_7hull: false
-        decomposition_polygon_8hull: false
-        decomposition_polygon_9hull: false
         points_end: true
         points_end_text: true
         points_start: true
-        polygonhole_0: true
-        polygonhole_1: true
-        polygonhole_2: true
-        polygonhole_3: true
         polygonhull: true
         vertices_and_strip: true
       Queue Size: 100
-      Value: true
-    - Class: voxblox_rviz_plugin/VoxbloxMesh
-      Enabled: true
-      Name: VoxbloxMesh
-      Topic: /firefly/vb_coverage_planner_node/mesh
-      Unreliable: false
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
@@ -124,12 +89,6 @@ Visualization Manager:
       Namespaces:
         {}
       Queue Size: 100
-      Value: true
-    - Class: voxblox_rviz_plugin/VoxbloxMesh
-      Enabled: true
-      Name: VoxbloxMesh
-      Topic: /firefly/voxblox_node/mesh
-      Unreliable: false
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
@@ -163,7 +122,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: -0.0949999988
+      Angle: 0
       Class: rviz/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
@@ -173,11 +132,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Scale: 10.8712025
+      Scale: 9.27528286
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 30.1873875
-      Y: 35.7129173
+      X: -2.51697946
+      Y: 64.6768951
     Saved: ~
 Window Geometry:
   Displays:
