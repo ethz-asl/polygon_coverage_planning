@@ -99,22 +99,46 @@ bool SweepPlanGraph::computeLineSweepPlans(
 
   // Create all sweep plans.
   bool cc_orientation = true;
-  std::vector<Point_2> sweep;
-  for (size_t start_id = 0; start_id < polygon.getPolygon().outer_boundary().size();
-       ++start_id) {
+  std::vector<EdgeConstIterator> dirs_swept;
+  for (size_t start_id = 0;
+       start_id < polygon.getPolygon().outer_boundary().size(); ++start_id) {
+    // Don't sweep same direction multiple times.
+    EdgeConstIterator dir = std::next(
+        polygon.getPolygon().outer_boundary().edges_begin(), start_id);
+    std::vector<EdgeConstIterator>::iterator it =
+        std::find_if(dirs_swept.begin(), dirs_swept.end(),
+                     [&dir](const EdgeConstIterator& dir_swept) {
+                       return CGAL::parallel(*dir, *dir_swept);
+                     });
+    if (it != dirs_swept.end()) {
+      DLOG(INFO) << "Direction already swept.";
+      continue;
+    }
+    dirs_swept.push_back(dir);
+
+    // Create 4 sweeps. Along direction, along opposite direction and reverse.
+    std::vector<Point_2> sweep;
+    LOG(INFO) << "Computing sweep for polygon: " << polygon << " with sweep distance: " << sweep_distance_ << ", start_id: " << start_id;
     if (!polygon.computeLineSweepPlan(sweep_distance_, start_id, cc_orientation,
-                                &sweep)) {
-      LOG(WARNING) << "Could not compute sweep plan for start_id: " << start_id
-                 << " in polygon: " << polygon;
+                                      &sweep)) {
+      LOG(WARNING)
+          << "Could not compute counter clockwise sweep plan for start_id: "
+          << start_id << " in polygon: " << polygon;
     } else {
+      CHECK(!sweep.empty());
+      cluster_sweeps->push_back(sweep);
+      std::reverse(sweep.begin(), sweep.end());
       cluster_sweeps->push_back(sweep);
     }
 
-    if (!polygon.computeLineSweepPlan(sweep_distance_, start_id, !cc_orientation,
-                               &sweep)) {
-      LOG(WARNING) << "Could not compute sweep plan for start_id: " << start_id
-                 << " in polygon: " << polygon;
+    if (!polygon.computeLineSweepPlan(
+            sweep_distance_,
+            (start_id + 1) % polygon.getPolygon().outer_boundary().size(),
+            !cc_orientation, &sweep)) {
+      LOG(WARNING) << "Could not compute clockwise sweep plan for start_id: "
+                   << start_id << " in polygon: " << polygon;
     } else {
+      CHECK(!sweep.empty());
       cluster_sweeps->push_back(sweep);
       std::reverse(sweep.begin(), sweep.end());
       cluster_sweeps->push_back(sweep);

@@ -9,6 +9,7 @@
 #include "mav_2d_coverage_planning/planners/polygon_stripmap_planner_exact_preprocessed.h"
 #include "mav_2d_coverage_planning/geometry/polygon.h"
 #include "mav_2d_coverage_planning/tests/test_helpers.h"
+#include "mav_2d_coverage_planning/sensor_models/frustum.h"
 
 using namespace mav_coverage_planning;
 
@@ -34,16 +35,14 @@ void runPlanners(const std::vector<Polygon>& polygons) {
     settings.polygon = p;
     EXPECT_EQ(0, settings.polygon.getPolygon().number_of_holes());
 
+    settings.offset_polygons = true;
+    settings.decomposition_type = DecompositionType::kBoustrophedeon;
     settings.path_cost_function =
         std::bind(&computeEuclideanPathCost, std::placeholders::_1);
-    settings.altitude = createRandomDouble(kAltitudeMin, kAltitudeMax);
-    settings.lateral_fov =
-        createRandomDouble(kFOVCameraRadMin, kFOVCameraRadMax);
-    settings.longitudinal_fov =
-        createRandomDouble(kFOVCameraRadMin, kFOVCameraRadMax);
-    settings.min_view_overlap =
-        createRandomDouble(kMinViewOverlapMin, kMinViewOverlapMax);
-    EXPECT_TRUE(settings.check());
+    settings.sensor_model = std::make_shared<Frustum>(
+        createRandomDouble(kAltitudeMin, kAltitudeMax),
+        createRandomDouble(kFOVCameraRadMin, kFOVCameraRadMax),
+        createRandomDouble(kMinViewOverlapMin, kMinViewOverlapMax));
 
     // Create planners.
     PolygonStripmapPlanner planner_gk_ma(settings);

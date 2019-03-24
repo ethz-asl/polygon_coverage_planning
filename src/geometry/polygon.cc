@@ -624,9 +624,6 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
     return false;
   }
 
-  // TODO(rikba): Do not calculate sweeps if origin edge is not at south or
-  // north and a parallel edge at south or north exists.
-
 
   // Compute sweep distance for equally spaced sweeps.
   double polygon_length = polygon.bbox().ymax() - polygon.bbox().ymin();

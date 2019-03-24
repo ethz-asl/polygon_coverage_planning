@@ -133,34 +133,63 @@ TEST(PolygonTest, computeLineSweepPlan) {
 TEST(PolygonText, computeLineSweepPlanBCDCell) {
   const double kMaxSweepDistance = 1.0;
 
-  Polygon poly(createBCDCell<Polygon_2>());
+  Polygon polygon(createBCDCell<Polygon_2>());
+  std::vector<std::vector<Point_2>> cluster_sweeps;
 
   bool cc_orientation = true;
+  std::vector<EdgeConstIterator> dirs_swept;
   for (size_t start_id = 0;
-       start_id < poly.getPolygon().outer_boundary().size(); ++start_id) {
-    std::vector<Point_2> waypoints;
-    bool success = poly.computeLineSweepPlan(kMaxSweepDistance, start_id,
-                                             cc_orientation, &waypoints);
-    if (start_id == 0 || start_id == 3 || start_id == 4)
-      EXPECT_TRUE(success);
-    else
-      EXPECT_FALSE(success);
-    if (success) {
-      EXPECT_GE(waypoints.size(), 4);
-      for (const Point_2& p : waypoints) EXPECT_TRUE(poly.pointInPolygon(p));
+       start_id < polygon.getPolygon().outer_boundary().size(); ++start_id) {
+    // Don't sweep same direction multiple times.
+    EdgeConstIterator dir = std::next(
+        polygon.getPolygon().outer_boundary().edges_begin(), start_id);
+    std::vector<EdgeConstIterator>::iterator it =
+        std::find_if(dirs_swept.begin(), dirs_swept.end(),
+                     [&dir](const EdgeConstIterator& dir_swept) {
+                       return CGAL::parallel(*dir, *dir_swept);
+                     });
+    if (it != dirs_swept.end()) {
+      DLOG(INFO) << "Direction already swept.";
+      continue;
+    }
+    dirs_swept.push_back(dir);
+
+    // Create 4 sweeps. Along direction, along opposite direction and reverse.
+    std::vector<Point_2> sweep;
+    if (!polygon.computeLineSweepPlan(kMaxSweepDistance, start_id, cc_orientation,
+                                      &sweep)) {
+      LOG(WARNING)
+          << "Could not compute counter clockwise sweep plan for start_id: "
+          << start_id << " in polygon: " << polygon;
+    } else {
+      LOG(INFO) << "Adding cc sweep.";
+      for (const Point_2& p : sweep) LOG(INFO) << p;
+      cluster_sweeps.push_back(sweep);
+      std::reverse(sweep.begin(), sweep.end());
+      LOG(INFO) << "Adding cc reverse sweep.";
+      for (const Point_2& p : sweep) LOG(INFO) << p;
+      cluster_sweeps.push_back(sweep);
     }
 
-    success = poly.computeLineSweepPlan(kMaxSweepDistance, start_id,
-                                        !cc_orientation, &waypoints);
-    if (start_id == 0 || start_id == 1 || start_id == 4)
-      EXPECT_TRUE(success);
-    else
-      EXPECT_FALSE(success);
-    if (success) {
-      EXPECT_GE(waypoints.size(), 4);
-      for (const Point_2& p : waypoints) EXPECT_TRUE(poly.pointInPolygon(p));
+    if (!polygon.computeLineSweepPlan(
+            kMaxSweepDistance,
+            (start_id + 1) % polygon.getPolygon().outer_boundary().size(),
+            !cc_orientation, &sweep)) {
+      LOG(WARNING) << "Could not compute clockwise sweep plan for start_id: "
+                   << start_id << " in polygon: " << polygon;
+    } else {
+      LOG(INFO) << "Adding cw sweep.";
+      for (const Point_2& p : sweep) LOG(INFO) << p;
+      cluster_sweeps.push_back(sweep);
+      std::reverse(sweep.begin(), sweep.end());
+      LOG(INFO) << "Adding cw reverse sweep.";
+      for (const Point_2& p : sweep) LOG(INFO) << p;
+      cluster_sweeps.push_back(sweep);
     }
   }
+
+  EXPECT_EQ(dirs_swept.size(), 3);
+  EXPECT_EQ(cluster_sweeps.size(), dirs_swept.size() * 4);
 }
 
 TEST(PolygonTest, computeVisibilityPolygon) {
