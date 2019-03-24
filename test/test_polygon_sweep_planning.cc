@@ -36,7 +36,7 @@ bool computeLineSweepPlans(const Polygon& polygon,
 
     // Create 4 sweeps. Along direction, along opposite direction and reverse.
     std::vector<Point_2> sweep;
-    const double kMaxSweepDistance = 4.0;
+    const double kMaxSweepDistance = 9.0;
     if (!polygon.computeLineSweepPlan(kMaxSweepDistance, start_id,
                                       cc_orientation, &sweep)) {
       LOG(WARNING)
@@ -97,8 +97,8 @@ int main(int argc, char** argv) {
   ros::Publisher pub = nh_private.advertise<visualization_msgs::MarkerArray>(
       "visualization", 1, true);
   visualization_msgs::MarkerArray polygon_markers;
-  const double kPolygonLineSize = 0.4;
-  const double kPolygonPointSize = 0.4;
+  const double kPolygonLineSize = 0.8;
+  const double kPolygonPointSize = 0.8;
   createPolygonMarkers(poly, altitude, global_frame_id, "polygon",
                        mav_visualization::Color::Black(),
                        mav_visualization::Color::Black(), kPolygonLineSize,
@@ -119,8 +119,8 @@ int main(int argc, char** argv) {
     // The planned path:
     visualization_msgs::MarkerArray all_markers;
     visualization_msgs::Marker path_points, path_line_strips;
-    const double kPathLineSize = 0.2;
-    const double kPathPointSize = 0.4;
+    const double kPathLineSize = 0.4;
+    const double kPathPointSize = 0.8;
     createMarkers(waypoints[i], altitude, global_frame_id, "vertices_and_strip",
                   mav_visualization::Color::Gray(),
                   mav_visualization::Color::Gray(), kPathLineSize,
@@ -155,9 +155,9 @@ int main(int argc, char** argv) {
     end.z = altitude;
     start_arrow.points.push_back(end);
     start_arrow.color = mav_visualization::Color::Red();
-    start_arrow.scale.x = 0.8;
-    start_arrow.scale.y = 2.0;
-    start_arrow.scale.z = 3.0;
+    start_arrow.scale.x = 1.6;
+    start_arrow.scale.y = 4.0;
+    start_arrow.scale.z = 6.0;
     start_arrow.header.frame_id = global_frame_id;
     start_arrow.header.stamp = ros::Time::now();
     start_arrow.ns = "dir";
