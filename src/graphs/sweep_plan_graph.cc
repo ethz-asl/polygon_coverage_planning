@@ -118,7 +118,6 @@ bool SweepPlanGraph::computeLineSweepPlans(
 
     // Create 4 sweeps. Along direction, along opposite direction and reverse.
     std::vector<Point_2> sweep;
-    LOG(INFO) << "Computing sweep for polygon: " << polygon << " with sweep distance: " << sweep_distance_ << ", start_id: " << start_id;
     if (!polygon.computeLineSweepPlan(sweep_distance_, start_id, cc_orientation,
                                       &sweep)) {
       LOG(WARNING)
