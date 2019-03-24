@@ -4,6 +4,9 @@ project(mav_coverage_planning_ros)
 find_package(catkin_simple REQUIRED)
 catkin_simple(ALL_DEPS_REQUIRED)
 
+find_package(CGAL QUIET COMPONENTS Core)
+include(${CGAL_USE_FILE})
+
 add_definitions(-std=c++11)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
@@ -16,7 +19,9 @@ cs_add_library(${PROJECT_NAME}
   src/nodes/2d/base_planner_2d.cc
   src/nodes/2d/shortest_path_2d.cc
   src/conversions/ros_interface.cc
+  test/test_polygon_sweep_planning.cc
 )
+target_link_libraries(${PROJECT_NAME} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES})
 
 ############
 # Binaries #

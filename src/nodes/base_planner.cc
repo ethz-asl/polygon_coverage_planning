@@ -15,7 +15,7 @@
 
 namespace mav_coverage_planning {
 
-constexpr double kThrottleRate = 1.0 / 10.0;
+constexpr double kThrottleRate = 0.1;
 
 BasePlanner::BaseSettings::BaseSettings()
     : trajectory_cost_function(

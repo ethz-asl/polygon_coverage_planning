@@ -33,4 +33,6 @@
   <depend>mav_3d_coverage_planning</depend>
   <depend>mav_coverage_planning_comm</depend>
 
+  <depend>cgal_catkin</depend>
+
 </package>

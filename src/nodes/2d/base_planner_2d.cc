@@ -11,7 +11,7 @@
 
 namespace mav_coverage_planning {
 
-constexpr double kThrottleRate = 1.0 / 10.0;
+constexpr double kThrottleRate = 0.1;
 
 BasePlanner2D::Settings::Settings()
     : min_wall_distance(0.0),
