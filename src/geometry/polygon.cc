@@ -19,9 +19,9 @@
 #include <mav_coverage_planning_comm/eigen_conversions.h>
 #include <boost/make_shared.hpp>
 
-#include "mav_2d_coverage_planning/geometry/polygon_triangulation.h"
 #include "mav_2d_coverage_planning/geometry/bcd_exact.h"
 #include "mav_2d_coverage_planning/geometry/is_approx_y_monotone_2.h"
+#include "mav_2d_coverage_planning/geometry/polygon_triangulation.h"
 
 namespace mav_coverage_planning {
 
@@ -120,14 +120,7 @@ bool Polygon::computeTrapezoidalDecompositionFromPolygonWithHoles(
   return true;
 }
 
-bool Polygon::computeBestTrapezoidalDecompositionFromPolygonWithHoles(
-    double sweep_offset, std::vector<Polygon>* trap_polygons) const {
-  CHECK_NOTNULL(trap_polygons);
-  trap_polygons->clear();
-  size_t min_num_sweeps = std::numeric_limits<size_t>::max();
-  size_t min_num_cells = std::numeric_limits<size_t>::max();
-  std::vector<Polygon_2> best_traps;
-
+std::vector<Direction_2> Polygon::findEdgeDirections() const {
   // Get all possible polygon directions.
   std::vector<Direction_2> directions;
   for (size_t i = 0; i < polygon_.outer_boundary().size(); ++i) {
@@ -154,62 +147,108 @@ bool Polygon::computeBestTrapezoidalDecompositionFromPolygonWithHoles(
     directions.erase(std::next(directions.begin(), *rit));
   }
 
-  // For all possible rotations:
-  for (const Direction_2& dir : directions) {
-    CGAL::Aff_transformation_2<K> rotation(CGAL::ROTATION, dir, 1, 1e9);
+  // Add opposite directions.
+  std::vector<Direction_2> temp_directions = directions;
+  for (size_t i = 0; i < temp_directions.size(); ++i) {
+    directions.push_back(-temp_directions[i]);
+  }
+
+  return directions;
+}
+
+std::vector<Polygon> Polygon::rotatePolygon(
+    const std::vector<Direction_2>& dirs) const {
+  std::vector<Polygon> rotated_polys(dirs.size());
+  for (size_t i = 0; i < dirs.size(); ++i) {
+    CGAL::Aff_transformation_2<K> rotation(CGAL::ROTATION, dirs[i], 1, 1e3);
     rotation = rotation.inverse();
-    PolygonWithHoles rotated_polygon = polygon_;
-    rotated_polygon.outer_boundary() =
+    PolygonWithHoles rot_pwh = polygon_;
+    rot_pwh.outer_boundary() =
         CGAL::transform(rotation, polygon_.outer_boundary());
-    PolygonWithHoles::Hole_iterator hit_rot = rotated_polygon.holes_begin();
+    PolygonWithHoles::Hole_iterator hit_rot = rot_pwh.holes_begin();
     for (PolygonWithHoles::Hole_const_iterator hit = polygon_.holes_begin();
          hit != polygon_.holes_end(); ++hit) {
       *(hit_rot++) = CGAL::transform(rotation, *hit);
     }
 
-    // Calculate decomposition.
-    std::vector<Polygon_2> traps;
-    Polygon_vertical_decomposition_2 decom;
-    decom(rotated_polygon, std::back_inserter(traps));
-    if (traps.size() > min_num_cells) continue;
-
-    // Calculate minimum number of sweeps.
-    size_t num_sweeps = 0;
-    for (const Polygon_2& trap : traps) {
-      // 1. Find smallest line sweep length.
-      FT trap_length = std::numeric_limits<double>::max();
-      for (size_t i = 0; i < trap.size(); ++i) {
-        const Segment_2& edge = trap.edge(i);
-        FT temp_trap_length = 0.0;
-        for (size_t j = 0; j < trap.size(); ++j) {
-          const Point_2& p = trap.vertex(j);
-          FT dist = CGAL::squared_distance(edge.supporting_line(), p);
-          temp_trap_length = dist > temp_trap_length ? dist : temp_trap_length;
-        }
-        trap_length =
-            temp_trap_length < trap_length ? temp_trap_length : trap_length;
-      }
-      CHECK_GT(CGAL::to_double(trap_length), 0.0);
-      // 2. Calculate minimum number of sweeps for this trapezoid.
-      num_sweeps +=
-          static_cast<size_t>(std::ceil(
-              std::sqrt(CGAL::to_double(trap_length)) / sweep_offset)) +
-          1;
-    }
-    if (num_sweeps < min_num_sweeps) {
-      min_num_cells = traps.size();
-      min_num_sweeps = num_sweeps;
-      rotation = rotation.inverse();
-      best_traps.clear();
-      for (const Polygon_2& trap : traps) {
-        best_traps.emplace_back(CGAL::transform(rotation, trap));
-      }
-    }
+    rotated_polys[i] = Polygon(rot_pwh, plane_tf_);
   }
 
-  for (const Polygon_2& p : best_traps) trap_polygons->emplace_back(p);
+  return rotated_polys;
+}
 
-  return true;
+double Polygon::findMinAltitude(const Polygon& subregion) const {
+  // Get all possible sweep directions.
+  std::vector<Direction_2> sweep_dirs = subregion.findEdgeDirections();
+  std::vector<Polygon> rotated_polys = subregion.rotatePolygon(sweep_dirs);
+
+  // Find minimum altitude.
+  double min_altitude = std::numeric_limits<double>::max();
+  for (const Polygon& poly : rotated_polys) {
+    const Polygon_2& poly_2 = poly.getPolygon().outer_boundary();
+    // Check if sweepable.
+    if (!CGAL::is_approx_y_monotone_2(poly_2.vertices_begin(),
+                                      poly_2.vertices_end())) {
+      DLOG(INFO) << "Polygon is not y-monotone.";
+      continue;
+    }
+
+    double altitude = poly_2.bbox().ymax() - poly_2.bbox().ymin();
+    min_altitude = altitude < min_altitude ? altitude : min_altitude;
+  }
+
+  return min_altitude;
+}
+
+bool Polygon::computeBestTrapezoidalDecompositionFromPolygonWithHoles(
+    std::vector<Polygon>* trap_polygons) const {
+  CHECK_NOTNULL(trap_polygons);
+  trap_polygons->clear();
+  double min_altitude_sum = std::numeric_limits<double>::max();
+
+  // Get all possible decomposition directions.
+  std::vector<Direction_2> directions = findEdgeDirections();
+  std::vector<Polygon> rotated_polys = rotatePolygon(directions);
+
+  // For all possible rotations:
+  Direction_2 best_direction = directions.front();
+  size_t dir = 0;
+  for (const Polygon& poly : rotated_polys) {
+    // Calculate decomposition.
+    std::vector<Polygon> traps;
+    if (!poly.computeTrapezoidalDecompositionFromPolygonWithHoles(&traps)) {
+      LOG(WARNING) << "Failed to compute trapezoidal decomposition.";
+      continue;
+    }
+
+    // Calculate minimum altitude sum for each cell.
+    double min_altitude_sum_tmp = 0.0;
+    for (const Polygon& trap : traps) {
+      min_altitude_sum_tmp += findMinAltitude(trap);
+    }
+    LOG(INFO) << "min_altitude_sum_tmp: " << min_altitude_sum_tmp;
+
+    // Update best decomposition.
+    if (min_altitude_sum_tmp < min_altitude_sum) {
+      LOG(INFO) << "// Update best decomposition.";
+      min_altitude_sum = min_altitude_sum_tmp;
+      *trap_polygons = traps;
+      best_direction = directions[dir];
+    }
+    dir++;
+  }
+
+  // Reverse trap rotation.
+  CGAL::Aff_transformation_2<K> rotation(CGAL::ROTATION, best_direction, 1,
+                                         1e3);
+  for (Polygon& trap : *trap_polygons) {
+    Polygon_2 trap_2 = trap.getPolygon().outer_boundary();
+    trap_2 = CGAL::transform(rotation, trap_2);
+    trap = Polygon(trap_2, trap.getPlaneTransformation());
+  }
+
+  if (trap_polygons->empty()) return false;
+  else return true;
 }
 
 bool Polygon::offsetEdge(const size_t& edge_id, double offset,
@@ -376,7 +415,8 @@ bool Polygon::computeYMonotoneDecomposition(
           polygon_.outer_boundary().vertices_begin(),
           polygon_.outer_boundary().vertices_end(), partition_polygons.begin(),
           partition_polygons.end(), PartitionValidityTraits())) {
-    // Partition is overlapping, union area != original area or non y-monotone.
+    // Partition is overlapping, union area != original area or non
+    // y-monotone.
     return false;
   }
 
@@ -441,7 +481,8 @@ bool Polygon::computeBCDFromPolygonWithHoles(
   bcd_polygons->clear();
 
   BCD bcd(polygon_);
-  std::vector<Polygon_2> polygons = computeBCDExact(polygon_, Direction_2(1,0));
+  std::vector<Polygon_2> polygons =
+      computeBCDExact(polygon_, Direction_2(1, 0));
 
   for (const Polygon_2& p : polygons) {
     bcd_polygons->emplace_back(p);
@@ -624,7 +665,6 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
     return false;
   }
 
-
   // Compute sweep distance for equally spaced sweeps.
   double polygon_length = polygon.bbox().ymax() - polygon.bbox().ymin();
   int num_sweeps =
@@ -679,8 +719,8 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
   sweep_mask = CGAL::transform(initial_offset, sweep_mask);
 
   for (int i = 0; i < num_sweeps - 1; ++i) {
-    // Find intersection between sweep mask and polygon that includes the sweep
-    // waypoints to be added.
+    // Find intersection between sweep mask and polygon that includes the
+    // sweep waypoints to be added.
     std::vector<PolygonWithHoles> intersections;
     CGAL::intersection(polygon, sweep_mask, std::back_inserter(intersections));
     // Some assertions.
@@ -701,9 +741,9 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
       intersection.reverse_orientation();
 
     // Add intersection vertices to waypoints. We skip the previous sweep and
-    // stop at the current sweep. For a counter clockwise polygon the two bottom
-    // most waypoints represent the vertices after the top most vertices
-    // represent the current sweep.
+    // stop at the current sweep. For a counter clockwise polygon the two
+    // bottom most waypoints represent the vertices after the top most
+    // vertices represent the current sweep.
 
     // 1. Find the two top and bottom most vertices.
     VertexConstCirculator bot_v = intersection.vertices_circulator();

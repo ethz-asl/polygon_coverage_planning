@@ -104,7 +104,7 @@ class Polygon {
 
   // The best TCD is considered the one with the smallest bound on sweeps.
   bool computeBestTrapezoidalDecompositionFromPolygonWithHoles(
-      double sweep_offset, std::vector<Polygon>* trap_polygons) const;
+      std::vector<Polygon>* trap_polygons) const;
 
   // Compute the visibility polygon given a point inside a strictly simple
   // polygon. Francisc Bungiu, Michael Hemmer, John Hershberger, Kan Huang, and
@@ -149,6 +149,11 @@ class Polygon {
   inline PlaneTransformation<K> getPlaneTransformation() const {
     return plane_tf_;
   }
+
+  std::vector<Direction_2> findEdgeDirections() const;
+  std::vector<Polygon> rotatePolygon(
+      const std::vector<Direction_2>& dirs) const;
+  double findMinAltitude(const Polygon& subregion) const;
 
  private:
   bool checkValidOffset(
