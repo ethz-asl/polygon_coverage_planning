@@ -8,6 +8,7 @@ std::vector<Polygon_2> computeBCDExact(const PolygonWithHoles& polygon_in,
                                        const Direction_2& dir) {
   // Rotate polygon to have direction aligned with x-axis.
   PolygonWithHoles rotated_polygon = rotatePolygon(polygon_in, dir);
+  LOG(INFO) << "Input polygon: " << rotated_polygon;
   sortPolygon(&rotated_polygon);
 
   // Sort vertices by x value.
@@ -153,7 +154,7 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       LOG(INFO) << "Close two cells, open one.";
       // Close two cells, open one.
       // Close lower cell.
-      CHECK(intersections.size() > e_upper_id + 1);
+      CHECK_GT(intersections.size(), e_upper_id + 1);
       std::list<Polygon_2>::iterator lower_cell =
           std::next(open_polygons->begin(), lower_cell_id);
       lower_cell->push_back(intersections[e_lower_id - 1]);
@@ -188,12 +189,14 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
 
     // Find edge to update.
     size_t e_LOWER_id = 0;
+    bool found_e_lower_id = false;
     for (size_t i = 0; i < intersections.size() - 1; i = i + 2) {
       if (intersections.empty()) break;
       if (open_one) {
         if (less_y_2(intersections[i], e_lower.source()) &&
             less_y_2(intersections[i + 1], e_upper.source())) {
           e_LOWER_id = i;
+          found_e_lower_id = true;
         }
       } else {
         if (less_y_2(intersections[i], e_lower.source()) &&
@@ -207,7 +210,8 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       // Add one new cell above e_UPPER.
       std::list<Segment_2>::iterator e_UPPER = L->begin();
       std::list<Polygon_2>::iterator open_cell = open_polygons->begin();
-      if (!L->empty()) {
+      if (!L->empty() && found_e_lower_id) {
+        LOG(INFO) << "e_LOWER_id: " << e_LOWER_id;
         e_UPPER = std::next(e_UPPER, e_LOWER_id + 1);
         open_cell = std::next(open_cell, e_LOWER_id / 2 + 1);
       }
@@ -215,7 +219,11 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       if (L->empty()) {
         L->insert(L->end(), e_lower);
         L->insert(L->end(), e_upper);
-      } else {
+      } else if (!L->empty() && !found_e_lower_id) {
+        L->insert(L->begin(), e_upper);     
+        L->insert(L->begin(), e_lower);
+      }
+      else {
         std::list<Segment_2>::iterator inserter = std::next(e_UPPER);
         L->insert(inserter, e_lower);
         L->insert(inserter, e_upper);
