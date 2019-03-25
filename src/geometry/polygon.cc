@@ -226,11 +226,9 @@ bool Polygon::computeBestTrapezoidalDecompositionFromPolygonWithHoles(
     for (const Polygon& trap : traps) {
       min_altitude_sum_tmp += findMinAltitude(trap);
     }
-    LOG(INFO) << "min_altitude_sum_tmp: " << min_altitude_sum_tmp;
 
     // Update best decomposition.
     if (min_altitude_sum_tmp < min_altitude_sum) {
-      LOG(INFO) << "// Update best decomposition.";
       min_altitude_sum = min_altitude_sum_tmp;
       *trap_polygons = traps;
       best_direction = directions[dir];
@@ -248,6 +246,56 @@ bool Polygon::computeBestTrapezoidalDecompositionFromPolygonWithHoles(
   }
 
   if (trap_polygons->empty()) return false;
+  else return true;
+}
+
+bool Polygon::computeBestBCDFromPolygonWithHoles(
+    std::vector<Polygon>* bcd_polygons) const {
+  CHECK_NOTNULL(bcd_polygons);
+  bcd_polygons->clear();
+  double min_altitude_sum = std::numeric_limits<double>::max();
+
+  // Get all possible decomposition directions.
+  std::vector<Direction_2> directions = findEdgeDirections();
+  std::vector<Polygon> rotated_polys = rotatePolygon(directions);
+
+  // For all possible rotations:
+  Direction_2 best_direction = directions.front();
+  size_t dir = 0;
+  for (const Polygon& poly : rotated_polys) {
+    // Calculate decomposition.
+    std::vector<Polygon> bcds;
+    LOG(INFO) << "rotated_poly: " << poly;
+    if (!poly.computeBCDFromPolygonWithHoles(&bcds)) {
+      LOG(WARNING) << "Failed to compute boustrophedon decomposition.";
+      continue;
+    }
+
+    // Calculate minimum altitude sum for each cell.
+    double min_altitude_sum_tmp = 0.0;
+    for (const Polygon& bcd : bcds) {
+      min_altitude_sum_tmp += findMinAltitude(bcd);
+    }
+
+    // Update best decomposition.
+    if (min_altitude_sum_tmp < min_altitude_sum) {
+      min_altitude_sum = min_altitude_sum_tmp;
+      *bcd_polygons = bcds;
+      best_direction = directions[dir];
+    }
+    dir++;
+  }
+
+  // Reverse bcd rotation.
+  CGAL::Aff_transformation_2<K> rotation(CGAL::ROTATION, best_direction, 1,
+                                         1e3);
+  for (Polygon& bcd : *bcd_polygons) {
+    Polygon_2 bcd_2 = bcd.getPolygon().outer_boundary();
+    bcd_2 = CGAL::transform(rotation, bcd_2);
+    bcd = Polygon(bcd_2, bcd.getPlaneTransformation());
+  }
+
+  if (bcd_polygons->empty()) return false;
   else return true;
 }
 

@@ -87,11 +87,8 @@ class Polygon {
 
   // Compute BCDs for every edge direction. Return any with the smallest number
   // of cells.
-  // TODO(rikba): implement.
   bool computeBestBCDFromPolygonWithHoles(
-      std::vector<Polygon>* bcd_polygons) const {
-    return computeBCDFromPolygonWithHoles(bcd_polygons);
-  }
+      std::vector<Polygon>* bcd_polygons) const;
 
   // TODO(rikba): implement.
   bool computeBestDecompositionFromPolygonWithHoles(
