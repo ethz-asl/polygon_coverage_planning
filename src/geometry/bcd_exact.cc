@@ -120,7 +120,10 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       less_x_2(e_upper.target(), e_upper.source())) {  // OUT
     LOG(INFO) << "OUT";
     // Determine whether we close one or close two and open one.
-    bool close_one = hasOnPolygon(pwh, e_upper);
+    // TODO(rikba): instead of looking at unbounded side, look at adjacent edge
+    // angle
+    bool close_one = hasOnPolygon(pwh, e_upper) &&
+                     hasOnUnbounded(pwh, e_lower.source() + Vector_2(1e-6, 0));
 
     // Find edges to remove.
     std::list<Segment_2>::iterator e_lower_it = L->begin();
@@ -220,7 +223,7 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
         L->insert(L->end(), e_lower);
         L->insert(L->end(), e_upper);
       } else if (!L->empty() && !found_e_lower_id) {
-        L->insert(L->begin(), e_upper);     
+        L->insert(L->begin(), e_upper);
         L->insert(L->begin(), e_lower);
       }
       else {
@@ -384,6 +387,17 @@ bool hasOnPolygon(const PolygonWithHoles& pwh, const Segment_2& seg) {
          e != hit->edges_end(); ++e) {
       if (eq_2(*e, seg)) return true;
     }
+  }
+
+  return false;
+}
+
+bool hasOnUnbounded(const PolygonWithHoles& pwh, const Point_2& p) {
+  if (pwh.outer_boundary().has_on_unbounded_side(p)) return true;
+
+  for (PolygonWithHoles::Hole_const_iterator hit = pwh.holes_begin();
+       hit != pwh.holes_end(); ++hit) {
+         if (pwh.outer_boundary().has_on_bounded_side(p)) return true;
   }
 
   return false;

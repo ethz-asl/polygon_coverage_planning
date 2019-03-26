@@ -21,6 +21,7 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
 std::vector<Point_2> getIntersections(const std::list<Segment_2>& L,
                                       const Line_2& l);
 bool hasOnPolygon(const PolygonWithHoles& pwh, const Segment_2& seg);
+bool hasOnUnbounded(const PolygonWithHoles& pwh, const Point_2& seg);
 // Removes duplicate vertices. Returns if resulting polygon is simple and has
 // some area.
 bool cleanupPolygon(Polygon_2* poly);
