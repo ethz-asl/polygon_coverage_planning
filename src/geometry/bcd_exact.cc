@@ -389,11 +389,16 @@ bool cleanupPolygon(Polygon_2* poly) {
 }
 
 bool outOfPWH(const PolygonWithHoles& pwh, const Point_2& p) {
-  if (pwh.outer_boundary().has_on_negative_side(p)) return true;
+  LOG(INFO) << "point: " << p;
+  if (pwh.outer_boundary().has_on_unbounded_side(p)) return true;
 
   for (PolygonWithHoles::Hole_const_iterator hit = pwh.holes_begin();
        hit != pwh.holes_end(); ++hit) {
-    if (pwh.outer_boundary().has_on_negative_side(p)) return true;
+    LOG(INFO) << "Check in hole: " << *hit;
+    if (hit->has_on_bounded_side(p)) {
+      LOG(INFO) << "inside hole!";
+      return true;
+    }
   }
 
   return false;
