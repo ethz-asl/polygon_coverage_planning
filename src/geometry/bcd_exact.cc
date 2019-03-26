@@ -111,27 +111,23 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
   }
 
   Polygon_2::Traits::Less_y_2 less_y_2;
-  Segment_2 e_lower =
-      less_y_2(e_prev.target(), e_next.target()) ? e_prev : e_next;
-        Segment_2 e_upper = e_lower == e_prev ? e_next : e_prev;
-
   Polygon_2::Traits::Less_x_2 less_x_2;
-  if (less_x_2(e_lower.target(), e_lower.source()) &&
-      less_x_2(e_upper.target(), e_upper.source())) {  // OUT
+  Segment_2 e_lower = e_prev;
+  Segment_2 e_upper = e_next;
+  if (less_x_2(e_prev.target(), e_prev.source()) &&
+      less_x_2(e_next.target(), e_next.source())) {  // OUT
+
+    Point_2 p_on_upper = eq_2(e_lower.source(), e_upper.source())
+                             ? e_upper.target()
+                             : e_upper.source();
+    if (e_lower.supporting_line().has_on_positive_side(p_on_upper))
+      std::swap(e_lower, e_upper);
+
     LOG(INFO) << "OUT";
     // Determine whether we close one or close two and open one.
     // TODO(rikba): instead of looking at unbounded side, look at adjacent edge
     // angle
-    bool has_on_polygon = hasOnPolygon(pwh, e_upper);
-    bool has_on_unbounded =
-        hasOnUnbounded(pwh, e_lower.source() + Vector_2(1e-6, 0));
-    bool close_one = has_on_polygon && has_on_unbounded;
-
-    // HACK
-    if (has_on_polygon && !has_on_unbounded) {
-      e_lower = e_next;
-      e_upper = e_prev;
-    }
+    bool close_one = outOfPWH(pwh, *v + Vector_2(1e-6, 0));
 
     // Find edges to remove.
     std::list<Segment_2>::iterator e_lower_it = L->begin();
@@ -205,9 +201,16 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
   } else if (!less_x_2(e_lower.target(), e_lower.source()) &&
              !less_x_2(e_upper.target(), e_upper.source())) {
     // IN
+    Polygon_2::Traits::Equal_2 eq_2;
     LOG(INFO) << "IN";
+    Point_2 p_on_lower = eq_2(e_lower.source(), e_upper.source())
+                             ? e_lower.target()
+                             : e_lower.source();
+    if (e_upper.supporting_line().has_on_positive_side(p_on_lower))
+      std::swap(e_lower, e_upper);
+
     // Determine whether we open one or close one and open two.
-    bool open_one = hasOnPolygon(pwh, e_lower);
+    bool open_one = outOfPWH(pwh, *v - Vector_2(1e-6, 0));
 
     // Find edge to update.
     size_t e_LOWER_id = 0;
@@ -244,8 +247,7 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       } else if (!L->empty() && !found_e_lower_id) {
         L->insert(L->begin(), e_upper);
         L->insert(L->begin(), e_lower);
-      }
-      else {
+      } else {
         std::list<Segment_2>::iterator inserter = std::next(e_UPPER);
         L->insert(inserter, e_lower);
         L->insert(inserter, e_upper);
@@ -255,7 +257,6 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       std::list<Polygon_2>::iterator open_polygon =
           open_polygons->insert(open_cell, Polygon_2());
       open_polygon->push_back(e_upper.source());
-      Polygon_2::Traits::Equal_2 eq_2;
       if (!eq_2(e_lower.source(), e_upper.source())) {
         open_polygon->push_back(e_lower.source());
       }
@@ -295,12 +296,6 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
   } else {
     LOG(INFO) << "MIDDLE.";
     // Correct vertical edges.
-    // Get e_lower and e_upper.
-    e_prev = Segment_2(*v, *std::prev(v));
-    e_next = Segment_2(*v, *std::next(v));
-    Polygon_2::Traits::Less_y_2 less_y_2;
-    e_lower = less_y_2(e_prev.target(), e_next.target()) ? e_prev : e_next;
-    e_upper = e_lower == e_prev ? e_next : e_prev;
 
     // Find edge to update.
     std::list<Segment_2>::iterator old_e_it = L->begin();
@@ -393,30 +388,12 @@ bool cleanupPolygon(Polygon_2* poly) {
   return poly->is_simple() && poly->area() != 0.0;
 }
 
-bool hasOnPolygon(const PolygonWithHoles& pwh, const Segment_2& seg) {
-  Polygon_2::Traits::Equal_2 eq_2;
-  for (Polygon_2::Edge_const_iterator e = pwh.outer_boundary().edges_begin();
-       e != pwh.outer_boundary().edges_end(); ++e) {
-    if (eq_2(*e, seg)) return true;
-  }
+bool outOfPWH(const PolygonWithHoles& pwh, const Point_2& p) {
+  if (pwh.outer_boundary().has_on_negative_side(p)) return true;
 
   for (PolygonWithHoles::Hole_const_iterator hit = pwh.holes_begin();
        hit != pwh.holes_end(); ++hit) {
-    for (Polygon_2::Edge_const_iterator e = hit->edges_begin();
-         e != hit->edges_end(); ++e) {
-      if (eq_2(*e, seg)) return true;
-    }
-  }
-
-  return false;
-}
-
-bool hasOnUnbounded(const PolygonWithHoles& pwh, const Point_2& p) {
-  if (pwh.outer_boundary().has_on_unbounded_side(p)) return true;
-
-  for (PolygonWithHoles::Hole_const_iterator hit = pwh.holes_begin();
-       hit != pwh.holes_end(); ++hit) {
-         if (pwh.outer_boundary().has_on_bounded_side(p)) return true;
+    if (pwh.outer_boundary().has_on_negative_side(p)) return true;
   }
 
   return false;
