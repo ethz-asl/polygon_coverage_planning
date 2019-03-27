@@ -8,7 +8,6 @@ std::vector<Polygon_2> computeBCDExact(const PolygonWithHoles& polygon_in,
                                        const Direction_2& dir) {
   // Rotate polygon to have direction aligned with x-axis.
   PolygonWithHoles rotated_polygon = rotatePolygon(polygon_in, dir);
-  LOG(INFO) << "Input polygon: " << rotated_polygon;
   sortPolygon(&rotated_polygon);
 
   // Sort vertices by x value.
@@ -28,18 +27,12 @@ std::vector<Polygon_2> computeBCDExact(const PolygonWithHoles& polygon_in,
       continue;
     processEvent(rotated_polygon, v, &sorted_vertices, &processed_vertices, &L,
                  &open_polygons, &closed_polygons);
-    LOG(INFO) << "L.";
-    for (std::list<Segment_2>::iterator it = L.begin(); it != L.end(); ++it) {
-      LOG(INFO) << *it;
-    }
   }
 
-  LOG(INFO) << "Polygons.";
   // Rotate back all polygons.
   for (Polygon_2& p : closed_polygons) {
     CGAL::Aff_transformation_2<K> rotation(CGAL::ROTATION, dir, 1, 1e9);
     p = CGAL::transform(rotation, p);
-    LOG(INFO) << p;
   }
 
   return closed_polygons;
@@ -102,7 +95,6 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
 
   Polygon_2::Traits::Equal_2 eq_2;
 
-  LOG(INFO) << "Event: " << *v;
   // Compute intersection.
   Line_2 l(*v, Direction_2(0, 1));
   std::vector<Point_2> intersections = getIntersections(*L, l);
@@ -131,7 +123,6 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
     if (e_lower.supporting_line().has_on_positive_side(p_on_upper))
       std::swap(e_lower, e_upper);
 
-    LOG(INFO) << "OUT";
     // Determine whether we close one or close two and open one.
     // TODO(rikba): instead of looking at unbounded side, look at adjacent edge
     // angle
@@ -151,14 +142,8 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
     size_t e_upper_id = e_lower_id + 1;
     size_t lower_cell_id = e_lower_id / 2;
     size_t upper_cell_id = e_upper_id / 2;
-    LOG(INFO) << "e_lower " << e_lower;
-    LOG(INFO) << "e_upper " << e_upper;
-    LOG(INFO) << "e_upper_id " << e_upper_id;
-    LOG(INFO) << "lower_cell_id " << lower_cell_id;
-    LOG(INFO) << "upper_cell_id " << upper_cell_id;
 
     if (close_one) {
-      LOG(INFO) << "Close one.";
       std::list<Polygon_2>::iterator cell =
           std::next(open_polygons->begin(), lower_cell_id);
       cell->push_back(e_lower.source());
@@ -171,19 +156,15 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       L->erase(e_upper_it);
       open_polygons->erase(cell);
     } else {
-      LOG(INFO) << "Close two cells, open one.";
       // Close two cells, open one.
       // Close lower cell.
-      LOG(INFO) << "// Close lower cell.";
       CHECK_GT(e_lower_id, 0);
       CHECK_GT(intersections.size(), e_upper_id + 1);
       std::list<Polygon_2>::iterator lower_cell =
           std::next(open_polygons->begin(), lower_cell_id);
-      LOG(INFO) << "Lower cell: " << *lower_cell;
       lower_cell->push_back(intersections[e_lower_id - 1]);
       lower_cell->push_back(intersections[e_lower_id]);
       if (cleanupPolygon(&*lower_cell)) closed_polygons->push_back(*lower_cell);
-      LOG(INFO) << "// Close upper cell.";
       // Close upper cell.
       std::list<Polygon_2>::iterator upper_cell =
           std::next(open_polygons->begin(), upper_cell_id);
@@ -192,12 +173,10 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       if (cleanupPolygon(&*upper_cell)) closed_polygons->push_back(*upper_cell);
 
       // Delete e_lower and e_upper from list.
-      LOG(INFO) << "// Delete e_lower and e_upper from list.";
       L->erase(e_lower_it);
       L->erase(e_upper_it);
 
       // Open one new cell.
-      LOG(INFO) << "// Open one new cell.";
       std::list<Polygon_2>::iterator new_polygon =
           open_polygons->insert(lower_cell, Polygon_2());
       new_polygon->push_back(intersections[e_upper_id + 1]);
@@ -214,7 +193,6 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
              !less_x_2(e_upper.target(), e_upper.source())) {
     // IN
     Polygon_2::Traits::Equal_2 eq_2;
-    LOG(INFO) << "IN";
     Point_2 p_on_lower = eq_2(e_lower.source(), e_upper.source())
                              ? e_lower.target()
                              : e_lower.source();
@@ -243,12 +221,10 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       }
     }
     if (open_one) {
-      LOG(INFO) << "Open one.";
       // Add one new cell above e_UPPER.
       std::list<Segment_2>::iterator e_UPPER = L->begin();
       std::list<Polygon_2>::iterator open_cell = open_polygons->begin();
       if (!L->empty() && found_e_lower_id) {
-        LOG(INFO) << "e_LOWER_id: " << e_LOWER_id;
         e_UPPER = std::next(e_UPPER, e_LOWER_id + 1);
         open_cell = std::next(open_cell, e_LOWER_id / 2 + 1);
       }
@@ -273,7 +249,6 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
         open_polygon->push_back(e_lower.source());
       }
     } else {
-      LOG(INFO) << "Close one, open two.";
       // Add new polygon between e_LOWER and e_UPPER.
       std::list<Segment_2>::iterator e_LOWER =
           std::next(L->begin(), e_LOWER_id);
@@ -310,7 +285,6 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       processed_vertices->push_back(e_upper.source());
     }
   } else {
-    LOG(INFO) << "MIDDLE.";
     // TODO(rikba): Sort vertices correctly in the first place.
     // Check if v exits among edges.
     VertexConstCirculator v_middle = v;
@@ -348,9 +322,6 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
     // Correct vertical edges.
     e_prev = Segment_2(*v_middle, *std::prev(v_middle));
     e_next = Segment_2(*v_middle, *std::next(v_middle));
-
-    LOG(INFO) << "e_prev: " << e_prev;
-    LOG(INFO) << "e_next: " << e_next;
 
     // Find edge to update.
     std::list<Segment_2>::iterator old_e_it = L->begin();
@@ -436,21 +407,15 @@ bool cleanupPolygon(Polygon_2* poly) {
     } while (vit != poly->vertices_circulator());
   }
 
-  if (poly->is_simple() && poly->area() != 0.0) {
-    LOG(INFO) << "Adding polygon: " << *poly;
-  }
   return poly->is_simple() && poly->area() != 0.0;
 }
 
 bool outOfPWH(const PolygonWithHoles& pwh, const Point_2& p) {
-  LOG(INFO) << "point: " << p;
   if (pwh.outer_boundary().has_on_unbounded_side(p)) return true;
 
   for (PolygonWithHoles::Hole_const_iterator hit = pwh.holes_begin();
        hit != pwh.holes_end(); ++hit) {
-    LOG(INFO) << "Check in hole: " << *hit;
     if (hit->has_on_bounded_side(p)) {
-      LOG(INFO) << "inside hole!";
       return true;
     }
   }

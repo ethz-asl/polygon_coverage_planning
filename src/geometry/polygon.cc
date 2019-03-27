@@ -265,7 +265,6 @@ bool Polygon::computeBestBCDFromPolygonWithHoles(
   for (const Polygon& poly : rotated_polys) {
     // Calculate decomposition.
     std::vector<Polygon> bcds;
-    LOG(INFO) << "rotated_poly: " << poly;
     if (!poly.computeBCDFromPolygonWithHoles(&bcds)) {
       LOG(WARNING) << "Failed to compute boustrophedon decomposition.";
       continue;
