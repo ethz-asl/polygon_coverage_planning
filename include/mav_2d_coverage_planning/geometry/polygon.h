@@ -75,7 +75,10 @@ class Polygon {
   // convertPolygonWithHolesToPolygonWithoutHoles, then
   // computeConvexDecomposition.
   bool computeConvexDecompositionFromPolygonWithHoles(
-      std::vector<Polygon>* convex_polygons);
+      std::vector<Polygon>* convex_polygons) const;
+
+  bool computeBestCCDFromPolygonWithHoles(
+      std::vector<Polygon>* convex_polygons) const;
 
   // Convenience function that first calls
   // convertPolygonWithHolesToPolygonWithoutHoles, then

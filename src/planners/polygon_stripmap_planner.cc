@@ -25,7 +25,7 @@ bool PolygonStripmapPlanner::setup() {
       break;
     }
     case DecompositionType::kConvex: {
-      if (!settings_.polygon.computeConvexDecompositionFromPolygonWithHoles(
+      if (!settings_.polygon.computeBestCCDFromPolygonWithHoles(
               &decomposition_)) {
         LOG(ERROR) << "Cannot compute convex decomposition.";
         is_initialized_ = false;

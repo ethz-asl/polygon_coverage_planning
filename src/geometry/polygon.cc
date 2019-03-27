@@ -298,6 +298,55 @@ bool Polygon::computeBestBCDFromPolygonWithHoles(
   else return true;
 }
 
+bool Polygon::computeBestCCDFromPolygonWithHoles(
+    std::vector<Polygon>* convex_polygons) const {
+  CHECK_NOTNULL(convex_polygons);
+  convex_polygons->clear();
+  double min_altitude_sum = std::numeric_limits<double>::max();
+
+  // Get all possible decomposition directions.
+  std::vector<Direction_2> directions = findEdgeDirections();
+  std::vector<Polygon> rotated_polys = rotatePolygon(directions);
+
+  // For all possible rotations:
+  Direction_2 best_direction = directions.front();
+  size_t dir = 0;
+  for (const Polygon& poly : rotated_polys) {
+    // Calculate decomposition.
+    std::vector<Polygon> cells;
+    if (!poly.computeConvexDecompositionFromPolygonWithHoles(&cells)) {
+      LOG(WARNING) << "Failed to compute convex decomposition.";
+      continue;
+    }
+
+    // Calculate minimum altitude sum for each cell.
+    double min_altitude_sum_tmp = 0.0;
+    for (const Polygon& cell : cells) {
+      min_altitude_sum_tmp += findMinAltitude(cell);
+    }
+
+    // Update best decomposition.
+    if (min_altitude_sum_tmp < min_altitude_sum) {
+      min_altitude_sum = min_altitude_sum_tmp;
+      *convex_polygons = cells;
+      best_direction = directions[dir];
+    }
+    dir++;
+  }
+
+  // Reverse bcd rotation.
+  CGAL::Aff_transformation_2<K> rotation(CGAL::ROTATION, best_direction, 1,
+                                         1e3);
+  for (Polygon& cell : *convex_polygons) {
+    Polygon_2 cell_2 = cell.getPolygon().outer_boundary();
+    cell_2 = CGAL::transform(rotation, cell_2);
+    cell = Polygon(cell_2, cell.getPlaneTransformation());
+  }
+
+  if (convex_polygons->empty()) return false;
+  else return true;
+}
+
 bool Polygon::offsetEdge(const size_t& edge_id, double offset,
                          Polygon* offset_polygon) const {
   CHECK_NOTNULL(offset_polygon);
@@ -509,7 +558,7 @@ bool Polygon::convertPolygonWithHolesToPolygonWithoutHoles(
 }
 
 bool Polygon::computeConvexDecompositionFromPolygonWithHoles(
-    std::vector<Polygon>* convex_polygons) {
+    std::vector<Polygon>* convex_polygons) const {
   CHECK_NOTNULL(convex_polygons);
 
   Polygon polygon_without_holes;
@@ -521,6 +570,8 @@ bool Polygon::computeConvexDecompositionFromPolygonWithHoles(
 
   return true;
 }
+
+
 
 bool Polygon::computeBCDFromPolygonWithHoles(
     std::vector<Polygon>* bcd_polygons) const {
