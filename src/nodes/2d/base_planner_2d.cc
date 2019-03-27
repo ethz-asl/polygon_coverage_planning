@@ -164,6 +164,7 @@ void BasePlanner2D::getParametersFromRos() {
   }
 
   // Offset polygon.
+  settings_.polygon_offset = settings_.polygon;
   settings_.offsetPolygon();
 
   // Getting the behaviour flags
