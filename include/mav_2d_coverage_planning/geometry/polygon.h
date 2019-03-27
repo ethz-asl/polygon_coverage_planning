@@ -151,6 +151,7 @@ class Polygon {
   }
 
   std::vector<Direction_2> findEdgeDirections() const;
+  std::vector<Direction_2> findPerpEdgeDirections() const;
   std::vector<Polygon> rotatePolygon(
       const std::vector<Direction_2>& dirs) const;
   double findMinAltitude(const Polygon& subregion) const;

@@ -156,6 +156,15 @@ std::vector<Direction_2> Polygon::findEdgeDirections() const {
   return directions;
 }
 
+std::vector<Direction_2> Polygon::findPerpEdgeDirections() const {
+  std::vector<Direction_2> directions = findEdgeDirections();
+  for (Direction_2& d : directions) {
+    d = Direction_2(-d.dy(), d.dx());
+  }
+
+  return directions;
+}
+
 std::vector<Polygon> Polygon::rotatePolygon(
     const std::vector<Direction_2>& dirs) const {
   std::vector<Polygon> rotated_polys(dirs.size());
@@ -207,7 +216,7 @@ bool Polygon::computeBestTrapezoidalDecompositionFromPolygonWithHoles(
   double min_altitude_sum = std::numeric_limits<double>::max();
 
   // Get all possible decomposition directions.
-  std::vector<Direction_2> directions = findEdgeDirections();
+  std::vector<Direction_2> directions = findPerpEdgeDirections();
   std::vector<Polygon> rotated_polys = rotatePolygon(directions);
 
   // For all possible rotations:
@@ -256,7 +265,7 @@ bool Polygon::computeBestBCDFromPolygonWithHoles(
   double min_altitude_sum = std::numeric_limits<double>::max();
 
   // Get all possible decomposition directions.
-  std::vector<Direction_2> directions = findEdgeDirections();
+  std::vector<Direction_2> directions = findPerpEdgeDirections();
   std::vector<Polygon> rotated_polys = rotatePolygon(directions);
 
   // For all possible rotations:
@@ -305,7 +314,7 @@ bool Polygon::computeBestCCDFromPolygonWithHoles(
   double min_altitude_sum = std::numeric_limits<double>::max();
 
   // Get all possible decomposition directions.
-  std::vector<Direction_2> directions = findEdgeDirections();
+  std::vector<Direction_2> directions = findPerpEdgeDirections();
   std::vector<Polygon> rotated_polys = rotatePolygon(directions);
 
   // For all possible rotations:
