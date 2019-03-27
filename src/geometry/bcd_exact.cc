@@ -20,13 +20,14 @@ std::vector<Polygon_2> computeBCDExact(const PolygonWithHoles& polygon_in,
   std::list<Polygon_2> open_polygons;
   std::vector<Polygon_2> closed_polygons;
   std::vector<Point_2> processed_vertices;
-  for (const VertexConstCirculator& v : sorted_vertices) {
+  for (size_t i = 0; i < sorted_vertices.size(); ++i) {
+    const VertexConstCirculator& v = sorted_vertices[i];
     // v already processed.
     if (std::find(processed_vertices.begin(), processed_vertices.end(), *v) !=
         processed_vertices.end())
       continue;
-    processEvent(rotated_polygon, v, &processed_vertices, &L, &open_polygons,
-                 &closed_polygons);
+    processEvent(rotated_polygon, v, &sorted_vertices, &processed_vertices, &L,
+                 &open_polygons, &closed_polygons);
     LOG(INFO) << "L.";
     for (std::list<Segment_2>::iterator it = L.begin(); it != L.end(); ++it) {
       LOG(INFO) << *it;
@@ -61,7 +62,7 @@ std::vector<VertexConstCirculator> getXSortedVertices(
       sorted_vertices.push_back(vh);
     } while (++vh != hit->vertices_circulator());
   }
-  // Sort.
+  // Sort x,y.
   Polygon_2::Traits::Less_xy_2 less_xy_2;
   std::sort(sorted_vertices.begin(), sorted_vertices.end(),
             [&less_xy_2](const VertexConstCirculator& a,
@@ -89,9 +90,16 @@ PolygonWithHoles rotatePolygon(const PolygonWithHoles& polygon_in,
 }
 
 void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
+                  std::vector<VertexConstCirculator>* sorted_vertices,
                   std::vector<Point_2>* processed_vertices,
                   std::list<Segment_2>* L, std::list<Polygon_2>* open_polygons,
                   std::vector<Polygon_2>* closed_polygons) {
+  CHECK_NOTNULL(sorted_vertices);
+  CHECK_NOTNULL(processed_vertices);
+  CHECK_NOTNULL(L);
+  CHECK_NOTNULL(open_polygons);
+  CHECK_NOTNULL(closed_polygons);
+
   Polygon_2::Traits::Equal_2 eq_2;
 
   LOG(INFO) << "Event: " << *v;
@@ -198,6 +206,10 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       open_polygons->erase(lower_cell);
       open_polygons->erase(upper_cell);
     }
+    processed_vertices->push_back(e_lower.source());
+    if (!eq_2(e_lower.source(), e_upper.source())) {
+      processed_vertices->push_back(e_upper.source());
+    }
   } else if (!less_x_2(e_lower.target(), e_lower.source()) &&
              !less_x_2(e_upper.target(), e_upper.source())) {
     // IN
@@ -293,24 +305,68 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
       // Close old cell.
       open_polygons->erase(cell);
     }
+    processed_vertices->push_back(e_lower.source());
+    if (!eq_2(e_lower.source(), e_upper.source())) {
+      processed_vertices->push_back(e_upper.source());
+    }
   } else {
     LOG(INFO) << "MIDDLE.";
+    // TODO(rikba): Sort vertices correctly in the first place.
+    // Check if v exits among edges.
+    VertexConstCirculator v_middle = v;
+    std::list<Segment_2>::iterator it = L->end();
+    while (it == L->end()) {
+      for (it = L->begin(); it != L->end(); it++) {
+        if (*v_middle == it->source() || *v_middle == it->target()) {
+          // Swap v in sorted vertices.
+          if (!eq_2(*v, *v_middle)) {
+            std::vector<VertexConstCirculator>::iterator i_v=sorted_vertices->end();
+            std::vector<VertexConstCirculator>::iterator i_v_middle=sorted_vertices->end();
+            for (std::vector<VertexConstCirculator>::iterator it = sorted_vertices->begin(); it != sorted_vertices->end(); ++it) {
+              if (*it == v) i_v = it;
+              if (*it == v_middle) i_v_middle = it;
+            }
+            CHECK(i_v != sorted_vertices->end());
+            CHECK(i_v_middle != sorted_vertices->end());
+            std::iter_swap(i_v, i_v_middle);
+          }
+          break;
+        }
+      }
+      if (it == L->end()) {
+        VertexConstCirculator v_prev = std::prev(v_middle);
+        VertexConstCirculator v_next = std::next(v_middle);
+        CHECK(v_prev->x() != v_next->x());
+        CHECK(v_prev->x() == v_middle->x() || v_next->x() == v_middle->x());
+        if (v_prev->x() == v_middle->x())
+          v_middle = v_prev;
+        else
+          v_middle = v_next;
+      }
+    }
+
     // Correct vertical edges.
+    e_prev = Segment_2(*v_middle, *std::prev(v_middle));
+    e_next = Segment_2(*v_middle, *std::next(v_middle));
+
+    LOG(INFO) << "e_prev: " << e_prev;
+    LOG(INFO) << "e_next: " << e_next;
 
     // Find edge to update.
     std::list<Segment_2>::iterator old_e_it = L->begin();
     Segment_2 new_edge;
     size_t edge_id = 0;
     for (; old_e_it != L->end(); ++old_e_it) {
-      if (*old_e_it == e_upper || *old_e_it == e_upper.opposite()) {
-        new_edge = e_lower;
+      if (*old_e_it == e_next || *old_e_it == e_next.opposite()) {
+        new_edge = e_prev;
         break;
-      } else if (*old_e_it == e_lower || *old_e_it == e_lower.opposite()) {
-        new_edge = e_upper;
+      } else if (*old_e_it == e_prev || *old_e_it == e_prev.opposite()) {
+        new_edge = e_next;
         break;
       }
       edge_id++;
     }
+    CHECK(old_e_it != L->end());
 
     // Update cell with new vertex.
     size_t cell_id = edge_id / 2;
@@ -327,10 +383,8 @@ void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
     // Update edge.
     L->insert(old_e_it, new_edge);
     L->erase(old_e_it);
-  }
-  processed_vertices->push_back(e_lower.source());
-  if (!eq_2(e_lower.source(), e_upper.source())) {
-    processed_vertices->push_back(e_upper.source());
+
+    processed_vertices->push_back(*v_middle);
   }
 }
 std::vector<Point_2> getIntersections(const std::list<Segment_2>& L,

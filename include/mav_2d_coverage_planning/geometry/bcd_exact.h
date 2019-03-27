@@ -15,6 +15,7 @@ std::vector<VertexConstCirculator> getXSortedVertices(
 PolygonWithHoles rotatePolygon(const PolygonWithHoles& polygon_in,
                                const Direction_2& dir);
 void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
+                  std::vector<VertexConstCirculator>* sorted_vertices,
                   std::vector<Point_2>* processed_vertices,
                   std::list<Segment_2>* L, std::list<Polygon_2>* open_polygons,
                   std::vector<Polygon_2>* closed_polygons);
