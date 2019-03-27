@@ -5,6 +5,7 @@
 
 #include <CGAL/Arr_naive_point_location.h>
 #include <CGAL/Boolean_set_operations_2.h>
+#include <CGAL/Cartesian_converter.h>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Partition_is_valid_traits_2.h>
 #include <CGAL/Partition_traits_2.h>
@@ -254,8 +255,10 @@ bool Polygon::computeBestTrapezoidalDecompositionFromPolygonWithHoles(
     trap = Polygon(trap_2, trap.getPlaneTransformation());
   }
 
-  if (trap_polygons->empty()) return false;
-  else return true;
+  if (trap_polygons->empty())
+    return false;
+  else
+    return true;
 }
 
 bool Polygon::computeBestBCDFromPolygonWithHoles(
@@ -303,8 +306,10 @@ bool Polygon::computeBestBCDFromPolygonWithHoles(
     bcd = Polygon(bcd_2, bcd.getPlaneTransformation());
   }
 
-  if (bcd_polygons->empty()) return false;
-  else return true;
+  if (bcd_polygons->empty())
+    return false;
+  else
+    return true;
 }
 
 bool Polygon::computeBestCCDFromPolygonWithHoles(
@@ -352,8 +357,63 @@ bool Polygon::computeBestCCDFromPolygonWithHoles(
     cell = Polygon(cell_2, cell.getPlaneTransformation());
   }
 
-  if (convex_polygons->empty()) return false;
-  else return true;
+  if (convex_polygons->empty())
+    return false;
+  else
+    return true;
+}
+
+bool Polygon::offsetEdgeWithRadialOffset(const size_t& edge_id,
+                                         double radial_offset,
+                                         Polygon* offset_polygon) const {
+  // Find perpendicular distance.
+  Polygon_2::Edge_const_circulator e =
+      std::next(polygon_.outer_boundary().edges_circulator(), edge_id);
+  Polygon_2::Edge_const_circulator e_prev = std::prev(e);
+  Polygon_2::Edge_const_circulator e_next = std::next(e);
+
+  typedef CGAL::Cartesian_converter<InexactKernel, K> IK_to_EK;
+  typedef CGAL::Cartesian_converter<K, InexactKernel> EK_to_IK;
+
+  EK_to_IK toInexact;
+  InexactKernel::Line_2 l = toInexact(e->supporting_line());
+  InexactKernel::Line_2 l_prev = toInexact(e_prev->supporting_line());
+  InexactKernel::Line_2 l_next = toInexact(e_next->supporting_line());
+
+  IK_to_EK toExact;
+  Line_2 bi_prev = toExact(CGAL::bisector(l, l_prev));
+  Line_2 bi_next = toExact(CGAL::bisector(l, l_next));
+
+  Polygon_2::Traits::Equal_2 eq_2;
+  CHECK(eq_2(e->source(), e_prev->target()));
+  CHECK(eq_2(e->target(), e_next->source()));
+
+  double len_l_prev =
+      std::sqrt(CGAL::to_double(bi_prev.to_vector().squared_length()));
+  Vector_2 offset_prev = radial_offset / len_l_prev * bi_prev.to_vector();
+  Point_2 p_prev = e->source() + offset_prev;
+
+  double len_l_next =
+      std::sqrt(CGAL::to_double(bi_next.to_vector().squared_length()));
+  Vector_2 offset_next = radial_offset / len_l_next * bi_next.to_vector();
+  Point_2 p_next = e->target() + offset_next;
+
+  Point_2 p_prev_proj = e->supporting_line().projection(p_prev);
+  Point_2 p_next_proj = e->supporting_line().projection(p_next);
+
+  Segment_2 s_prev(p_prev, p_prev_proj);
+  Segment_2 s_next(p_next, p_next_proj);
+
+  FT offset_distance_prev = s_prev.squared_length();
+  FT offset_distance_next = s_next.squared_length();
+
+  double offset_distance_sq =
+      std::min(CGAL::to_double(radial_offset * radial_offset),
+               CGAL::to_double(offset_distance_prev));
+  offset_distance_sq =
+      std::min(CGAL::to_double(offset_distance_next), offset_distance_sq);
+      
+  return offsetEdge(edge_id, std::sqrt(offset_distance_sq), offset_polygon);
 }
 
 bool Polygon::offsetEdge(const size_t& edge_id, double offset,
@@ -579,8 +639,6 @@ bool Polygon::computeConvexDecompositionFromPolygonWithHoles(
 
   return true;
 }
-
-
 
 bool Polygon::computeBCDFromPolygonWithHoles(
     std::vector<Polygon>* bcd_polygons) const {

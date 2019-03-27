@@ -156,7 +156,7 @@ bool PolygonStripmapPlanner::offsetRectangularDecomposition() {
               if (*s == cell.edge(cell_e) ||
                   s->opposite() == cell.edge(cell_e)) {
                 Polygon offset_cell;
-                decomposition_[i].offsetEdge(
+                decomposition_[i].offsetEdgeWithRadialOffset(
                     cell_e, settings_.sensor_model->getSweepDistance(),
                     &offset_cell);
                 Polygon intersected_offset;
@@ -169,7 +169,7 @@ bool PolygonStripmapPlanner::offsetRectangularDecomposition() {
               } else if (*s == neighbor.edge(neighbor_e) ||
                          s->opposite() == neighbor.edge(neighbor_e)) {
                 Polygon offset_neighbor;
-                decomposition_[*it].offsetEdge(
+                decomposition_[*it].offsetEdgeWithRadialOffset(
                     neighbor_e, settings_.sensor_model->getSweepDistance(),
                     &offset_neighbor);
                 Polygon intersected_offset;

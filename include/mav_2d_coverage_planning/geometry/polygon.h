@@ -51,6 +51,10 @@ class Polygon {
   bool offsetEdge(const size_t& edge_id, double offset,
                   Polygon* offset_polygon) const;
 
+  // Offset at most radial_offset from corner.
+  bool offsetEdgeWithRadialOffset(const size_t& edge_id, double radial_offset,
+                                  Polygon* offset_polygon) const;
+
   // Given a simple polygon without holes, compute its convex decomposition.
   // Daniel H. Greene. The decomposition of polygons into convex parts. In
   // Franco P. Preparata, editor, Computational Geometry, volume 1 of Adv.
