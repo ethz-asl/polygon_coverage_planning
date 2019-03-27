@@ -73,11 +73,30 @@ Visualization Manager:
       Name: MarkerArray
       Namespaces:
         "": true
-        decomposition_polygon_0hull: false
-        decomposition_polygon_1hull: false
+        decomposition_polygon_0hull: true
+        decomposition_polygon_10hull: true
+        decomposition_polygon_11hull: true
+        decomposition_polygon_12hull: true
+        decomposition_polygon_13hull: true
+        decomposition_polygon_14hull: true
+        decomposition_polygon_15hull: true
+        decomposition_polygon_16hull: true
+        decomposition_polygon_1hull: true
+        decomposition_polygon_2hull: true
+        decomposition_polygon_3hull: true
+        decomposition_polygon_4hull: true
+        decomposition_polygon_5hull: true
+        decomposition_polygon_6hull: true
+        decomposition_polygon_7hull: true
+        decomposition_polygon_8hull: true
+        decomposition_polygon_9hull: true
         points_end: true
         points_end_text: true
         points_start: true
+        polygonhole_0: true
+        polygonhole_1: true
+        polygonhole_2: true
+        polygonhole_3: true
         polygonhull: true
         vertices_and_strip: true
       Queue Size: 100
@@ -132,11 +151,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Scale: 9.27528286
+      Scale: 10.2110271
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: -2.51697946
-      Y: 64.6768951
+      X: 28.1881561
+      Y: 30.6226482
     Saved: ~
 Window Geometry:
   Displays:
