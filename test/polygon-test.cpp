@@ -45,12 +45,15 @@ TEST(PolygonTest, OffsetEdge) {
 }
 
 TEST(PolygonTest, ConvertPolygonWithHolesToPolygonWithoutHoles) {
+  LOG(INFO) << "Create polygon.";
   Polygon rectangle_in_rectangle(
       createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
   Polygon poly_without_holes;
+  LOG(INFO) << "Run test.";
   EXPECT_TRUE(
       rectangle_in_rectangle.convertPolygonWithHolesToPolygonWithoutHoles(
           &poly_without_holes));
+  LOG(INFO) << "Check number of holes.";
   EXPECT_EQ(0, poly_without_holes.getPolygon().number_of_holes());
   EXPECT_EQ(10, poly_without_holes.getPolygon().outer_boundary().size());
 }
@@ -62,7 +65,7 @@ TEST(PolygonTest, ConvexDecomposition) {
   EXPECT_TRUE(
       rectangle_in_rectangle.computeConvexDecompositionFromPolygonWithHoles(
           &convex_polygons));
-  EXPECT_EQ(4, convex_polygons.size());
+  EXPECT_EQ(8, convex_polygons.size());
 }
 
 TEST(PolygonTest, BCDecomposition) {

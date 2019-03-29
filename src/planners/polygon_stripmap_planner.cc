@@ -25,7 +25,7 @@ bool PolygonStripmapPlanner::setup() {
       break;
     }
     case DecompositionType::kConvex: {
-      if (!settings_.polygon.computeBestCCDFromPolygonWithHoles(
+      if (!settings_.polygon.computeConvexDecompositionFromPolygonWithHoles(
               &decomposition_)) {
         LOG(ERROR) << "Cannot compute convex decomposition.";
         is_initialized_ = false;
@@ -70,7 +70,7 @@ bool PolygonStripmapPlanner::setup() {
     is_initialized_ = false;
   }
 
-  if (settings_.offset_polygons && !offsetRectangularDecomposition()) {
+  if (settings_.offset_polygons && !offsetDecomposition()) {
     LOG(ERROR) << "Failed to offset rectangular decomposition.";
     is_initialized_ = false;
   }
@@ -116,11 +116,7 @@ bool PolygonStripmapPlanner::updateDecompositionAdjacency() {
   return true;
 }
 
-bool PolygonStripmapPlanner::offsetRectangularDecomposition() {
-  if (settings_.decomposition_type != DecompositionType::kBoustrophedeon &&
-      settings_.decomposition_type != DecompositionType::kTrapezoidal)
-    return true;
-
+bool PolygonStripmapPlanner::offsetDecomposition() {
   // Find overlapping edges.
   std::vector<Polygon> offsetted_decomposition = decomposition_;
   std::vector<Segment_2> offsetted_segments;

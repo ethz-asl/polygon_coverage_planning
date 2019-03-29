@@ -14,8 +14,10 @@
 #include <CGAL/Triangular_expansion_visibility_2.h>
 #include <CGAL/connect_holes.h>
 #include <CGAL/create_offset_polygons_from_polygon_with_holes_2.h>
+#include <CGAL/Polygon_triangulation_decomposition_2.h>
 #include <CGAL/is_y_monotone_2.h>
 #include <CGAL/partition_2.h>
+#include <CGAL/Polygon_convex_decomposition_2.h>
 #include <glog/logging.h>
 #include <mav_coverage_planning_comm/eigen_conversions.h>
 #include <boost/make_shared.hpp>
@@ -222,11 +224,11 @@ bool Polygon::computeBestTrapezoidalDecompositionFromPolygonWithHoles(
 
   // For all possible rotations:
   Direction_2 best_direction = directions.front();
-  size_t dir = 0;
-  for (const Polygon& poly : rotated_polys) {
+  CHECK_EQ(rotated_polys.size(), directions.size());
+  for (size_t i = 0; i < rotated_polys.size(); ++i){
     // Calculate decomposition.
     std::vector<Polygon> traps;
-    if (!poly.computeTrapezoidalDecompositionFromPolygonWithHoles(&traps)) {
+    if (!rotated_polys[i].computeTrapezoidalDecompositionFromPolygonWithHoles(&traps)) {
       LOG(WARNING) << "Failed to compute trapezoidal decomposition.";
       continue;
     }
@@ -241,9 +243,8 @@ bool Polygon::computeBestTrapezoidalDecompositionFromPolygonWithHoles(
     if (min_altitude_sum_tmp < min_altitude_sum) {
       min_altitude_sum = min_altitude_sum_tmp;
       *trap_polygons = traps;
-      best_direction = directions[dir];
+      best_direction = directions[i];
     }
-    dir++;
   }
 
   // Reverse trap rotation.
@@ -273,11 +274,11 @@ bool Polygon::computeBestBCDFromPolygonWithHoles(
 
   // For all possible rotations:
   Direction_2 best_direction = directions.front();
-  size_t dir = 0;
-  for (const Polygon& poly : rotated_polys) {
+  CHECK_EQ(rotated_polys.size(), directions.size());
+  for (size_t i = 0; i < rotated_polys.size(); ++i){
     // Calculate decomposition.
     std::vector<Polygon> bcds;
-    if (!poly.computeBCDFromPolygonWithHoles(&bcds)) {
+    if (!rotated_polys[i].computeBCDFromPolygonWithHoles(&bcds)) {
       LOG(WARNING) << "Failed to compute boustrophedon decomposition.";
       continue;
     }
@@ -292,9 +293,8 @@ bool Polygon::computeBestBCDFromPolygonWithHoles(
     if (min_altitude_sum_tmp < min_altitude_sum) {
       min_altitude_sum = min_altitude_sum_tmp;
       *bcd_polygons = bcds;
-      best_direction = directions[dir];
+      best_direction = directions[i];
     }
-    dir++;
   }
 
   // Reverse bcd rotation.
@@ -312,55 +312,15 @@ bool Polygon::computeBestBCDFromPolygonWithHoles(
     return true;
 }
 
-bool Polygon::computeBestCCDFromPolygonWithHoles(
-    std::vector<Polygon>* convex_polygons) const {
-  CHECK_NOTNULL(convex_polygons);
-  convex_polygons->clear();
-  double min_altitude_sum = std::numeric_limits<double>::max();
-
-  // Get all possible decomposition directions.
-  std::vector<Direction_2> directions = findPerpEdgeDirections();
-  std::vector<Polygon> rotated_polys = rotatePolygon(directions);
-
-  // For all possible rotations:
-  Direction_2 best_direction = directions.front();
-  size_t dir = 0;
-  for (const Polygon& poly : rotated_polys) {
-    // Calculate decomposition.
-    std::vector<Polygon> cells;
-    if (!poly.computeConvexDecompositionFromPolygonWithHoles(&cells)) {
-      LOG(WARNING) << "Failed to compute convex decomposition.";
-      continue;
-    }
-
-    // Calculate minimum altitude sum for each cell.
-    double min_altitude_sum_tmp = 0.0;
-    for (const Polygon& cell : cells) {
-      min_altitude_sum_tmp += findMinAltitude(cell);
-    }
-
-    // Update best decomposition.
-    if (min_altitude_sum_tmp < min_altitude_sum) {
-      min_altitude_sum = min_altitude_sum_tmp;
-      *convex_polygons = cells;
-      best_direction = directions[dir];
-    }
-    dir++;
+std::vector<Direction_2> Polygon::getUniformDirections(const int num) const {
+  std::vector<Direction_2> dirs(num);
+  double delta = 2.0 * M_PI / num;
+  double alpha = 0.0;
+  for (int i = 0; i < num; ++i) {
+    dirs[i] = Direction_2(std::cos(alpha), std::sin(alpha));
+    alpha += delta;
   }
-
-  // Reverse bcd rotation.
-  CGAL::Aff_transformation_2<K> rotation(CGAL::ROTATION, best_direction, 1,
-                                         1e3);
-  for (Polygon& cell : *convex_polygons) {
-    Polygon_2 cell_2 = cell.getPolygon().outer_boundary();
-    cell_2 = CGAL::transform(rotation, cell_2);
-    cell = Polygon(cell_2, cell.getPlaneTransformation());
-  }
-
-  if (convex_polygons->empty())
-    return false;
-  else
-    return true;
+  return dirs;
 }
 
 bool Polygon::offsetEdgeWithRadialOffset(const size_t& edge_id,
@@ -412,7 +372,7 @@ bool Polygon::offsetEdgeWithRadialOffset(const size_t& edge_id,
                CGAL::to_double(offset_distance_prev));
   offset_distance_sq =
       std::min(CGAL::to_double(offset_distance_next), offset_distance_sq);
-      
+
   return offsetEdge(edge_id, std::sqrt(offset_distance_sq), offset_polygon);
 }
 
@@ -508,60 +468,12 @@ bool Polygon::offsetEdge(const size_t& edge_id, double offset,
   return true;
 }
 
-bool Polygon::computeConvexDecomposition(
-    std::vector<Polygon>* convex_polygons) const {
-  CHECK_NOTNULL(convex_polygons);
-
-  // Precondition.
-  if (polygon_.number_of_holes() > 0) return false;
-  if (!is_strictly_simple_) return false;
-  if (is_convex_) {
-    *convex_polygons = {*this};
-    return true;
-  }
-
-  // Convex decomposition.
-  typedef CGAL::Partition_traits_2<K> PartitionTraits;
-  typedef PartitionTraits::Polygon_2 PartitionPolygon;
-  std::vector<PartitionPolygon> partition_polygons;
-  CGAL::optimal_convex_partition_2(polygon_.outer_boundary().vertices_begin(),
-                                   polygon_.outer_boundary().vertices_end(),
-                                   std::back_inserter(partition_polygons),
-                                   PartitionTraits());
-
-  // Validity check.
-  typedef CGAL::Is_convex_2<PartitionTraits> IsConvex2;
-  typedef CGAL::Partition_is_valid_traits_2<PartitionTraits, IsConvex2>
-      PartitionValidityTraits;
-  if (!CGAL::partition_is_valid_2(
-          polygon_.outer_boundary().vertices_begin(),
-          polygon_.outer_boundary().vertices_end(), partition_polygons.begin(),
-          partition_polygons.end(), PartitionValidityTraits())) {
-    // Partition is overlapping, union area != original area or non convex.
-    return false;
-  }
-
-  convex_polygons->clear();
-  convex_polygons->reserve(partition_polygons.size());
-  for (const PartitionPolygon& p : partition_polygons) {
-    // TODO(rikba): Some unnecessary move from list to vector because I don't
-    // know how to handle these partition traits.
-    std::vector<Point_2> vertices = {
-        std::make_move_iterator(p.vertices_begin()),
-        std::make_move_iterator(p.vertices_end())};
-    convex_polygons->emplace_back(vertices.begin(), vertices.end());
-  }
-
-  return true;
-}
-
 bool Polygon::computeYMonotoneDecomposition(
     std::vector<Polygon>* y_monotone_polygons) const {
   CHECK_NOTNULL(y_monotone_polygons);
 
   // Precondition.
   if (polygon_.number_of_holes() > 0) return false;
-  if (!is_strictly_simple_) return false;
 
   // y-monotone decomposition.
   typedef CGAL::Partition_traits_2<K> PartitionTraits;
@@ -571,19 +483,6 @@ bool Polygon::computeYMonotoneDecomposition(
                                    polygon_.outer_boundary().vertices_end(),
                                    std::back_inserter(partition_polygons),
                                    PartitionTraits());
-
-  // Validity check.
-  typedef CGAL::Is_y_monotone_2<PartitionTraits> IsYMonotone2;
-  typedef CGAL::Partition_is_valid_traits_2<PartitionTraits, IsYMonotone2>
-      PartitionValidityTraits;
-  if (!CGAL::partition_is_valid_2(
-          polygon_.outer_boundary().vertices_begin(),
-          polygon_.outer_boundary().vertices_end(), partition_polygons.begin(),
-          partition_polygons.end(), PartitionValidityTraits())) {
-    // Partition is overlapping, union area != original area or non
-    // y-monotone.
-    return false;
-  }
 
   // Copy polygon.
   y_monotone_polygons->clear();
@@ -613,15 +512,7 @@ bool Polygon::convertPolygonWithHolesToPolygonWithoutHoles(
 
   std::vector<Point_2> pts;
   CGAL::connect_holes(polygon_, std::back_inserter(pts));
-
-  // Tiny hack to make resulting polygon strictly simple. Add small offset to
-  // seperate coincident edges.
-  // TODO(rikba): Only offset coincident edges.
-  const FT kOffset = std::numeric_limits<double>::epsilon();
-  Polygon weakly_simple_polygon_without_holes(pts.begin(), pts.end());
-  if (!weakly_simple_polygon_without_holes.computeOffsetPolygon(
-          kOffset, polygon_without_holes))
-    return false;
+  *polygon_without_holes = Polygon(pts.begin(), pts.end());
 
   return true;
 }
@@ -629,13 +520,16 @@ bool Polygon::convertPolygonWithHolesToPolygonWithoutHoles(
 bool Polygon::computeConvexDecompositionFromPolygonWithHoles(
     std::vector<Polygon>* convex_polygons) const {
   CHECK_NOTNULL(convex_polygons);
+  convex_polygons->clear();
 
-  Polygon polygon_without_holes;
-  if (!convertPolygonWithHolesToPolygonWithoutHoles(&polygon_without_holes))
-    return false;
+  std::vector<Polygon_2> cells;
+  CGAL::Polygon_triangulation_decomposition_2<K> decom;
+  decom(polygon_, std::back_inserter(cells));
 
-  if (!polygon_without_holes.computeConvexDecomposition(convex_polygons))
-    return false;
+  for (const Polygon_2& c : cells) {
+    convex_polygons->emplace_back(c, plane_tf_);
+  }
+
 
   return true;
 }

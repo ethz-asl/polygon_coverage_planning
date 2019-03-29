@@ -48,7 +48,7 @@ class PolygonStripmapPlanner {
   // altered.
   bool updateDecompositionAdjacency();
 
-  bool offsetRectangularDecomposition();
+  bool offsetDecomposition();
 
  protected:
   virtual bool setupSolver() { return true; };

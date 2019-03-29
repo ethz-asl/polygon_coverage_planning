@@ -55,12 +55,6 @@ class Polygon {
   bool offsetEdgeWithRadialOffset(const size_t& edge_id, double radial_offset,
                                   Polygon* offset_polygon) const;
 
-  // Given a simple polygon without holes, compute its convex decomposition.
-  // Daniel H. Greene. The decomposition of polygons into convex parts. In
-  // Franco P. Preparata, editor, Computational Geometry, volume 1 of Adv.
-  // Comput. Res., pages 235–259. JAI Press, Greenwich, Conn., 1983.
-  bool computeConvexDecomposition(std::vector<Polygon>* convex_polygons) const;
-
   // Given a simple polygon without holes, compute its y-monotone decomposition.
   // Mark de Berg, Marc van Kreveld, Mark Overmars, and Otfried Schwarzkopf.
   // Computational Geometry: Algorithms and Applications. Springer-Verlag,
@@ -79,9 +73,6 @@ class Polygon {
   // convertPolygonWithHolesToPolygonWithoutHoles, then
   // computeConvexDecomposition.
   bool computeConvexDecompositionFromPolygonWithHoles(
-      std::vector<Polygon>* convex_polygons) const;
-
-  bool computeBestCCDFromPolygonWithHoles(
       std::vector<Polygon>* convex_polygons) const;
 
   // Convenience function that first calls
@@ -156,6 +147,7 @@ class Polygon {
 
   std::vector<Direction_2> findEdgeDirections() const;
   std::vector<Direction_2> findPerpEdgeDirections() const;
+  std::vector<Direction_2> getUniformDirections(const int num) const;
   std::vector<Polygon> rotatePolygon(
       const std::vector<Direction_2>& dirs) const;
   double findMinAltitude(const Polygon& subregion) const;
