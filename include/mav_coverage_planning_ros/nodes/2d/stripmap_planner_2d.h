@@ -21,7 +21,7 @@ class StripmapPlanner2D : public BasePlanner2D {
   StripmapPlanner2D(const ros::NodeHandle& nh,
                     const ros::NodeHandle& nh_private)
       : BasePlanner2D(nh, nh_private),
-        decomposition_type_(DecompositionType::kBest),
+        decomposition_type_(DecompositionType::kBoustrophedeon),
         sweep_around_obstacles_(false),
         offset_polygons_(true) {
     // Parameters.
