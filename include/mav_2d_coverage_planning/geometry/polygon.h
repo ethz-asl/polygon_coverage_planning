@@ -14,7 +14,7 @@
 
 namespace mav_coverage_planning {
 
-enum DecompositionType { kBest = 0, kBoustrophedeon, kConvex, kTrapezoidal };
+enum DecompositionType { kBoustrophedeon, kTrapezoidal };
 
 class Polygon {
  public:
@@ -54,32 +54,6 @@ class Polygon {
   // Offset at most radial_offset from corner.
   bool offsetEdgeWithRadialOffset(const size_t& edge_id, double radial_offset,
                                   Polygon* offset_polygon) const;
-
-  // Given a simple polygon without holes, compute its y-monotone decomposition.
-  // Mark de Berg, Marc van Kreveld, Mark Overmars, and Otfried Schwarzkopf.
-  // Computational Geometry: Algorithms and Applications. Springer-Verlag,
-  // Berlin, 1997, p. 49ff.
-  bool computeYMonotoneDecomposition(
-      std::vector<Polygon>* y_monotone_polygons) const;
-
-  // Given a strictly simple polygon with holes, compute its simple equivalent
-  // without holes. Note: New edges are added to the polygon.
-  // Uses
-  // https://doc.cgal.org/latest/Boolean_set_operations_2/group__boolean__connect__holes.html
-  bool convertPolygonWithHolesToPolygonWithoutHoles(
-      Polygon* polygon_without_holes) const;
-
-  // Convenience function that first calls
-  // convertPolygonWithHolesToPolygonWithoutHoles, then
-  // computeConvexDecomposition.
-  bool computeConvexDecompositionFromPolygonWithHoles(
-      std::vector<Polygon>* convex_polygons) const;
-
-  // Convenience function that first calls
-  // convertPolygonWithHolesToPolygonWithoutHoles, then
-  // computeYMonotoneDecomposition.
-  bool computeYMonotoneDecompositionFromPolygonWithHoles(
-      std::vector<Polygon>* y_monotone_polygons);
 
   bool computeBCDFromPolygonWithHoles(std::vector<Polygon>* bcd_polygons) const;
 

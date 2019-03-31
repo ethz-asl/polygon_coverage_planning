@@ -468,72 +468,6 @@ bool Polygon::offsetEdge(const size_t& edge_id, double offset,
   return true;
 }
 
-bool Polygon::computeYMonotoneDecomposition(
-    std::vector<Polygon>* y_monotone_polygons) const {
-  CHECK_NOTNULL(y_monotone_polygons);
-
-  // Precondition.
-  if (polygon_.number_of_holes() > 0) return false;
-
-  // y-monotone decomposition.
-  typedef CGAL::Partition_traits_2<K> PartitionTraits;
-  typedef PartitionTraits::Polygon_2 PartitionPolygon;
-  std::vector<PartitionPolygon> partition_polygons;
-  CGAL::optimal_convex_partition_2(polygon_.outer_boundary().vertices_begin(),
-                                   polygon_.outer_boundary().vertices_end(),
-                                   std::back_inserter(partition_polygons),
-                                   PartitionTraits());
-
-  // Copy polygon.
-  y_monotone_polygons->clear();
-  y_monotone_polygons->reserve(partition_polygons.size());
-  for (const PartitionPolygon& p : partition_polygons) {
-    // TODO(rikba): Some unnecessary move from list to vector because I don't
-    // know how to handle these partition traits.
-    std::vector<Point_2> vertices = {
-        std::make_move_iterator(p.vertices_begin()),
-        std::make_move_iterator(p.vertices_end())};
-    y_monotone_polygons->emplace_back(vertices.begin(), vertices.end());
-  }
-
-  return true;
-}
-
-bool Polygon::convertPolygonWithHolesToPolygonWithoutHoles(
-    Polygon* polygon_without_holes) const {
-  CHECK_NOTNULL(polygon_without_holes);
-
-  if (!is_strictly_simple_) return false;
-
-  if (polygon_.number_of_holes() == 0) {
-    *polygon_without_holes = Polygon(polygon_);
-    return true;
-  }
-
-  std::vector<Point_2> pts;
-  CGAL::connect_holes(polygon_, std::back_inserter(pts));
-  *polygon_without_holes = Polygon(pts.begin(), pts.end());
-
-  return true;
-}
-
-bool Polygon::computeConvexDecompositionFromPolygonWithHoles(
-    std::vector<Polygon>* convex_polygons) const {
-  CHECK_NOTNULL(convex_polygons);
-  convex_polygons->clear();
-
-  std::vector<Polygon_2> cells;
-  CGAL::Polygon_triangulation_decomposition_2<K> decom;
-  decom(polygon_, std::back_inserter(cells));
-
-  for (const Polygon_2& c : cells) {
-    convex_polygons->emplace_back(c, plane_tf_);
-  }
-
-
-  return true;
-}
-
 bool Polygon::computeBCDFromPolygonWithHoles(
     std::vector<Polygon>* bcd_polygons) const {
   CHECK_NOTNULL(bcd_polygons);
@@ -546,20 +480,6 @@ bool Polygon::computeBCDFromPolygonWithHoles(
   for (const Polygon_2& p : polygons) {
     bcd_polygons->emplace_back(p);
   }
-
-  return true;
-}
-
-bool Polygon::computeYMonotoneDecompositionFromPolygonWithHoles(
-    std::vector<Polygon>* y_monotone_polygons) {
-  CHECK_NOTNULL(y_monotone_polygons);
-
-  Polygon polygon_without_holes;
-  if (!convertPolygonWithHolesToPolygonWithoutHoles(&polygon_without_holes))
-    return false;
-
-  if (!polygon_without_holes.computeYMonotoneDecomposition(y_monotone_polygons))
-    return false;
 
   return true;
 }

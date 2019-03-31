@@ -24,17 +24,6 @@ bool PolygonStripmapPlanner::setup() {
       }
       break;
     }
-    case DecompositionType::kConvex: {
-      if (!settings_.polygon.computeConvexDecompositionFromPolygonWithHoles(
-              &decomposition_)) {
-        LOG(ERROR) << "Cannot compute convex decomposition.";
-        is_initialized_ = false;
-      } else {
-        LOG(INFO) << "Successfully created convex decomposition with "
-                  << decomposition_.size() << " polygon(s).";
-      }
-      break;
-    }
     case DecompositionType::kTrapezoidal: {
       if (!settings_.polygon
                .computeBestTrapezoidalDecompositionFromPolygonWithHoles(
@@ -43,17 +32,6 @@ bool PolygonStripmapPlanner::setup() {
         is_initialized_ = false;
       } else {
         LOG(INFO) << "Successfully created trapezoidal decomposition with "
-                  << decomposition_.size() << " polygon(s).";
-      }
-      break;
-    }
-    case DecompositionType::kBest: {
-      if (!settings_.polygon.computeBestDecompositionFromPolygonWithHoles(
-              &decomposition_)) {
-        LOG(ERROR) << "Cannot compute best decomposition.";
-        is_initialized_ = false;
-      } else {
-        LOG(INFO) << "Successfully created best decomposition with "
                   << decomposition_.size() << " polygon(s).";
       }
       break;

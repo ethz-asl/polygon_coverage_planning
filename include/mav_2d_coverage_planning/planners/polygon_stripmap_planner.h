@@ -43,9 +43,6 @@ class PolygonStripmapPlanner {
 
   // Check which decomposition cells are adjacent. Return whether each cell has
   // at least one neighbor.
-  // TODO(rikba): Convex decomposition adjacency is not fully captured because
-  // the polygon with holes they have been created from has been slightly
-  // altered.
   bool updateDecompositionAdjacency();
 
   bool offsetDecomposition();
