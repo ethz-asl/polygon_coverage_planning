@@ -120,7 +120,7 @@ bool SweepPlanGraph::computeLineSweepPlans(
     std::vector<Point_2> sweep;
     if (!polygon.computeLineSweepPlan(sweep_distance_, start_id, cc_orientation,
                                       &sweep)) {
-      LOG(WARNING)
+      DLOG(INFO)
           << "Could not compute counter clockwise sweep plan for start_id: "
           << start_id << " in polygon: " << polygon;
     } else {
@@ -134,8 +134,8 @@ bool SweepPlanGraph::computeLineSweepPlans(
             sweep_distance_,
             (start_id + 1) % polygon.getPolygon().outer_boundary().size(),
             !cc_orientation, &sweep)) {
-      LOG(WARNING) << "Could not compute clockwise sweep plan for start_id: "
-                   << start_id << " in polygon: " << polygon;
+      DLOG(INFO) << "Could not compute clockwise sweep plan for start_id: "
+                 << start_id << " in polygon: " << polygon;
     } else {
       CHECK(!sweep.empty());
       cluster_sweeps->push_back(sweep);
@@ -167,7 +167,7 @@ bool SweepPlanGraph::getClusters(
   }
   if (cluster_set != expected_clusters) {
     return false;  // Clusters not enumerated [0 .. n-1].
-  } //HERE
+  }                // HERE
 
   clusters->resize(cluster_set.size());
   for (size_t i = 0; i < clusters->size(); ++i) {
