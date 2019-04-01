@@ -9,53 +9,60 @@
 
 #include <mav_planning_msgs/PolygonWithHoles.h>
 
+#include <mav_2d_coverage_planning/geometry/polygon.h>
+#include <mav_coverage_planning_comm/cgal_definitions.h>
+
 const std::string kPackageName = "mav_coverage_planning_ros";
 const size_t kMaxNoObstacles = 10;
+const size_t kNoInstances = 100;
 
-bool loadPolygonFromNode(const YAML::Node& node,
-                         mav_planning_msgs::Polygon2D* poly) {
+using namespace mav_coverage_planning;
+
+bool loadPolygonFromNode(const YAML::Node& node, Polygon_2* poly) {
   CHECK_NOTNULL(poly);
   if (!node) return false;
   YAML::Node points = node["points"];
   if (!points) return false;
   if (points.size() < 3) return false;
-  poly->points.clear();
+  poly->clear();
 
   for (size_t i = 0; i < points.size(); ++i) {
     YAML::Node point = points[i];
     if (!point["x"]) return false;
     if (!point["y"]) return false;
-    mav_planning_msgs::Point2D p;
-    p.x = point["x"].as<double>();
-    p.y = point["y"].as<double>();
-    poly->points.push_back(p);
+    Point_2 p(point["x"].as<double>(), point["y"].as<double>());
+    poly->push_back(p);
   }
 
   return true;
 }
 
-bool loadPWHFromFile(const std::string& file) {
+bool loadPWHFromFile(const std::string& file, Polygon* polygon) {
   ROS_INFO_STREAM("Loading polygon from " << file);
   YAML::Node node = YAML::LoadFile(file);
 
-  mav_planning_msgs::PolygonWithHoles pwh;
-  if (!loadPolygonFromNode(node["hull"], &pwh.hull)) return false;
+  PolygonWithHoles pwh;
+  if (!loadPolygonFromNode(node["hull"], &pwh.outer_boundary())) return false;
 
-  pwh.holes.clear();
   for (size_t i = 0; i < node["holes"].size(); ++i) {
-    mav_planning_msgs::Polygon2D poly;
+    Polygon_2 poly;
     if (!loadPolygonFromNode(node["holes"][i], &poly)) return false;
-    pwh.holes.push_back(poly);
+    pwh.add_hole(poly);
   }
 
-  ROS_INFO_STREAM("Successfully loaded PWH with " << pwh.holes.size()
+  ROS_INFO_STREAM("Successfully loaded PWH with " << pwh.number_of_holes()
                                                   << " holes.");
+
+  CHECK_NOTNULL(polygon);
+  *polygon = Polygon(pwh);
 
   return true;
 }
 
-TEST(BenchmarkTest, Benchmark) {
-  // Load polygons.
+bool loadAllInstances(std::vector<std::vector<Polygon>>* polys) {
+  CHECK_NOTNULL(polys);
+  polys->resize(kMaxNoObstacles, std::vector<Polygon>(kNoInstances));
+
   std::string instances_path = ros::package::getPath(kPackageName);
   instances_path = instances_path.substr(0, instances_path.find("/src/"));
   instances_path +=
@@ -63,12 +70,22 @@ TEST(BenchmarkTest, Benchmark) {
 
   for (size_t i = 0; i < kMaxNoObstacles; ++i) {
     std::string subfolder = instances_path + std::to_string(i) + "/";
-    for (size_t j = 0; j < 100; ++j) {
+    for (size_t j = 0; j < kNoInstances; ++j) {
       std::stringstream ss;
       ss << std::setw(4) << std::setfill('0') << j;
-      CHECK(loadPWHFromFile(subfolder + ss.str() + ".yaml"));
+      if (!loadPWHFromFile(subfolder + ss.str() + ".yaml", &(*polys)[i][j]))
+        return false;
     }
   }
+
+  return true;
+}
+
+TEST(BenchmarkTest, Benchmark) {
+  std::vector<std::vector<Polygon>> polys;
+  // Load polygons.
+  CHECK(loadAllInstances(&polys));
+
 }
 
 int main(int argc, char** argv) {
