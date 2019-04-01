@@ -6,6 +6,7 @@
 #include <ros/package.h>
 #include <ros/ros.h>
 #include <yaml-cpp/yaml.h>
+#include <CGAL/Boolean_set_operations_2.h>
 
 #include <mav_planning_msgs/PolygonWithHoles.h>
 
@@ -23,6 +24,8 @@ const double kSweepDistance = 10.0;
 const double kOverlap = 0.0;
 const double kVMax = 3.0;
 const double kAMax = 1.0;
+const Point_2 kStart(0.0, 0.0);
+const Point_2 kGoal = kStart;
 
 using namespace mav_coverage_planning;
 
@@ -54,7 +57,9 @@ bool loadPWHFromFile(const std::string& file, Polygon* polygon) {
   for (size_t i = 0; i < node["holes"].size(); ++i) {
     Polygon_2 poly;
     if (!loadPolygonFromNode(node["holes"][i], &poly)) return false;
-    pwh.add_hole(poly);
+    std::list<PolygonWithHoles> diff;
+    CGAL::difference(pwh, poly, std::back_inserter(diff));
+    pwh = *diff.begin();
   }
 
   CHECK_NOTNULL(polygon);
@@ -86,26 +91,30 @@ bool loadAllInstances(std::vector<std::vector<Polygon>>* polys) {
 }
 
 template <class StripmapPlanner>
-std::vector<std::vector<typename StripmapPlanner::Settings>> createSettings(
-    std::vector<std::vector<Polygon>> polys, const DecompositionType& decom) {
-  std::vector<std::vector<typename StripmapPlanner::Settings>> settings(
-      polys.size());
-
-  for (size_t i = 0; i < polys.size(); ++i) {
-    settings[i].resize(polys[i].size());
-    for (size_t j = 0; j < polys[i].size(); ++j) {
-      settings[i][j].polygon = polys[i][j];
-      settings[i][j].path_cost_function = std::bind(
-          &computeVelocityRampPathCost, std::placeholders::_1, kVMax, kAMax);
-      settings[i][j].sensor_model =
-          std::make_shared<Line>(kSweepDistance, kOverlap);
-      settings[i][j].sweep_around_obstacles = false;
-      settings[i][j].offset_polygons = true;
-      settings[i][j].decomposition_type = decom;
-    }
-  }
+typename StripmapPlanner::Settings createSettings(
+    Polygon poly, const DecompositionType& decom) {
+  typename StripmapPlanner::Settings settings;
+  settings.polygon = poly;
+  settings.path_cost_function = std::bind(&computeVelocityRampPathCost,
+                                          std::placeholders::_1, kVMax, kAMax);
+  settings.sensor_model = std::make_shared<Line>(kSweepDistance, kOverlap);
+  settings.sweep_around_obstacles = false;
+  settings.offset_polygons = true;
+  settings.decomposition_type = decom;
 
   return settings;
+}
+
+template <class StripmapPlanner>
+bool runPlanner(StripmapPlanner* planner) {
+  // Setup.
+  planner->setup();
+  if (!planner->isInitialized()) return false;
+  // Solve.
+  std::vector<Point_2> solution;
+  if (!planner->solve(kStart, kGoal, &solution)) return false;
+  // TODO(rikba): Save results.
+  return true;
 }
 
 TEST(BenchmarkTest, Benchmark) {
@@ -113,20 +122,29 @@ TEST(BenchmarkTest, Benchmark) {
   // Load polygons.
   ROS_INFO_STREAM("Loading " << kMaxNoObstacles * kNoInstances
                              << " test instances.");
-  CHECK(loadAllInstances(&polys));
+  EXPECT_TRUE(loadAllInstances(&polys));
 
-  // Create settings.
-  std::vector<std::vector<PolygonStripmapPlanner::Settings>> our_bcd_settings =
-      createSettings<PolygonStripmapPlanner::Settings>(
-          polys, DecompositionType::kBoustrophedeon);
-
-
-  // Create planners.
-  // PolygonStripmapPlanner our_planner;
-  // PolygonStripmapPlannerExact exact_planner;
-
-  // Solve planners.
-  // Save to CSV.
+  // Run planners.
+  for (size_t i = 0; i < polys.size(); ++i) {
+    ROS_INFO_STREAM("Number of obstacles: " << i);
+    for (size_t j = 0; j < polys.size(); ++j) {
+      // Create settings.
+      ROS_INFO_STREAM("Polygon number: " << j);
+      ROS_INFO_STREAM("Run planner on polygon: " << polys[i][j]);
+      if (i > polys[i][j].getPolygon().number_of_holes())
+        ROS_WARN_STREAM("Less holes: "
+                        << polys[i][j].getPolygon().number_of_holes() << " vs. "
+                        << i);
+      PolygonStripmapPlanner::Settings our_bcd_settings =
+          createSettings<PolygonStripmapPlanner>(
+              polys[i][j], DecompositionType::kBoustrophedeon);
+      EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>);
+      // Create planners.
+      PolygonStripmapPlanner our_bcd(our_bcd_settings);
+      // Run planners.
+      EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>(&our_bcd));
+    }
+  }
 }
 
 int main(int argc, char** argv) {
