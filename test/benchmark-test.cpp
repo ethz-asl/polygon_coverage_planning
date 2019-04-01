@@ -19,10 +19,11 @@
 #include <mav_coverage_planning_comm/timing.h>
 
 const std::string kPackageName = "mav_coverage_planning_ros";
-const size_t kMaxNoObstacles = 10;
+const std::string kResultsFile = "/tmp/coverage_results.txt";
+const size_t kMaxNoObstacles = 5;
 const size_t kNthObstacle = 5;
 const size_t kObstacleBins = kMaxNoObstacles / kNthObstacle + 1;
-const size_t kNoInstances = 100;
+const size_t kNoInstances = 10;
 const double kSweepDistance = 3.0;
 const double kOverlap = 0.0;
 const double kVMax = 3.0;
@@ -95,7 +96,8 @@ bool loadAllInstances(std::vector<std::vector<Polygon>>* polys) {
       "/build/" + kPackageName + "/pwh_instances-prefix/src/pwh_instances/";
 
   for (size_t i = 0; i < kObstacleBins; i++) {
-    std::string subfolder = instances_path + std::to_string(i * kNthObstacle) + "/";
+    std::string subfolder =
+        instances_path + std::to_string(i * kNthObstacle) + "/";
     for (size_t j = 0; j < kNoInstances; ++j) {
       std::stringstream ss;
       ss << std::setw(4) << std::setfill('0') << j;
@@ -122,9 +124,85 @@ typename StripmapPlanner::Settings createSettings(
   return settings;
 }
 
+struct Result {
+  std::string planner;
+  size_t num_holes;
+  size_t num_hole_vertices;
+  double cost;
+  double total_time;
+  double total_time_setup;
+  double total_time_solve;
+  double time_decomposition;
+  double time_polygon_adjacency;
+  double time_poly_offset;
+  double total_time_sweep_graph;
+  double total_time_setup_solver;
+  double time_line_sweeps;
+  double time_node_creation;
+  double time_pruning;
+  double time_edge_creation;
+  double sweep_distance = kSweepDistance;
+  double v_max = kVMax;
+  double a_max = kAMax;
+};
+
+bool resultsToCsv(const std::string& path, const std::vector<Result>& results) {
+  ROS_INFO_STREAM("Saving results to: " << path);
+  std::ofstream file;
+  file.open(path);
+  if (!file.is_open()) return false;
+  file << "planner" << ",";
+  file << "num_holes" << ",";
+  file << "num_hole_vertices" << ",";
+  file << "cost" << ",";
+  file << "total_time" << ",";
+  file << "total_time_setup" << ",";
+  file << "total_time_solve" << ",";
+  file << "time_decomposition" << ",";
+  file << "time_polygon_adjacency" << ",";
+  file << "time_poly_offset" << ",";
+  file << "total_time_sweep_graph" << ",";
+  file << "total_time_setup_solver" << ",";
+  file << "time_line_sweeps" << ",";
+  file << "time_node_creation" << ",";
+  file << "time_pruning" << ",";
+  file << "time_edge_creation" << ",";
+  file << "sweep_distance" << ",";
+  file << "v_max" << ",";
+  file << "a_max" << "\n";
+  for (const Result& result : results) {
+    file << result.planner << ",";
+    file << result.num_holes << ",";
+    file << result.num_hole_vertices << ",";
+    file << result.cost << ",";
+    file << result.total_time << ",";
+    file << result.total_time_setup << ",";
+    file << result.total_time_solve << ",";
+    file << result.time_decomposition << ",";
+    file << result.time_polygon_adjacency << ",";
+    file << result.time_poly_offset << ",";
+    file << result.total_time_sweep_graph << ",";
+    file << result.total_time_setup_solver << ",";
+    file << result.time_line_sweeps << ",";
+    file << result.time_node_creation << ",";
+    file << result.time_pruning << ",";
+    file << result.time_edge_creation << ",";
+    file << result.sweep_distance << ",";
+    file << result.v_max << ",";
+    file << result.a_max << "\n";
+  }
+
+  file.close();
+  return true;
+}
+
 template <class StripmapPlanner>
-bool runPlanner(StripmapPlanner* planner) {
+bool runPlanner(StripmapPlanner* planner, Result* result) {
+  CHECK_NOTNULL(planner);
+  CHECK_NOTNULL(result);
+
   // Setup.
+  timing::Timing::Reset();
   timing::Timer timer_setup_total("timer_setup_total");
   planner->setup();
   if (!planner->isInitialized()) return false;
@@ -136,13 +214,15 @@ bool runPlanner(StripmapPlanner* planner) {
   timer_solve_total.Stop();
   // TODO(rikba): Save results.
   timing::Timing::Print(std::cout);
-  std::cout << "Path cost: "
-            << computeVelocityRampPathCost(solution, kVMax, kAMax);
+  ROS_INFO_STREAM(
+      "Path cost: " << computeVelocityRampPathCost(solution, kVMax, kAMax));
   return true;
 }
 
 TEST(BenchmarkTest, Benchmark) {
   std::vector<std::vector<Polygon>> polys;
+  std::vector<Result> results;
+
   // Load polygons.
   ROS_INFO_STREAM("Loading " << kObstacleBins * kNoInstances
                              << " test instances.");
@@ -150,13 +230,23 @@ TEST(BenchmarkTest, Benchmark) {
 
   // Run planners.
   for (size_t i = 0; i < polys.size(); ++i) {
+    ROS_INFO_STREAM("Number of holes: " << i * kNthObstacle);
     for (size_t j = 0; j < polys[i].size(); ++j) {
-      // Create settings.
       ROS_INFO_STREAM("Polygon number: " << j);
-      if (i > polys[i][j].getPolygon().number_of_holes())
-        ROS_WARN_STREAM("Less holes: "
-                        << polys[i][j].getPolygon().number_of_holes() << " vs. "
-                        << i);
+
+      // Create results.
+      Result our_bcd_result;
+
+      // Number of hole vertices.
+      size_t num_hole_vertices = computeNoHoleVertices(polys[i][j]);
+      ROS_INFO_STREAM("Num hole vertices: " << num_hole_vertices);
+      size_t num_holes = polys[i][j].getPolygon().number_of_holes();
+      EXPECT_EQ(i * kNthObstacle, polys[i][j].getPolygon().number_of_holes());
+      our_bcd_result.num_holes = num_holes;
+      our_bcd_result.num_hole_vertices = num_hole_vertices;
+      our_bcd_result.planner = "our_bcd";
+
+      // Create settings.
       PolygonStripmapPlanner::Settings our_bcd_settings =
           createSettings<PolygonStripmapPlanner>(
               polys[i][j], DecompositionType::kBoustrophedeon);
@@ -164,9 +254,15 @@ TEST(BenchmarkTest, Benchmark) {
       // Create planners.
       PolygonStripmapPlanner our_bcd(our_bcd_settings);
       // Run planners.
-      EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>(&our_bcd));
+      EXPECT_TRUE(
+          runPlanner<PolygonStripmapPlanner>(&our_bcd, &our_bcd_result));
+
+      // Save results.
+      results.push_back(our_bcd_result);
     }
   }
+
+  EXPECT_TRUE(resultsToCsv(kResultsFile, results));
 }
 
 int main(int argc, char** argv) {
