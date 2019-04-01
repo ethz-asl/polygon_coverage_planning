@@ -9,12 +9,20 @@
 
 #include <mav_planning_msgs/PolygonWithHoles.h>
 
+#include <mav_2d_coverage_planning/cost_functions/path_cost_functions.h>
 #include <mav_2d_coverage_planning/geometry/polygon.h>
+#include <mav_2d_coverage_planning/planners/polygon_stripmap_planner.h>
+#include <mav_2d_coverage_planning/planners/polygon_stripmap_planner_exact.h>
+#include <mav_2d_coverage_planning/sensor_models/line.h>
 #include <mav_coverage_planning_comm/cgal_definitions.h>
 
 const std::string kPackageName = "mav_coverage_planning_ros";
 const size_t kMaxNoObstacles = 10;
 const size_t kNoInstances = 100;
+const double kSweepDistance = 10.0;
+const double kOverlap = 0.0;
+const double kVMax = 3.0;
+const double kAMax = 1.0;
 
 using namespace mav_coverage_planning;
 
@@ -38,7 +46,6 @@ bool loadPolygonFromNode(const YAML::Node& node, Polygon_2* poly) {
 }
 
 bool loadPWHFromFile(const std::string& file, Polygon* polygon) {
-  ROS_INFO_STREAM("Loading polygon from " << file);
   YAML::Node node = YAML::LoadFile(file);
 
   PolygonWithHoles pwh;
@@ -49,9 +56,6 @@ bool loadPWHFromFile(const std::string& file, Polygon* polygon) {
     if (!loadPolygonFromNode(node["holes"][i], &poly)) return false;
     pwh.add_hole(poly);
   }
-
-  ROS_INFO_STREAM("Successfully loaded PWH with " << pwh.number_of_holes()
-                                                  << " holes.");
 
   CHECK_NOTNULL(polygon);
   *polygon = Polygon(pwh);
@@ -81,11 +85,48 @@ bool loadAllInstances(std::vector<std::vector<Polygon>>* polys) {
   return true;
 }
 
+template <class StripmapPlanner>
+std::vector<std::vector<typename StripmapPlanner::Settings>> createSettings(
+    std::vector<std::vector<Polygon>> polys, const DecompositionType& decom) {
+  std::vector<std::vector<typename StripmapPlanner::Settings>> settings(
+      polys.size());
+
+  for (size_t i = 0; i < polys.size(); ++i) {
+    settings[i].resize(polys[i].size());
+    for (size_t j = 0; j < polys[i].size(); ++j) {
+      settings[i][j].polygon = polys[i][j];
+      settings[i][j].path_cost_function = std::bind(
+          &computeVelocityRampPathCost, std::placeholders::_1, kVMax, kAMax);
+      settings[i][j].sensor_model =
+          std::make_shared<Line>(kSweepDistance, kOverlap);
+      settings[i][j].sweep_around_obstacles = false;
+      settings[i][j].offset_polygons = true;
+      settings[i][j].decomposition_type = decom;
+    }
+  }
+
+  return settings;
+}
+
 TEST(BenchmarkTest, Benchmark) {
   std::vector<std::vector<Polygon>> polys;
   // Load polygons.
+  ROS_INFO_STREAM("Loading " << kMaxNoObstacles * kNoInstances
+                             << " test instances.");
   CHECK(loadAllInstances(&polys));
 
+  // Create settings.
+  std::vector<std::vector<PolygonStripmapPlanner::Settings>> our_bcd_settings =
+      createSettings<PolygonStripmapPlanner::Settings>(
+          polys, DecompositionType::kBoustrophedeon);
+
+
+  // Create planners.
+  // PolygonStripmapPlanner our_planner;
+  // PolygonStripmapPlannerExact exact_planner;
+
+  // Solve planners.
+  // Save to CSV.
 }
 
 int main(int argc, char** argv) {
