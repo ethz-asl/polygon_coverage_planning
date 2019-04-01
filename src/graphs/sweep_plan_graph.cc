@@ -2,6 +2,8 @@
 
 #include <glog/logging.h>
 
+#include <mav_coverage_planning_comm/timing.h>
+
 #include "mav_coverage_graph_solvers/gk_ma.h"
 
 namespace mav_coverage_planning {
@@ -50,13 +52,16 @@ bool SweepPlanGraph::create() {
   for (size_t cluster = 0; cluster < polygon_clusters_.size(); ++cluster) {
     // Compute all cluster sweeps.
     std::vector<std::vector<Point_2>> cluster_sweeps;
+    timing::Timer timer_line_sweeps("line_sweeps");
     if (!computeLineSweepPlans(polygon_clusters_[cluster], &cluster_sweeps)) {
       LOG(ERROR) << "Cannot create all sweep plans for cluster " << cluster;
       return false;
     }
     num_sweep_plans += cluster_sweeps.size();
+    timer_line_sweeps.Stop();
 
     // Create node properties.
+    timing::Timer timer_node_creation("node_creation");
     std::vector<NodeProperty> node_properties;
     node_properties.resize(cluster_sweeps.size());
     for (size_t i = 0; i < node_properties.size(); ++i) {
@@ -66,6 +71,9 @@ bool SweepPlanGraph::create() {
       }
       node_properties[i] = node;
     }
+    timer_node_creation.Stop();
+
+    timing::Timer timer_pruning("pruning");
     // Prune nodes that are definitely not optimal.
     std::vector<NodeProperty>::iterator new_end = std::remove_if(
         node_properties.begin(), node_properties.end(),
@@ -74,13 +82,16 @@ bool SweepPlanGraph::create() {
                                             cost_function_);
         });
     node_properties.erase(new_end, node_properties.end());
+    timer_pruning.Stop();
 
     // For each remaining sweep create a node.
+    timing::Timer timer_edge_creation("edge_creation");
     for (const NodeProperty& node_property : node_properties) {
       if (!addNode(node_property)) {
         return false;
       }
     }
+    timer_edge_creation.Stop();
   }
 
   LOG(INFO) << "Created sweep plan graph with " << graph_.size()

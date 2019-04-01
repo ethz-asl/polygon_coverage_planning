@@ -3,6 +3,8 @@
 #include <glog/logging.h>
 #include <cmath>
 
+#include <mav_coverage_planning_comm/timing.h>
+
 namespace mav_coverage_planning {
 
 PolygonStripmapPlanner::PolygonStripmapPlanner(const Settings& settings)
@@ -12,6 +14,7 @@ bool PolygonStripmapPlanner::setup() {
   is_initialized_ = true;
 
   // Create decomposition.
+  timing::Timer timer_decom("decomposition");
   switch (settings_.decomposition_type) {
     case DecompositionType::kBoustrophedeon: {
       if (!settings_.polygon.computeBestBCDFromPolygonWithHoles(
@@ -42,18 +45,24 @@ bool PolygonStripmapPlanner::setup() {
       break;
     }
   }
+  timer_decom.Stop();
 
+  timing::Timer timer_poly_adj("polygon_adjacency");
   if (!updateDecompositionAdjacency()) {
     LOG(ERROR) << "Decomposition not fully connected.";
     is_initialized_ = false;
   }
+  timer_poly_adj.Stop();
 
+  timing::Timer timer_poly_offset("poly_offset");
   if (settings_.offset_polygons && !offsetDecomposition()) {
     LOG(ERROR) << "Failed to offset rectangular decomposition.";
     is_initialized_ = false;
   }
+  timer_poly_offset.Stop();
 
   // Create sweep plan graph.
+  timing::Timer timer_sweep_graph("sweep_graph");
   CHECK_NOTNULL(settings_.sensor_model);
   if (is_initialized_) {
     LOG(INFO) << "Start creating sweep plan graph.";
@@ -65,9 +74,12 @@ bool PolygonStripmapPlanner::setup() {
       is_initialized_ = false;
     }
   }
+  timer_sweep_graph.Stop();
 
   // Solver specific setup.
+  timing::Timer timer_setup_solver("setup_solver");
   is_initialized_ = setupSolver();
+  timer_setup_solver.Stop();
 
   return is_initialized_;
 }
@@ -172,6 +184,7 @@ bool PolygonStripmapPlanner::offsetDecomposition() {
 
 bool PolygonStripmapPlanner::solve(const Point_2& start, const Point_2& goal,
                                    std::vector<Point_2>* solution) const {
+  timing::Timer timer_solve("solve");
   CHECK_NOTNULL(solution);
   solution->clear();
 
@@ -209,6 +222,8 @@ bool PolygonStripmapPlanner::solve(const Point_2& start, const Point_2& goal,
   if (!settings_.polygon.pointInPolygon(goal)) {
     solution->insert(solution->end(), goal);
   }
+
+  timer_solve.Stop();
 
   return true;
 }
