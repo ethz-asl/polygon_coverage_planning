@@ -1,12 +1,12 @@
 #include <iomanip>
 #include <sstream>
 
+#include <CGAL/Boolean_set_operations_2.h>
 #include <glog/logging.h>
 #include <gtest/gtest.h>
 #include <ros/package.h>
 #include <ros/ros.h>
 #include <yaml-cpp/yaml.h>
-#include <CGAL/Boolean_set_operations_2.h>
 
 #include <mav_planning_msgs/PolygonWithHoles.h>
 
@@ -16,16 +16,20 @@
 #include <mav_2d_coverage_planning/planners/polygon_stripmap_planner_exact.h>
 #include <mav_2d_coverage_planning/sensor_models/line.h>
 #include <mav_coverage_planning_comm/cgal_definitions.h>
+#include <mav_coverage_planning_comm/timing.h>
 
 const std::string kPackageName = "mav_coverage_planning_ros";
 const size_t kMaxNoObstacles = 10;
+const size_t kNthObstacle = 5;
+const size_t kObstacleBins = kMaxNoObstacles / kNthObstacle + 1;
 const size_t kNoInstances = 100;
-const double kSweepDistance = 10.0;
+const double kSweepDistance = 3.0;
 const double kOverlap = 0.0;
 const double kVMax = 3.0;
 const double kAMax = 1.0;
 const Point_2 kStart(0.0, 0.0);
 const Point_2 kGoal = kStart;
+const double kMapScale = 0.025;
 
 using namespace mav_coverage_planning;
 
@@ -41,7 +45,8 @@ bool loadPolygonFromNode(const YAML::Node& node, Polygon_2* poly) {
     YAML::Node point = points[i];
     if (!point["x"]) return false;
     if (!point["y"]) return false;
-    Point_2 p(point["x"].as<double>(), point["y"].as<double>());
+    Point_2 p(kMapScale * point["x"].as<double>(),
+              kMapScale * point["y"].as<double>());
     poly->push_back(p);
   }
 
@@ -49,6 +54,8 @@ bool loadPolygonFromNode(const YAML::Node& node, Polygon_2* poly) {
 }
 
 bool loadPWHFromFile(const std::string& file, Polygon* polygon) {
+  CHECK_NOTNULL(polygon);
+
   YAML::Node node = YAML::LoadFile(file);
 
   PolygonWithHoles pwh;
@@ -68,17 +75,27 @@ bool loadPWHFromFile(const std::string& file, Polygon* polygon) {
   return true;
 }
 
+size_t computeNoHoleVertices(const Polygon& poly) {
+  size_t no_hole_vertices = 0;
+  for (PolygonWithHoles::Hole_const_iterator hit =
+           poly.getPolygon().holes_begin();
+       hit != poly.getPolygon().holes_end(); ++hit) {
+    no_hole_vertices += hit->size();
+  }
+  return no_hole_vertices;
+}
+
 bool loadAllInstances(std::vector<std::vector<Polygon>>* polys) {
   CHECK_NOTNULL(polys);
-  polys->resize(kMaxNoObstacles, std::vector<Polygon>(kNoInstances));
+  polys->resize(kObstacleBins, std::vector<Polygon>(kNoInstances));
 
   std::string instances_path = ros::package::getPath(kPackageName);
   instances_path = instances_path.substr(0, instances_path.find("/src/"));
   instances_path +=
       "/build/" + kPackageName + "/pwh_instances-prefix/src/pwh_instances/";
 
-  for (size_t i = 0; i < kMaxNoObstacles; ++i) {
-    std::string subfolder = instances_path + std::to_string(i) + "/";
+  for (size_t i = 0; i < kObstacleBins; i++) {
+    std::string subfolder = instances_path + std::to_string(i * kNthObstacle) + "/";
     for (size_t j = 0; j < kNoInstances; ++j) {
       std::stringstream ss;
       ss << std::setw(4) << std::setfill('0') << j;
@@ -108,29 +125,34 @@ typename StripmapPlanner::Settings createSettings(
 template <class StripmapPlanner>
 bool runPlanner(StripmapPlanner* planner) {
   // Setup.
+  timing::Timer timer_setup_total("timer_setup_total");
   planner->setup();
   if (!planner->isInitialized()) return false;
+  timer_setup_total.Stop();
   // Solve.
+  timing::Timer timer_solve_total("timer_solve_total");
   std::vector<Point_2> solution;
   if (!planner->solve(kStart, kGoal, &solution)) return false;
+  timer_solve_total.Stop();
   // TODO(rikba): Save results.
+  timing::Timing::Print(std::cout);
+  std::cout << "Path cost: "
+            << computeVelocityRampPathCost(solution, kVMax, kAMax);
   return true;
 }
 
 TEST(BenchmarkTest, Benchmark) {
   std::vector<std::vector<Polygon>> polys;
   // Load polygons.
-  ROS_INFO_STREAM("Loading " << kMaxNoObstacles * kNoInstances
+  ROS_INFO_STREAM("Loading " << kObstacleBins * kNoInstances
                              << " test instances.");
   EXPECT_TRUE(loadAllInstances(&polys));
 
   // Run planners.
   for (size_t i = 0; i < polys.size(); ++i) {
-    ROS_INFO_STREAM("Number of obstacles: " << i);
-    for (size_t j = 0; j < polys.size(); ++j) {
+    for (size_t j = 0; j < polys[i].size(); ++j) {
       // Create settings.
       ROS_INFO_STREAM("Polygon number: " << j);
-      ROS_INFO_STREAM("Run planner on polygon: " << polys[i][j]);
       if (i > polys[i][j].getPolygon().number_of_holes())
         ROS_WARN_STREAM("Less holes: "
                         << polys[i][j].getPolygon().number_of_holes() << " vs. "
