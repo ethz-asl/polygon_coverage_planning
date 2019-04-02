@@ -209,6 +209,7 @@ template <class StripmapPlanner>
 bool runPlanner(StripmapPlanner* planner, Result* result) {
   CHECK_NOTNULL(planner);
   CHECK_NOTNULL(result);
+  ROS_INFO_STREAM("Planning with: " << result->planner);
 
   // Setup.
   timing::Timing::Reset();
@@ -249,31 +250,41 @@ TEST(BenchmarkTest, Benchmark) {
     for (size_t j = 0; j < polys[i].size(); ++j) {
       ROS_INFO_STREAM("Polygon number: " << j);
 
-      // Create results.
-      Result our_bcd_result;
-
       // Number of hole vertices.
       size_t num_hole_vertices = computeNoHoleVertices(polys[i][j]);
-      ROS_INFO_STREAM("Num hole vertices: " << num_hole_vertices);
       size_t num_holes = polys[i][j].getPolygon().number_of_holes();
       EXPECT_EQ(i * kNthObstacle, polys[i][j].getPolygon().number_of_holes());
+
+      // Create results.
+      Result our_bcd_result;
       our_bcd_result.num_holes = num_holes;
       our_bcd_result.num_hole_vertices = num_hole_vertices;
       our_bcd_result.planner = "our_bcd";
+
+      Result our_tcd_result;
+      our_tcd_result.num_holes = num_holes;
+      our_tcd_result.num_hole_vertices = num_hole_vertices;
+      our_tcd_result.planner = "our_tcd";
 
       // Create settings.
       PolygonStripmapPlanner::Settings our_bcd_settings =
           createSettings<PolygonStripmapPlanner>(
               polys[i][j], DecompositionType::kBoustrophedeon);
-      EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>);
+      PolygonStripmapPlanner::Settings our_tcd_settings =
+          createSettings<PolygonStripmapPlanner>(
+              polys[i][j], DecompositionType::kTrapezoidal);
       // Create planners.
       PolygonStripmapPlanner our_bcd(our_bcd_settings);
+      PolygonStripmapPlanner our_tcd(our_tcd_settings);
       // Run planners.
       EXPECT_TRUE(
           runPlanner<PolygonStripmapPlanner>(&our_bcd, &our_bcd_result));
+      EXPECT_TRUE(
+          runPlanner<PolygonStripmapPlanner>(&our_tcd, &our_tcd_result));
 
       // Save results.
       results.push_back(our_bcd_result);
+      results.push_back(our_tcd_result);
     }
   }
 
