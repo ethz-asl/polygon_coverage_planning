@@ -23,7 +23,8 @@ class StripmapPlanner2D : public BasePlanner2D {
       : BasePlanner2D(nh, nh_private),
         decomposition_type_(DecompositionType::kBoustrophedeon),
         sweep_around_obstacles_(false),
-        offset_polygons_(true) {
+        offset_polygons_(true),
+        sweep_single_direction_(false) {
     // Parameters.
     double lateral_overlap = 0.0;
     if (!nh_private_.getParam("lateral_overlap", lateral_overlap)) {
@@ -95,6 +96,12 @@ class StripmapPlanner2D : public BasePlanner2D {
     ROS_INFO_STREAM("Lateral overlap: " << lateral_overlap);
     ROS_INFO_STREAM("Sweep distance: " << sensor_model_->getSweepDistance());
 
+
+    if (!nh_private_.getParam("sweep_single_direction", sweep_single_direction_)) {
+      ROS_WARN_STREAM("Default sweeping in single direction: " << sweep_single_direction_);
+    }
+    ROS_INFO_STREAM("Sweep single direction: " << sweep_single_direction_);
+
     // Creating the line sweep planner from the retrieved parameters.
     // This operation may take some time.
     resetPlanner();
@@ -116,6 +123,7 @@ class StripmapPlanner2D : public BasePlanner2D {
     settings.sweep_around_obstacles = sweep_around_obstacles_;
     settings.offset_polygons = offset_polygons_;
     settings.decomposition_type = decomposition_type_;
+    settings.sweep_single_direction = sweep_single_direction_;
 
     planner_.reset(new StripmapPlanner(settings));
     planner_->setup();
@@ -160,6 +168,7 @@ class StripmapPlanner2D : public BasePlanner2D {
   DecompositionType decomposition_type_;
   bool sweep_around_obstacles_;
   bool offset_polygons_;
+  bool sweep_single_direction_;
 };
 }  // namespace mav_coverage_planning
 

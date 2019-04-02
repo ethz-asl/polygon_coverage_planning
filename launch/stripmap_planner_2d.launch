@@ -21,6 +21,7 @@
     <param name="lateral_overlap" value="0.6" />
     <param name="sweep_around_obstacles" value="false" />
     <param name="offset_polygons" value="true" />
+    <param name="sweep_single_direction" value="false" />
     <!-- Decomposition type: 0, 1 [bcd, trapezoidal]-->
     <param name="decomposition_type" value="0" />
     <!-- Sensor model: 0, 1 [line, frustum]-->
