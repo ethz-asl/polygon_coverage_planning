@@ -47,6 +47,12 @@ class PolygonStripmapPlanner {
 
   bool offsetDecomposition();
 
+  inline size_t getDecompositionSize() const { return decomposition_.size(); }
+  inline size_t getNumberOfNodes() const { return sweep_plan_graph_.size(); }
+  inline size_t getNumberOfEdges() const {
+    return sweep_plan_graph_.getNumberOfEdges();
+  }
+
  protected:
   virtual bool setupSolver() { return true; };
   // Default: Heuristic GTSPP solver.
