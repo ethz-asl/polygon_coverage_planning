@@ -129,6 +129,7 @@ struct Result {
   size_t num_holes;
   size_t num_hole_vertices;
   double cost;
+  std::map<std::string, double> times;
   double total_time;
   double total_time_setup;
   double total_time_solve;
@@ -151,49 +152,57 @@ bool resultsToCsv(const std::string& path, const std::vector<Result>& results) {
   std::ofstream file;
   file.open(path);
   if (!file.is_open()) return false;
-  file << "planner" << ",";
-  file << "num_holes" << ",";
-  file << "num_hole_vertices" << ",";
-  file << "cost" << ",";
-  file << "total_time" << ",";
-  file << "total_time_setup" << ",";
-  file << "total_time_solve" << ",";
-  file << "time_decomposition" << ",";
-  file << "time_polygon_adjacency" << ",";
-  file << "time_poly_offset" << ",";
-  file << "total_time_sweep_graph" << ",";
-  file << "total_time_setup_solver" << ",";
-  file << "time_line_sweeps" << ",";
-  file << "time_node_creation" << ",";
-  file << "time_pruning" << ",";
-  file << "time_edge_creation" << ",";
-  file << "sweep_distance" << ",";
-  file << "v_max" << ",";
-  file << "a_max" << "\n";
+  file << "planner"
+       << ",";
+  file << "num_holes"
+       << ",";
+  file << "num_hole_vertices"
+       << ",";
+  file << "cost"
+       << ",";
+  file << "sweep_distance"
+       << ",";
+  file << "v_max"
+       << ",";
+  file << "a_max"
+       << ",";
+  const Result& first_result = results.front();
+  for (std::map<std::string, double>::const_iterator it =
+           first_result.times.begin();
+       it != first_result.times.end(); ++it) {
+    file << it->first;
+    if (it != std::prev(first_result.times.end())) file << ",";
+  }
+  file << "\n";
   for (const Result& result : results) {
     file << result.planner << ",";
     file << result.num_holes << ",";
     file << result.num_hole_vertices << ",";
     file << result.cost << ",";
-    file << result.total_time << ",";
-    file << result.total_time_setup << ",";
-    file << result.total_time_solve << ",";
-    file << result.time_decomposition << ",";
-    file << result.time_polygon_adjacency << ",";
-    file << result.time_poly_offset << ",";
-    file << result.total_time_sweep_graph << ",";
-    file << result.total_time_setup_solver << ",";
-    file << result.time_line_sweeps << ",";
-    file << result.time_node_creation << ",";
-    file << result.time_pruning << ",";
-    file << result.time_edge_creation << ",";
     file << result.sweep_distance << ",";
     file << result.v_max << ",";
-    file << result.a_max << "\n";
+    file << result.a_max << ",";
+
+    for (std::map<std::string, double>::const_iterator it =
+             result.times.begin();
+         it != result.times.end(); ++it) {
+      file << it->second;
+      if (it != std::prev(result.times.end())) file << ",";
+    }
+
+    file << "\n";
   }
 
   file.close();
   return true;
+}
+
+void saveTimes(Result* result) {
+  timing::Timing::map_t timers = timing::Timing::GetTimers();
+  for (timing::Timing::map_t::const_iterator it = timers.begin();
+       it != timers.end(); ++it) {
+    result->times[it->first] = timing::Timing::GetTotalSeconds(it->second);
+  }
 }
 
 template <class StripmapPlanner>
@@ -214,11 +223,11 @@ bool runPlanner(StripmapPlanner* planner, Result* result) {
   timer_solve_total.Stop();
   // TODO(rikba): Save results.
   result->cost = computeVelocityRampPathCost(solution, kVMax, kAMax);
+  saveTimes(result);
 
   // Get times.
   timing::Timing::Print(std::cout);
-  ROS_INFO_STREAM(
-      "Path cost: " << result->cost);
+  ROS_INFO_STREAM("Path cost: " << result->cost);
   return true;
 }
 
