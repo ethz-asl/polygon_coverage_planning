@@ -213,9 +213,12 @@ bool runPlanner(StripmapPlanner* planner, Result* result) {
   if (!planner->solve(kStart, kGoal, &solution)) return false;
   timer_solve_total.Stop();
   // TODO(rikba): Save results.
+  result->cost = computeVelocityRampPathCost(solution, kVMax, kAMax);
+
+  // Get times.
   timing::Timing::Print(std::cout);
   ROS_INFO_STREAM(
-      "Path cost: " << computeVelocityRampPathCost(solution, kVMax, kAMax));
+      "Path cost: " << result->cost);
   return true;
 }
 
