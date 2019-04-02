@@ -129,22 +129,13 @@ struct Result {
   size_t num_holes;
   size_t num_hole_vertices;
   double cost;
-  std::map<std::string, double> times;
-  double total_time;
-  double total_time_setup;
-  double total_time_solve;
-  double time_decomposition;
-  double time_polygon_adjacency;
-  double time_poly_offset;
-  double total_time_sweep_graph;
-  double total_time_setup_solver;
-  double time_line_sweeps;
-  double time_node_creation;
-  double time_pruning;
-  double time_edge_creation;
   double sweep_distance = kSweepDistance;
   double v_max = kVMax;
   double a_max = kAMax;
+  size_t num_nodes;
+  size_t num_edges;
+  size_t num_cells;
+  std::map<std::string, double> times;
 };
 
 bool resultsToCsv(const std::string& path, const std::vector<Result>& results) {
@@ -166,6 +157,12 @@ bool resultsToCsv(const std::string& path, const std::vector<Result>& results) {
        << ",";
   file << "a_max"
        << ",";
+  file << "num_nodes"
+       << ",";
+  file << "num_edges"
+       << ",";
+  file << "num_cells"
+       << ",";
   const Result& first_result = results.front();
   for (std::map<std::string, double>::const_iterator it =
            first_result.times.begin();
@@ -182,6 +179,9 @@ bool resultsToCsv(const std::string& path, const std::vector<Result>& results) {
     file << result.sweep_distance << ",";
     file << result.v_max << ",";
     file << result.a_max << ",";
+    file << result.num_nodes << ",";
+    file << result.num_edges << ",";
+    file << result.num_cells << ",";
 
     for (std::map<std::string, double>::const_iterator it =
              result.times.begin();
@@ -224,6 +224,9 @@ bool runPlanner(StripmapPlanner* planner, Result* result) {
   // TODO(rikba): Save results.
   result->cost = computeVelocityRampPathCost(solution, kVMax, kAMax);
   saveTimes(result);
+  result->num_cells = planner->getDecompositionSize();
+  result->num_nodes = planner->getNumberOfNodes();
+  result->num_edges = planner->getNumberOfEdges();
 
   // Get times.
   timing::Timing::Print(std::cout);
