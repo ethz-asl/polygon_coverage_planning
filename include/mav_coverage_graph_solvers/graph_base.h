@@ -1,10 +1,10 @@
 #ifndef MAV_COVERAGE_GRAPH_SOLVERS_GRAPH_BASE_H_
 #define MAV_COVERAGE_GRAPH_SOLVERS_GRAPH_BASE_H_
 
+#include <cmath>
 #include <limits>
 #include <map>
 #include <vector>
-#include <cmath>
 
 // Utilities to create graphs.
 namespace mav_coverage_planning {
@@ -61,6 +61,7 @@ class GraphBase {
   virtual bool create();
 
   inline size_t size() const { return graph_.size(); }
+  inline size_t getNumberOfEdges() const { return edge_properties_.size(); }
   inline void reserve(size_t size) { graph_.reserve(size); }
   inline size_t getStartIdx() const { return start_idx_; }
   inline size_t getGoalIdx() const { return goal_idx_; }
