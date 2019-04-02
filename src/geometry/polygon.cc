@@ -10,14 +10,14 @@
 #include <CGAL/Partition_is_valid_traits_2.h>
 #include <CGAL/Partition_traits_2.h>
 #include <CGAL/Polygon_2_algorithms.h>
+#include <CGAL/Polygon_convex_decomposition_2.h>
+#include <CGAL/Polygon_triangulation_decomposition_2.h>
 #include <CGAL/Triangle_2.h>
 #include <CGAL/Triangular_expansion_visibility_2.h>
 #include <CGAL/connect_holes.h>
 #include <CGAL/create_offset_polygons_from_polygon_with_holes_2.h>
-#include <CGAL/Polygon_triangulation_decomposition_2.h>
 #include <CGAL/is_y_monotone_2.h>
 #include <CGAL/partition_2.h>
-#include <CGAL/Polygon_convex_decomposition_2.h>
 #include <glog/logging.h>
 #include <mav_coverage_planning_comm/eigen_conversions.h>
 #include <boost/make_shared.hpp>
@@ -189,15 +189,16 @@ std::vector<Polygon> Polygon::rotatePolygon(
   return rotated_polys;
 }
 
-double Polygon::findMinAltitude(const Polygon& subregion) const {
+double Polygon::findMinAltitude(const Polygon& subregion,
+                                Direction_2* sweep_dir) const {
   // Get all possible sweep directions.
   std::vector<Direction_2> sweep_dirs = subregion.findEdgeDirections();
   std::vector<Polygon> rotated_polys = subregion.rotatePolygon(sweep_dirs);
 
   // Find minimum altitude.
   double min_altitude = std::numeric_limits<double>::max();
-  for (const Polygon& poly : rotated_polys) {
-    const Polygon_2& poly_2 = poly.getPolygon().outer_boundary();
+  for (size_t i = 0; i < sweep_dirs.size(); ++i) {
+    const Polygon_2& poly_2 = rotated_polys[i].getPolygon().outer_boundary();
     // Check if sweepable.
     if (!CGAL::is_approx_y_monotone_2(poly_2.vertices_begin(),
                                       poly_2.vertices_end())) {
@@ -206,7 +207,10 @@ double Polygon::findMinAltitude(const Polygon& subregion) const {
     }
 
     double altitude = poly_2.bbox().ymax() - poly_2.bbox().ymin();
-    min_altitude = altitude < min_altitude ? altitude : min_altitude;
+    if (altitude < min_altitude) {
+      min_altitude = altitude;
+      if (sweep_dir) *sweep_dir = sweep_dirs[i];
+    }
   }
 
   return min_altitude;
@@ -225,10 +229,11 @@ bool Polygon::computeBestTrapezoidalDecompositionFromPolygonWithHoles(
   // For all possible rotations:
   Direction_2 best_direction = directions.front();
   CHECK_EQ(rotated_polys.size(), directions.size());
-  for (size_t i = 0; i < rotated_polys.size(); ++i){
+  for (size_t i = 0; i < rotated_polys.size(); ++i) {
     // Calculate decomposition.
     std::vector<Polygon> traps;
-    if (!rotated_polys[i].computeTrapezoidalDecompositionFromPolygonWithHoles(&traps)) {
+    if (!rotated_polys[i].computeTrapezoidalDecompositionFromPolygonWithHoles(
+            &traps)) {
       LOG(WARNING) << "Failed to compute trapezoidal decomposition.";
       continue;
     }
@@ -275,7 +280,7 @@ bool Polygon::computeBestBCDFromPolygonWithHoles(
   // For all possible rotations:
   Direction_2 best_direction = directions.front();
   CHECK_EQ(rotated_polys.size(), directions.size());
-  for (size_t i = 0; i < rotated_polys.size(); ++i){
+  for (size_t i = 0; i < rotated_polys.size(); ++i) {
     // Calculate decomposition.
     std::vector<Polygon> bcds;
     if (!rotated_polys[i].computeBCDFromPolygonWithHoles(&bcds)) {
@@ -774,7 +779,10 @@ bool Polygon::computeLineSweepPlan(double max_sweep_distance,
       }
     } while (++eit != intersection.edges_circulator());
     // Assertion.
-    if (!has_bottom_sweep || !has_top_sweep) return false;
+    if (!has_bottom_sweep || !has_top_sweep) {
+      LOG(ERROR) << "Has no bottom or top sweep.";
+      return false;
+    }
 
     // 3. Add waypoints from previous sweep to current sweep.
     // Note: The first sweep is handled differently. Here the full polygon

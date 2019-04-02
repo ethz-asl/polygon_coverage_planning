@@ -68,7 +68,8 @@ bool PolygonStripmapPlanner::setup() {
     LOG(INFO) << "Start creating sweep plan graph.";
     sweep_plan_graph_ = sweep_plan_graph::SweepPlanGraph(
         settings_.polygon, settings_.path_cost_function, decomposition_,
-        settings_.sensor_model->getSweepDistance());
+        settings_.sensor_model->getSweepDistance(),
+        settings_.sweep_single_direction);
     if (!sweep_plan_graph_.isInitialized()) {
       LOG(ERROR) << "Cannot create sweep plan graph.";
       is_initialized_ = false;

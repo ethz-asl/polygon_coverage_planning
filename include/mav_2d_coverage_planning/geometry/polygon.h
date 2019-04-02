@@ -124,7 +124,8 @@ class Polygon {
   std::vector<Direction_2> getUniformDirections(const int num) const;
   std::vector<Polygon> rotatePolygon(
       const std::vector<Direction_2>& dirs) const;
-  double findMinAltitude(const Polygon& subregion) const;
+  double findMinAltitude(const Polygon& subregion,
+                         Direction_2* sweep_dir = nullptr) const;
 
  private:
   bool checkValidOffset(

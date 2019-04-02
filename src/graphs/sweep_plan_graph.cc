@@ -111,6 +111,8 @@ bool SweepPlanGraph::computeLineSweepPlans(
   // Create all sweep plans.
   bool cc_orientation = true;
   std::vector<EdgeConstIterator> dirs_swept;
+  Direction_2 best_dir;
+  if (sweep_single_direction_) polygon.findMinAltitude(polygon, &best_dir);
   for (size_t start_id = 0;
        start_id < polygon.getPolygon().outer_boundary().size(); ++start_id) {
     // Don't sweep same direction multiple times.
@@ -125,7 +127,14 @@ bool SweepPlanGraph::computeLineSweepPlans(
       DLOG(INFO) << "Direction already swept.";
       continue;
     }
+    if (sweep_single_direction_ &&
+        CGAL::orientation(dir->to_vector(), best_dir.vector()) !=
+            CGAL::COLLINEAR) {
+      continue;
+    }
     dirs_swept.push_back(dir);
+
+
 
     // Create 4 sweeps. Along direction, along opposite direction and reverse.
     std::vector<Point_2> sweep;
@@ -137,21 +146,25 @@ bool SweepPlanGraph::computeLineSweepPlans(
     } else {
       CHECK(!sweep.empty());
       cluster_sweeps->push_back(sweep);
-      std::reverse(sweep.begin(), sweep.end());
-      cluster_sweeps->push_back(sweep);
+      if (!sweep_single_direction_) {
+        std::reverse(sweep.begin(), sweep.end());
+        cluster_sweeps->push_back(sweep);
+      }
     }
 
-    if (!polygon.computeLineSweepPlan(
-            sweep_distance_,
-            (start_id + 1) % polygon.getPolygon().outer_boundary().size(),
-            !cc_orientation, &sweep)) {
-      DLOG(INFO) << "Could not compute clockwise sweep plan for start_id: "
-                 << start_id << " in polygon: " << polygon;
-    } else {
-      CHECK(!sweep.empty());
-      cluster_sweeps->push_back(sweep);
-      std::reverse(sweep.begin(), sweep.end());
-      cluster_sweeps->push_back(sweep);
+    if (!sweep_single_direction_) {
+      if (!polygon.computeLineSweepPlan(
+              sweep_distance_,
+              (start_id + 1) % polygon.getPolygon().outer_boundary().size(),
+              !cc_orientation, &sweep)) {
+        DLOG(INFO) << "Could not compute clockwise sweep plan for start_id: "
+                   << start_id << " in polygon: " << polygon;
+      } else {
+        CHECK(!sweep.empty());
+        cluster_sweeps->push_back(sweep);
+        std::reverse(sweep.begin(), sweep.end());
+        cluster_sweeps->push_back(sweep);
+      }
     }
   }
 

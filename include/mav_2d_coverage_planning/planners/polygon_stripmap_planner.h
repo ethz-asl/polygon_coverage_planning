@@ -20,6 +20,7 @@ class PolygonStripmapPlanner {
     bool sweep_around_obstacles;
     bool offset_polygons;
     DecompositionType decomposition_type;
+    bool sweep_single_direction;
   };
 
   // Create a sweep plan for a 2D polygon with holes.
