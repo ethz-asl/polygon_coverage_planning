@@ -30,7 +30,7 @@ const double kVMax = 3.0;
 const double kAMax = 1.0;
 const Point_2 kStart(0.0, 0.0);
 const Point_2 kGoal = kStart;
-const double kMapScale = 0.025;
+const double kMapScale = 1.0;
 
 using namespace mav_coverage_planning;
 
