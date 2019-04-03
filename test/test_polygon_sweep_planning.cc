@@ -14,47 +14,6 @@
 
 using namespace mav_coverage_planning;
 
-bool computeLineSweepPlans(const Polygon& polygon,
-                           std::vector<std::vector<Point_2>>* cluster_sweeps) {
-  CHECK_NOTNULL(cluster_sweeps);
-  cluster_sweeps->clear();
-  const Polygon_2& poly = polygon.getPolygon().outer_boundary();
-  cluster_sweeps->reserve(2 * poly.size());
-
-  // Find all sweepable directions.
-  std::vector<Direction_2> dirs = getAllSweepableEdgeDirections(poly);
-
-  // Compute all possible sweeps.
-  visibility_graph::VisibilityGraph vis_graph(polygon);
-  for (const Direction_2& dir : dirs) {
-    ROS_INFO_STREAM("Sweepable direction: " << dir);
-
-    bool counter_clockwise = true;
-    const double kMaxSweepDistance = 9.0;
-    std::vector<Point_2> sweep;
-    if (!computeSweep(poly, vis_graph, kMaxSweepDistance, dir,
-                      counter_clockwise, &sweep)) {
-      ROS_ERROR_STREAM("Cannot compute counter-clockwise sweep.");
-    } else {
-      CHECK(!sweep.empty());
-      cluster_sweeps->push_back(sweep);
-      std::reverse(sweep.begin(), sweep.end());
-      cluster_sweeps->push_back(sweep);
-    }
-
-    if (!computeSweep(poly, vis_graph, kMaxSweepDistance, dir,
-                      !counter_clockwise, &sweep)) {
-      ROS_ERROR_STREAM("Cannot compute clockwise sweep.");
-    } else {
-      CHECK(!sweep.empty());
-      cluster_sweeps->push_back(sweep);
-      std::reverse(sweep.begin(), sweep.end());
-      cluster_sweeps->push_back(sweep);
-    }
-  }
-  return true;
-}
-
 int main(int argc, char** argv) {
   ros::init(argc, argv, "sweep_calculator");
 
@@ -100,11 +59,16 @@ int main(int argc, char** argv) {
 
   // Compute sweep permutations.
   std::vector<std::vector<Point_2>> waypoints;
-  computeLineSweepPlans(poly, &waypoints);
+  const double kMaxSweepDistance = 9.0;
+  computeAllSweeps(poly, kMaxSweepDistance, &waypoints);
 
   ros::Rate loop_rate(1.0);
   size_t i = 0;
   while (ros::ok()) {
+    for (const Point_2& p : waypoints[i]) {
+      ROS_INFO_STREAM("p: " << p);
+    }
+
     // The planned path:
     visualization_msgs::MarkerArray all_markers;
     visualization_msgs::Marker path_points, path_line_strips;
