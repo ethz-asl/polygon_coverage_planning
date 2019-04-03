@@ -27,6 +27,7 @@ cs_add_library(${PROJECT_NAME}
   src/geometry/polygon.cc
   src/geometry/BCD.cpp
   src/geometry/bcd_exact.cc
+  src/geometry/weakly_monotone.cc
   src/geometry/sweep.cc
   src/graphs/gtspp_product_graph.cc
   src/graphs/sweep_plan_graph.cc
