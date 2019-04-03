@@ -21,7 +21,7 @@
 const std::string kPackageName = "mav_coverage_planning_ros";
 const std::string kResultsFile = "/tmp/coverage_results.txt";
 const size_t kMaxNoObstacles = 5;
-const size_t kNthObstacle = 5;
+const size_t kNthObstacle = 1;
 const size_t kObstacleBins = kMaxNoObstacles / kNthObstacle + 1;
 const size_t kNoInstances = 10;
 const double kSweepDistance = 3.0;
@@ -111,7 +111,7 @@ bool loadAllInstances(std::vector<std::vector<Polygon>>* polys) {
 
 template <class StripmapPlanner>
 typename StripmapPlanner::Settings createSettings(
-    Polygon poly, const DecompositionType& decom) {
+    Polygon poly, const DecompositionType& decom, bool sweep_single_direction) {
   typename StripmapPlanner::Settings settings;
   settings.polygon = poly;
   settings.path_cost_function = std::bind(&computeVelocityRampPathCost,
@@ -120,6 +120,7 @@ typename StripmapPlanner::Settings createSettings(
   settings.sweep_around_obstacles = false;
   settings.offset_polygons = true;
   settings.decomposition_type = decom;
+  settings.sweep_single_direction = sweep_single_direction;
 
   return settings;
 }
@@ -138,8 +139,8 @@ struct Result {
   std::map<std::string, double> times;
 };
 
-bool resultsToCsv(const std::string& path, const std::vector<Result>& results) {
-  ROS_INFO_STREAM("Saving results to: " << path);
+bool initCsv(const std::string& path, const Result& result) {
+  ROS_INFO_STREAM("Init results file: " << path);
   std::ofstream file;
   file.open(path);
   if (!file.is_open()) return false;
@@ -163,35 +164,39 @@ bool resultsToCsv(const std::string& path, const std::vector<Result>& results) {
        << ",";
   file << "num_cells"
        << ",";
-  const Result& first_result = results.front();
-  for (std::map<std::string, double>::const_iterator it =
-           first_result.times.begin();
-       it != first_result.times.end(); ++it) {
+  for (std::map<std::string, double>::const_iterator it = result.times.begin();
+       it != result.times.end(); ++it) {
     file << it->first;
-    if (it != std::prev(first_result.times.end())) file << ",";
+    if (it != std::prev(result.times.end())) file << ",";
   }
   file << "\n";
-  for (const Result& result : results) {
-    file << result.planner << ",";
-    file << result.num_holes << ",";
-    file << result.num_hole_vertices << ",";
-    file << result.cost << ",";
-    file << result.sweep_distance << ",";
-    file << result.v_max << ",";
-    file << result.a_max << ",";
-    file << result.num_nodes << ",";
-    file << result.num_edges << ",";
-    file << result.num_cells << ",";
+  file.close();
+  return true;
+}
 
-    for (std::map<std::string, double>::const_iterator it =
-             result.times.begin();
-         it != result.times.end(); ++it) {
-      file << it->second;
-      if (it != std::prev(result.times.end())) file << ",";
-    }
+bool resultToCsv(const std::string& path, const Result& result) {
+  std::ofstream file;
+  file.open(path, std::fstream::app);
+  if (!file.is_open()) return false;
 
-    file << "\n";
+  file << result.planner << ",";
+  file << result.num_holes << ",";
+  file << result.num_hole_vertices << ",";
+  file << result.cost << ",";
+  file << result.sweep_distance << ",";
+  file << result.v_max << ",";
+  file << result.a_max << ",";
+  file << result.num_nodes << ",";
+  file << result.num_edges << ",";
+  file << result.num_cells << ",";
+
+  for (std::map<std::string, double>::const_iterator it = result.times.begin();
+       it != result.times.end(); ++it) {
+    file << it->second;
+    if (it != std::prev(result.times.end())) file << ",";
   }
+
+  file << "\n";
 
   file.close();
   return true;
@@ -222,7 +227,7 @@ bool runPlanner(StripmapPlanner* planner, Result* result) {
   std::vector<Point_2> solution;
   if (!planner->solve(kStart, kGoal, &solution)) return false;
   timer_solve_total.Stop();
-  // TODO(rikba): Save results.
+  // Save results.
   result->cost = computeVelocityRampPathCost(solution, kVMax, kAMax);
   saveTimes(result);
   result->num_cells = planner->getDecompositionSize();
@@ -246,8 +251,8 @@ TEST(BenchmarkTest, Benchmark) {
 
   // Run planners.
   for (size_t i = 0; i < polys.size(); ++i) {
-    ROS_INFO_STREAM("Number of holes: " << i * kNthObstacle);
     for (size_t j = 0; j < polys[i].size(); ++j) {
+      ROS_INFO_STREAM("Number of holes: " << i * kNthObstacle);
       ROS_INFO_STREAM("Polygon number: " << j);
 
       // Number of hole vertices.
@@ -261,34 +266,81 @@ TEST(BenchmarkTest, Benchmark) {
       our_bcd_result.num_hole_vertices = num_hole_vertices;
       our_bcd_result.planner = "our_bcd";
 
-      Result our_tcd_result;
-      our_tcd_result.num_holes = num_holes;
-      our_tcd_result.num_hole_vertices = num_hole_vertices;
+      Result our_tcd_result = our_bcd_result;
       our_tcd_result.planner = "our_tcd";
+
+      Result one_dir_gkma_result = our_bcd_result;
+      one_dir_gkma_result.planner = "one_dir_gkma";
+
+      Result gtsp_exact_result = our_bcd_result;
+      gtsp_exact_result.planner = "gtsp_exact";
+
+      Result one_dir_exact_result = our_bcd_result;
+      one_dir_exact_result.planner = "one_dir_exact";
 
       // Create settings.
       PolygonStripmapPlanner::Settings our_bcd_settings =
           createSettings<PolygonStripmapPlanner>(
-              polys[i][j], DecompositionType::kBoustrophedeon);
+              polys[i][j], DecompositionType::kBoustrophedeon, false);
       PolygonStripmapPlanner::Settings our_tcd_settings =
           createSettings<PolygonStripmapPlanner>(
-              polys[i][j], DecompositionType::kTrapezoidal);
+              polys[i][j], DecompositionType::kTrapezoidal, false);
+      PolygonStripmapPlanner::Settings one_dir_gkma_settings =
+          createSettings<PolygonStripmapPlanner>(
+              polys[i][j], DecompositionType::kBoustrophedeon, true);
+      PolygonStripmapPlanner::Settings gtsp_exact_settings =
+          createSettings<PolygonStripmapPlanner>(
+              polys[i][j], DecompositionType::kBoustrophedeon, false);
+      PolygonStripmapPlanner::Settings one_dir_exact_settings =
+          createSettings<PolygonStripmapPlanner>(
+              polys[i][j], DecompositionType::kBoustrophedeon, true);
+
       // Create planners.
       PolygonStripmapPlanner our_bcd(our_bcd_settings);
       PolygonStripmapPlanner our_tcd(our_tcd_settings);
+      PolygonStripmapPlanner one_dir_gkma(one_dir_gkma_settings);
+      PolygonStripmapPlannerExact gtsp_exact(gtsp_exact_settings);
+      PolygonStripmapPlannerExact one_dir_exact(one_dir_exact_settings);
       // Run planners.
       EXPECT_TRUE(
           runPlanner<PolygonStripmapPlanner>(&our_bcd, &our_bcd_result));
       EXPECT_TRUE(
           runPlanner<PolygonStripmapPlanner>(&our_tcd, &our_tcd_result));
+      EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>(&one_dir_gkma,
+                                                     &one_dir_gkma_result));
+      static bool skip_gtsp_exact = false;
+      if (!skip_gtsp_exact)
+        EXPECT_TRUE(runPlanner<PolygonStripmapPlannerExact>(
+            &gtsp_exact, &gtsp_exact_result));
+      static bool skip_one_dir_exact = false;
+      if (!skip_one_dir_exact)
+        EXPECT_TRUE(runPlanner<PolygonStripmapPlannerExact>(
+            &one_dir_exact, &one_dir_exact_result));
+
+      double kTimeOut = 60.0;
+      if (gtsp_exact_result.times["timer_setup_total"] > kTimeOut ||
+          gtsp_exact_result.times["timer_solve_total"] > kTimeOut) {
+        LOG(WARNING) << "Skipping gtsp_exact because running longer than: "
+                     << kTimeOut;
+        skip_gtsp_exact = true;
+      }
+      if (one_dir_exact_result.times["timer_setup_total"] > kTimeOut ||
+          one_dir_exact_result.times["timer_solve_total"] > kTimeOut) {
+        LOG(WARNING) << "Skipping one_dir_exact because running longer than: "
+                     << kTimeOut;
+        skip_one_dir_exact = true;
+      }
 
       // Save results.
-      results.push_back(our_bcd_result);
-      results.push_back(our_tcd_result);
+      if (i == 0 && j == 0) EXPECT_TRUE(initCsv(kResultsFile, our_bcd_result));
+
+      EXPECT_TRUE(resultToCsv(kResultsFile, our_bcd_result));
+      EXPECT_TRUE(resultToCsv(kResultsFile, our_tcd_result));
+      EXPECT_TRUE(resultToCsv(kResultsFile, one_dir_gkma_result));
+      EXPECT_TRUE(resultToCsv(kResultsFile, gtsp_exact_result));
+      EXPECT_TRUE(resultToCsv(kResultsFile, one_dir_exact_result));
     }
   }
-
-  EXPECT_TRUE(resultsToCsv(kResultsFile, results));
 }
 
 int main(int argc, char** argv) {

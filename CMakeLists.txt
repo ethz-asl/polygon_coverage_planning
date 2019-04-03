@@ -32,7 +32,7 @@ ExternalProject_Add(
   pwh_instances
   URL https://polybox.ethz.ch/index.php/s/KzD3L3U5KXdd8Mz/download
   DOWNLOAD_NAME pwh.tar.gz
-  URL_MD5 777a1b83f36ceb0644fa42fbd7415faf
+  URL_MD5 87b964a974f6a8dd174dfe393b631a61
   UPDATE_COMMAND ""
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
