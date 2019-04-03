@@ -86,9 +86,12 @@ size_t computeNoHoleVertices(const Polygon& poly) {
   return no_hole_vertices;
 }
 
-bool loadAllInstances(std::vector<std::vector<Polygon>>* polys) {
+bool loadAllInstances(std::vector<std::vector<Polygon>>* polys,
+                      std::vector<std::vector<std::string>>* names) {
   CHECK_NOTNULL(polys);
+  CHECK_NOTNULL(names);
   polys->resize(kObstacleBins, std::vector<Polygon>(kNoInstances));
+  names->resize(kObstacleBins, std::vector<std::string>(kNoInstances));
 
   std::string instances_path = ros::package::getPath(kPackageName);
   instances_path = instances_path.substr(0, instances_path.find("/src/"));
@@ -103,6 +106,8 @@ bool loadAllInstances(std::vector<std::vector<Polygon>>* polys) {
       ss << std::setw(4) << std::setfill('0') << j;
       if (!loadPWHFromFile(subfolder + ss.str() + ".yaml", &(*polys)[i][j]))
         return false;
+
+      (*names)[i][j] = std::to_string(i * kNthObstacle) + "/" + ss.str();
     }
   }
 
@@ -127,6 +132,7 @@ typename StripmapPlanner::Settings createSettings(
 
 struct Result {
   std::string planner;
+  std::string instance;
   size_t num_holes;
   size_t num_hole_vertices;
   double cost;
@@ -145,6 +151,8 @@ bool initCsv(const std::string& path, const Result& result) {
   file.open(path);
   if (!file.is_open()) return false;
   file << "planner"
+       << ",";
+  file << "instance"
        << ",";
   file << "num_holes"
        << ",";
@@ -180,6 +188,7 @@ bool resultToCsv(const std::string& path, const Result& result) {
   if (!file.is_open()) return false;
 
   file << result.planner << ",";
+  file << result.instance << ",";
   file << result.num_holes << ",";
   file << result.num_hole_vertices << ",";
   file << result.cost << ",";
@@ -242,12 +251,12 @@ bool runPlanner(StripmapPlanner* planner, Result* result) {
 
 TEST(BenchmarkTest, Benchmark) {
   std::vector<std::vector<Polygon>> polys;
-  std::vector<Result> results;
+  std::vector<std::vector<std::string>> names;
 
   // Load polygons.
   ROS_INFO_STREAM("Loading " << kObstacleBins * kNoInstances
                              << " test instances.");
-  EXPECT_TRUE(loadAllInstances(&polys));
+  EXPECT_TRUE(loadAllInstances(&polys, &names));
 
   // Run planners.
   for (size_t i = 0; i < polys.size(); ++i) {
@@ -265,6 +274,7 @@ TEST(BenchmarkTest, Benchmark) {
       our_bcd_result.num_holes = num_holes;
       our_bcd_result.num_hole_vertices = num_hole_vertices;
       our_bcd_result.planner = "our_bcd";
+      our_bcd_result.instance = names[i][j];
 
       Result our_tcd_result = our_bcd_result;
       our_tcd_result.planner = "our_tcd";
@@ -309,13 +319,19 @@ TEST(BenchmarkTest, Benchmark) {
       EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>(&one_dir_gkma,
                                                      &one_dir_gkma_result));
       static bool skip_gtsp_exact = false;
-      if (!skip_gtsp_exact)
-        EXPECT_TRUE(runPlanner<PolygonStripmapPlannerExact>(
-            &gtsp_exact, &gtsp_exact_result));
+
+      size_t kMaxCellsExact = 6;
+      bool success_gtsp_exact = false;
+      if (!skip_gtsp_exact && our_bcd_result.num_cells < kMaxCellsExact)
+        EXPECT_TRUE(success_gtsp_exact =
+                        runPlanner<PolygonStripmapPlannerExact>(
+                            &gtsp_exact, &gtsp_exact_result));
       static bool skip_one_dir_exact = false;
-      if (!skip_one_dir_exact)
-        EXPECT_TRUE(runPlanner<PolygonStripmapPlannerExact>(
-            &one_dir_exact, &one_dir_exact_result));
+      bool success_one_dir_exact = false;
+      if (!skip_one_dir_exact && our_bcd_result.num_cells < 2 * kMaxCellsExact)
+        EXPECT_TRUE(success_one_dir_exact =
+                        runPlanner<PolygonStripmapPlannerExact>(
+                            &one_dir_exact, &one_dir_exact_result));
 
       double kTimeOut = 60.0;
       if (gtsp_exact_result.times["timer_setup_total"] > kTimeOut ||
@@ -337,8 +353,11 @@ TEST(BenchmarkTest, Benchmark) {
       EXPECT_TRUE(resultToCsv(kResultsFile, our_bcd_result));
       EXPECT_TRUE(resultToCsv(kResultsFile, our_tcd_result));
       EXPECT_TRUE(resultToCsv(kResultsFile, one_dir_gkma_result));
-      EXPECT_TRUE(resultToCsv(kResultsFile, gtsp_exact_result));
-      EXPECT_TRUE(resultToCsv(kResultsFile, one_dir_exact_result));
+
+      if (success_gtsp_exact)
+        EXPECT_TRUE(resultToCsv(kResultsFile, gtsp_exact_result));
+      if (success_one_dir_exact)
+        EXPECT_TRUE(resultToCsv(kResultsFile, one_dir_exact_result));
     }
   }
 }
