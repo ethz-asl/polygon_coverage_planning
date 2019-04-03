@@ -1,6 +1,7 @@
 #include "mav_2d_coverage_planning/geometry/sweep.h"
 
 #include "mav_2d_coverage_planning/geometry/is_approx_y_monotone_2.h"
+#include "mav_2d_coverage_planning/geometry/polygon.h"
 #include "mav_2d_coverage_planning/graphs/visibility_graph.h"
 
 namespace mav_coverage_planning {
@@ -11,69 +12,81 @@ bool computeSweep(const Polygon_2& in,
   CHECK_NOTNULL(waypoints);
   waypoints->clear();
 
-  // Rotate polygon in direction.
-  CGAL::Aff_transformation_2<K> rotation(CGAL::ROTATION, dir, 1, 1e3);
-  rotation = rotation.inverse();
-  Polygon_2 poly = CGAL::transform(rotation, poly);
+  Polygon poly_in(in);
 
   // Assertions.
-  if (!CGAL::is_approx_y_monotone_2(poly.vertices_begin(), poly.vertices_end()))
-    return false;
-  if (!poly.is_counterclockwise_oriented()) return false;
+  // TODO(rikba): Check monotone perpendicular to dir.
+  if (!in.is_counterclockwise_oriented()) return false;
 
-  // Find start vertex.
-  Point_2 start =
-      counter_clockwise ? findApproxSouthWest(poly) : findApproxSouthEast(poly);
+  // Find start sweep.
+  Line_2 sweep(Point_2(0.0, 0.0), dir);
+  std::vector<Point_2> sorted_pts = sortVerticesToLine(in, sweep);
+  sweep = Line_2(sorted_pts.front(), dir);
 
-  const Vector_2 kOffset(0.0, offset);
-  Line_2 horz_line(*start, Direction_2(1.0, 0.0));
+  Vector_2 offset_vector = sweep.perpendicular(sorted_pts.front()).to_vector();
+  offset_vector = offset * offset_vector /
+                  std::sqrt(CGAL::to_double(offset_vector.squared_length()));
+  const CGAL::Aff_transformation_2<K> kOffset(CGAL::TRANSLATION, offset_vector);
+  std::vector<Point_2> intersections = findIntercections(in, sweep);
   while (!intersections.empty()) {
-    // Find interception of horizontal sweep.
-    std::vector<Point_2> intersections = findIntercections(poly, horz_line);
     // Sort intersections.
-    if (!counter_clockwise)
+    if (counter_clockwise)
       std::reverse(intersections.begin(), intersections.end());
-    Point_2 start = intersections.front();
+    // Move from previous sweep.
+    if (!waypoints->empty()) {
+      Polygon start_visibility, goal_visibility;
+      if (!poly_in.computeVisibilityPolygon(waypoints->back(),
+                                            &start_visibility)) {
+        LOG(ERROR) << "Cannot compute visibility polygon from query point "
+                   << waypoints->back() << " in polygon: " << poly_in;
+        return false;
+      }
+      if (!poly_in.computeVisibilityPolygon(intersections.front(),
+                                            &goal_visibility)) {
+        LOG(ERROR) << "Cannot compute visibility polygon from query point "
+                   << intersections.front() << " in polygon: " << poly_in;
+        return false;
+      }
+      std::vector<Point_2> shortest_path;
+      if(!visibility_graph.solve(waypoints->back(),
+                                   start_visibility,
+                                   intersections.front(),
+                                   goal_visibility,
+                                   &shortest_path)) {
+        LOG(ERROR) << "Cannot compute shortest path from "
+                   << waypoints->back() << " to "
+                   << intersections.front() << " in polygon: " << poly_in;
+        return false;
+      }
+    }
+    // Traverse sweep.
+    waypoints->push_back(intersections.front());
+    waypoints->push_back(intersections.back());
+    // Offset sweep.
+    sweep.transform(kOffset);
+    // Find new sweep interception.
+    intersections = findIntercections(in, sweep);
   }
 
   return true;
 }
 
-Point_2 findApproxSouthEast(const Polygon_2& p) {
-  VertexConstIterator v = p.vertices_begin();
-  Polygon_2::Traits::Less_y_2 less_y_2;
-  Polygon_2::Traits::Less_x_2 less_x_2;
+std::vector<Point_2> sortVerticesToLine(const Polygon_2& p, const Line_2& l) {
+  // Copy points.
+  std::vector<Point_2> pts(p.size());
+  std::vector<Point_2>::iterator pts_it = pts.begin();
   for (VertexConstIterator it = p.vertices_begin(); it != p.vertices_end();
        ++it) {
-    if (isApproxEqual(it->y(), v->y())) {
-      *v = less_x_2(*v, *it) ? *it : *v;
-    } else if (less_y_2(*it, *v)) {
-      *v = *it;
-    }
+    *(pts_it++) = *it;
   }
 
-  return *v;
-}
+  // Sort.
+  std::sort(pts.begin(), pts.end(),
+            [&l](const Point_2& a, const Point_2& b) -> bool {
+              return CGAL::has_smaller_signed_distance_to_line(l, a, b);
+            });
 
-Point_2 findApproxSouthWest(const Polygon_2& p) {
-  VertexConstIterator v = p.vertices_begin();
-  Polygon_2::Traits::Less_y_2 less_y_2;
-  Polygon_2::Traits::Less_x_2 less_x_2;
-  for (VertexConstIterator it = p.vertices_begin(); it != p.vertices_end();
-       ++it) {
-    if (isApproxEqual(it->y(), v->y())) {
-      *v = less_x_2(*it, *v) ? *it : *v;
-    } else if (less_y_2(*it, *v)) {
-      *v = *it;
-    }
-  }
-
-  return *v;
-}
-
-bool isApproxEqual(const FT a, const FT b) {
-  const double kPrecision = 1.0e-3;
-  return std::fabs(CGAL::to_double(a) - CGAL::to_double(b)) < kPrecision;
+  return pts;
 }
 
 std::vector<Point_2> findIntercections(const Polygon_2& p, const Line_2& l) {
@@ -93,14 +106,14 @@ std::vector<Point_2> findIntercections(const Polygon_2& p, const Line_2& l) {
     }
   }
 
-  // Remove redundant points.
-  Polygon_2::Traits::Less_x_2 less_x_2;
+  CHECK_LE(intersections.size(), 4);
+
+  // Sort.
+  Line_2 perp_l = l.perpendicular(l.point(0));
   std::sort(intersections.begin(), intersections.end(),
-            [&less_x_2](const Point_2& a, const Point_2& b) -> bool {
-              return less_x_2(a, b);
+            [&perp_l](const Point_2& a, const Point_2& b) -> bool {
+              return CGAL::has_smaller_signed_distance_to_line(perp_l, a, b);
             });
-  intersections.erase(std::unique(intersections.begin(), intersections.end()),
-                      intersections.end());
 
   return intersections;
 }

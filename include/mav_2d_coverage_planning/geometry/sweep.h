@@ -8,10 +8,12 @@ namespace mav_coverage_planning {
 bool computeSweep(const Polygon_2& in, const FT offset, const Direction_2& dir,
                   bool counter_clockwise, std::vector<Point_2>* waypoints);
 
-VertexConstIterator findApproxSouthEast(const Polygon_2& p);
-VertexConstIterator findApproxSouthWest(const Polygon_2& p);
-bool isApproxEqual(const FT a, const FT b);
+// Find the intersections between a polygon and a line and sort them by the
+// distance to the perpendicular direction of the line.
 std::vector<Point_2> findIntercections(const Polygon_2& p, const Line_2& l);
+
+// Sort vertices of polygon based on signed distance to line l.
+std::vector<Point_2> sortVerticesToLine(const Polygon_2& p, const Line_2& l);
 
 }  // namespace mav_coverage_planning
 
