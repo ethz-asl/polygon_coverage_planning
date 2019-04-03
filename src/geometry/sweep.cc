@@ -1,6 +1,6 @@
 #include "mav_2d_coverage_planning/geometry/sweep.h"
 
-#include "mav_2d_coverage_planning/geometry/is_approx_y_monotone_2.h"
+#include "mav_2d_coverage_planning/geometry/weakly_monotone.h"
 
 namespace mav_coverage_planning {
 bool computeSweep(const Polygon_2& in,
@@ -23,12 +23,12 @@ bool computeSweep(const Polygon_2& in,
   offset_vector = offset * offset_vector /
                   std::sqrt(CGAL::to_double(offset_vector.squared_length()));
   const CGAL::Aff_transformation_2<K> kOffset(CGAL::TRANSLATION, offset_vector);
-  std::vector<Point_2> intersections = findIntercections(in, sweep);
+  std::vector<Point_2> intersections = findIntersections(in, sweep);
   while (!intersections.empty()) {
     // Sort intersections.
     if (counter_clockwise)
       std::reverse(intersections.begin(), intersections.end());
-    // Move from previous sweep.
+    // Connect previous sweep.
     if (!waypoints->empty()) {
       std::vector<Point_2> shortest_path;
       if (!calculateShortestPath(visibility_graph, waypoints->back(),
@@ -41,15 +41,64 @@ bool computeSweep(const Polygon_2& in,
     }
     // Traverse sweep.
     waypoints->push_back(intersections.front());
-    waypoints->push_back(intersections.back());
+    if (intersections.back() != intersections.front())
+      waypoints->push_back(intersections.back());
     // Offset sweep.
-    sweep.transform(kOffset);
+    sweep = sweep.transform(kOffset);
     // Find new sweep interception.
-    intersections = findIntercections(in, sweep);
+    intersections = findIntersections(in, sweep);
+    // Add a final sweep.
+    if (intersections.empty() &&
+        !(*std::prev(waypoints->end(), 1) == sorted_pts.back() ||
+          *std::prev(waypoints->end(), 2) == sorted_pts.back())) {
+      sweep = Line_2(sorted_pts.back(), dir);
+      intersections = findIntersections(in, sweep);
+    }
+
     // Swap directions.
     counter_clockwise = !counter_clockwise;
   }
 
+  return true;
+}
+
+bool computeAllSweeps(const Polygon& polygon, const double max_sweep_offset,
+                      std::vector<std::vector<Point_2>>* cluster_sweeps) {
+  CHECK_NOTNULL(cluster_sweeps);
+  cluster_sweeps->clear();
+  const Polygon_2& poly = polygon.getPolygon().outer_boundary();
+  cluster_sweeps->reserve(2 * poly.size());
+
+  // Find all sweepable directions.
+  std::vector<Direction_2> dirs = getAllSweepableEdgeDirections(poly);
+
+  // Compute all possible sweeps.
+  visibility_graph::VisibilityGraph vis_graph(polygon);
+  for (const Direction_2& dir : dirs) {
+    bool counter_clockwise = true;
+    std::vector<Point_2> sweep;
+    if (!computeSweep(poly, vis_graph, max_sweep_offset, dir, counter_clockwise,
+                      &sweep)) {
+      LOG(ERROR) << "Cannot compute counter-clockwise sweep.";
+      return false;
+    } else {
+      CHECK(!sweep.empty());
+      cluster_sweeps->push_back(sweep);
+      std::reverse(sweep.begin(), sweep.end());
+      cluster_sweeps->push_back(sweep);
+    }
+
+    if (!computeSweep(poly, vis_graph, max_sweep_offset, dir,
+                      !counter_clockwise, &sweep)) {
+      LOG(ERROR) << "Cannot compute clockwise sweep.";
+      return false;
+    } else {
+      CHECK(!sweep.empty());
+      cluster_sweeps->push_back(sweep);
+      std::reverse(sweep.begin(), sweep.end());
+      cluster_sweeps->push_back(sweep);
+    }
+  }
   return true;
 }
 
@@ -106,7 +155,7 @@ std::vector<Point_2> sortVerticesToLine(const Polygon_2& p, const Line_2& l) {
   return pts;
 }
 
-std::vector<Point_2> findIntercections(const Polygon_2& p, const Line_2& l) {
+std::vector<Point_2> findIntersections(const Polygon_2& p, const Line_2& l) {
   std::vector<Point_2> intersections;
   typedef CGAL::cpp11::result_of<Intersect_2(Segment_2, Line_2)>::type
       Intersection;
