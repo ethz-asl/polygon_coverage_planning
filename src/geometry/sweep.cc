@@ -9,6 +9,7 @@ bool computeSweep(const Polygon_2& in,
                   bool counter_clockwise, std::vector<Point_2>* waypoints) {
   CHECK_NOTNULL(waypoints);
   waypoints->clear();
+  const FT kSqOffset = offset * offset;
 
   // Assertions.
   // TODO(rikba): Check monotone perpendicular to dir.
@@ -23,16 +24,17 @@ bool computeSweep(const Polygon_2& in,
   offset_vector = offset * offset_vector /
                   std::sqrt(CGAL::to_double(offset_vector.squared_length()));
   const CGAL::Aff_transformation_2<K> kOffset(CGAL::TRANSLATION, offset_vector);
-  std::vector<Point_2> intersections = findIntersections(in, sweep);
-  while (!intersections.empty()) {
-    // Sort intersections.
-    if (counter_clockwise)
-      std::reverse(intersections.begin(), intersections.end());
+
+  Segment_2 sweep_segment;
+  bool has_sweep_segment = findSweepSegment(in, sweep, &sweep_segment);
+  while (has_sweep_segment) {
+    // Align sweep segment.
+    if (counter_clockwise) sweep_segment = sweep_segment.opposite();
     // Connect previous sweep.
     if (!waypoints->empty()) {
       std::vector<Point_2> shortest_path;
       if (!calculateShortestPath(visibility_graph, waypoints->back(),
-                                 intersections.front(), &shortest_path))
+                                 sweep_segment.source(), &shortest_path))
         return false;
       for (std::vector<Point_2>::iterator it = std::next(shortest_path.begin());
            it != std::prev(shortest_path.end()); ++it) {
@@ -40,19 +42,41 @@ bool computeSweep(const Polygon_2& in,
       }
     }
     // Traverse sweep.
-    waypoints->push_back(intersections.front());
-    if (intersections.back() != intersections.front())
-      waypoints->push_back(intersections.back());
+    waypoints->push_back(sweep_segment.source());
+    if (!sweep_segment.is_degenerate())
+      waypoints->push_back(sweep_segment.target());
     // Offset sweep.
     sweep = sweep.transform(kOffset);
-    // Find new sweep interception.
-    intersections = findIntersections(in, sweep);
+    // Find new sweep segment.
+    Segment_2 prev_sweep_segment =
+        counter_clockwise ? sweep_segment.opposite() : sweep_segment;
+    has_sweep_segment = findSweepSegment(in, sweep, &sweep_segment);
     // Add a final sweep.
-    if (intersections.empty() &&
+    if (!has_sweep_segment &&
         !(*std::prev(waypoints->end(), 1) == sorted_pts.back() ||
           *std::prev(waypoints->end(), 2) == sorted_pts.back())) {
       sweep = Line_2(sorted_pts.back(), dir);
-      intersections = findIntersections(in, sweep);
+      has_sweep_segment = findSweepSegment(in, sweep, &sweep_segment);
+      if (!has_sweep_segment) {
+        LOG(ERROR) << "Failed to calculate final sweep.";
+        return false;
+      }
+    }
+    // Check observability of vertices between sweeps.
+    if (has_sweep_segment) {
+      std::vector<Point_2>::const_iterator unobservable_point =
+          sorted_pts.end();
+      checkObservability(prev_sweep_segment, sweep_segment, sorted_pts,
+                         kSqOffset, &unobservable_point);
+      if (unobservable_point != sorted_pts.end()) {
+        sweep = Line_2(*unobservable_point, dir);
+        has_sweep_segment = findSweepSegment(in, sweep, &sweep_segment);
+        if (!has_sweep_segment) {
+          LOG(ERROR) << "Failed to calculate extra sweep at point: "
+                     << *unobservable_point;
+          return false;
+        }
+      }
     }
 
     // Swap directions.
@@ -60,6 +84,38 @@ bool computeSweep(const Polygon_2& in,
   }
 
   return true;
+}
+
+bool findSweepSegment(const Polygon_2& p, const Line_2& l,
+                      Segment_2* sweep_segment) {
+  std::vector<Point_2> intersections = findIntersections(p, l);
+  if (intersections.empty()) return false;
+  *sweep_segment = Segment_2(intersections.front(), intersections.back());
+  return true;
+}
+
+void checkObservability(
+    const Segment_2& prev_sweep, const Segment_2& sweep,
+    const std::vector<Point_2>& sorted_pts, const FT max_sq_distance,
+    std::vector<Point_2>::const_iterator* lowest_unobservable_point) {
+  CHECK_NOTNULL(lowest_unobservable_point);
+  *lowest_unobservable_point = sorted_pts.end();
+
+  // Find first point that is between prev_sweep and sweep and unobservable.
+  for (std::vector<Point_2>::const_iterator it = sorted_pts.begin();
+       it != sorted_pts.end(); ++it) {
+    if (prev_sweep.supporting_line().has_on_positive_side(*it)) continue;
+    if (sweep.supporting_line().has_on_negative_side(*it)) {
+      break;
+    }
+    FT sq_distance_prev = CGAL::squared_distance(prev_sweep, *it);
+    FT sq_distance_curr = CGAL::squared_distance(sweep, *it);
+    if (sq_distance_prev > max_sq_distance &&
+        sq_distance_curr > max_sq_distance) {
+      *lowest_unobservable_point = it;
+      return;
+    }
+  }
 }
 
 bool computeAllSweeps(const Polygon& polygon, const double max_sweep_offset,
@@ -171,8 +227,6 @@ std::vector<Point_2> findIntersections(const Polygon_2& p, const Line_2& l) {
       }
     }
   }
-
-  CHECK_LE(intersections.size(), 4);
 
   // Sort.
   Line_2 perp_l = l.perpendicular(l.point(0));
