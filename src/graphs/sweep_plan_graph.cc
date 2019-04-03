@@ -4,7 +4,8 @@
 
 #include <mav_coverage_planning_comm/timing.h>
 
-#include "mav_coverage_graph_solvers/gk_ma.h"
+#include <mav_coverage_graph_solvers/gk_ma.h>
+#include "mav_2d_coverage_planning/geometry/sweep.h"
 
 namespace mav_coverage_planning {
 namespace sweep_plan_graph {
@@ -53,9 +54,25 @@ bool SweepPlanGraph::create() {
     // Compute all cluster sweeps.
     std::vector<std::vector<Point_2>> cluster_sweeps;
     timing::Timer timer_line_sweeps("line_sweeps");
-    if (!computeLineSweepPlans(polygon_clusters_[cluster], &cluster_sweeps)) {
-      LOG(ERROR) << "Cannot create all sweep plans for cluster " << cluster;
-      return false;
+    if (sweep_single_direction_) {
+      Direction_2 best_dir;
+      polygon_clusters_[cluster].findMinAltitude(polygon_clusters_[cluster],
+                                                 &best_dir);
+      visibility_graph::VisibilityGraph vis_graph(polygon_clusters_[cluster]);
+      const Polygon_2& poly =
+          polygon_clusters_[cluster].getPolygon().outer_boundary();
+      cluster_sweeps.resize(1);
+      if (!computeSweep(poly, vis_graph, sweep_distance_, best_dir, true,
+                        &cluster_sweeps.front())) {
+        LOG(ERROR) << "Cannot compute single sweep for cluster: " << cluster;
+        return false;
+      }
+    } else {
+      if (!computeAllSweeps(polygon_clusters_[cluster], sweep_distance_,
+                            &cluster_sweeps)) {
+        LOG(ERROR) << "Cannot create all sweep plans for cluster " << cluster;
+        return false;
+      }
     }
     num_sweep_plans += cluster_sweeps.size();
     timer_line_sweeps.Stop();
@@ -98,76 +115,6 @@ bool SweepPlanGraph::create() {
             << " nodes and " << edge_properties_.size() << " edges.";
   LOG(INFO) << "Pruned " << num_sweep_plans - graph_.size() << " nodes.";
   is_created_ = true;
-  return true;
-}
-
-bool SweepPlanGraph::computeLineSweepPlans(
-    const Polygon& polygon,
-    std::vector<std::vector<Point_2>>* cluster_sweeps) const {
-  CHECK_NOTNULL(cluster_sweeps);
-  cluster_sweeps->clear();
-  cluster_sweeps->reserve(2 * polygon.getPolygon().outer_boundary().size());
-
-  // Create all sweep plans.
-  bool cc_orientation = true;
-  std::vector<EdgeConstIterator> dirs_swept;
-  Direction_2 best_dir;
-  if (sweep_single_direction_) polygon.findMinAltitude(polygon, &best_dir);
-  for (size_t start_id = 0;
-       start_id < polygon.getPolygon().outer_boundary().size(); ++start_id) {
-    // Don't sweep same direction multiple times.
-    EdgeConstIterator dir = std::next(
-        polygon.getPolygon().outer_boundary().edges_begin(), start_id);
-    std::vector<EdgeConstIterator>::iterator it =
-        std::find_if(dirs_swept.begin(), dirs_swept.end(),
-                     [&dir](const EdgeConstIterator& dir_swept) {
-                       return CGAL::parallel(*dir, *dir_swept);
-                     });
-    if (it != dirs_swept.end()) {
-      DLOG(INFO) << "Direction already swept.";
-      continue;
-    }
-    if (sweep_single_direction_ &&
-        CGAL::orientation(dir->to_vector(), best_dir.vector()) !=
-            CGAL::COLLINEAR) {
-      continue;
-    }
-    dirs_swept.push_back(dir);
-
-
-
-    // Create 4 sweeps. Along direction, along opposite direction and reverse.
-    std::vector<Point_2> sweep;
-    if (!polygon.computeLineSweepPlan(sweep_distance_, start_id, cc_orientation,
-                                      &sweep)) {
-      DLOG(INFO)
-          << "Could not compute counter clockwise sweep plan for start_id: "
-          << start_id << " in polygon: " << polygon;
-    } else {
-      CHECK(!sweep.empty());
-      cluster_sweeps->push_back(sweep);
-      if (!sweep_single_direction_) {
-        std::reverse(sweep.begin(), sweep.end());
-        cluster_sweeps->push_back(sweep);
-      }
-    }
-
-    if (!sweep_single_direction_) {
-      if (!polygon.computeLineSweepPlan(
-              sweep_distance_,
-              (start_id + 1) % polygon.getPolygon().outer_boundary().size(),
-              !cc_orientation, &sweep)) {
-        DLOG(INFO) << "Could not compute clockwise sweep plan for start_id: "
-                   << start_id << " in polygon: " << polygon;
-      } else {
-        CHECK(!sweep.empty());
-        cluster_sweeps->push_back(sweep);
-        std::reverse(sweep.begin(), sweep.end());
-        cluster_sweeps->push_back(sweep);
-      }
-    }
-  }
-
   return true;
 }
 

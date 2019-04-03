@@ -104,11 +104,6 @@ class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
   // - edge is not between start and goal.
   bool isConnected(const EdgeId& edge_id) const;
 
-  // Compute all possible sweep plans for a given simple polygon.
-  bool computeLineSweepPlans(
-      const Polygon& polygon,
-      std::vector<std::vector<Point_2>>* cluster_sweeps) const;
-
   // Compute the start and goal visibility polygon of a sweep. Also resets the
   // start and goal vertex in case they are not inside the polygon.
   bool computeStartAndGoalVisibility(
