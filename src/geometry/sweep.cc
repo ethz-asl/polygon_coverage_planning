@@ -1,8 +1,6 @@
 #include "mav_2d_coverage_planning/geometry/sweep.h"
 
 #include "mav_2d_coverage_planning/geometry/is_approx_y_monotone_2.h"
-#include "mav_2d_coverage_planning/geometry/polygon.h"
-#include "mav_2d_coverage_planning/graphs/visibility_graph.h"
 
 namespace mav_coverage_planning {
 bool computeSweep(const Polygon_2& in,
@@ -11,8 +9,6 @@ bool computeSweep(const Polygon_2& in,
                   bool counter_clockwise, std::vector<Point_2>* waypoints) {
   CHECK_NOTNULL(waypoints);
   waypoints->clear();
-
-  Polygon poly_in(in);
 
   // Assertions.
   // TODO(rikba): Check monotone perpendicular to dir.
@@ -34,29 +30,13 @@ bool computeSweep(const Polygon_2& in,
       std::reverse(intersections.begin(), intersections.end());
     // Move from previous sweep.
     if (!waypoints->empty()) {
-      Polygon start_visibility, goal_visibility;
-      if (!poly_in.computeVisibilityPolygon(waypoints->back(),
-                                            &start_visibility)) {
-        LOG(ERROR) << "Cannot compute visibility polygon from query point "
-                   << waypoints->back() << " in polygon: " << poly_in;
-        return false;
-      }
-      if (!poly_in.computeVisibilityPolygon(intersections.front(),
-                                            &goal_visibility)) {
-        LOG(ERROR) << "Cannot compute visibility polygon from query point "
-                   << intersections.front() << " in polygon: " << poly_in;
-        return false;
-      }
       std::vector<Point_2> shortest_path;
-      if(!visibility_graph.solve(waypoints->back(),
-                                   start_visibility,
-                                   intersections.front(),
-                                   goal_visibility,
-                                   &shortest_path)) {
-        LOG(ERROR) << "Cannot compute shortest path from "
-                   << waypoints->back() << " to "
-                   << intersections.front() << " in polygon: " << poly_in;
+      if (!calculateShortestPath(visibility_graph, waypoints->back(),
+                                 intersections.front(), &shortest_path))
         return false;
+      for (std::vector<Point_2>::iterator it = std::next(shortest_path.begin());
+           it != std::prev(shortest_path.end()); ++it) {
+        waypoints->push_back(*it);
       }
     }
     // Traverse sweep.
@@ -66,6 +46,43 @@ bool computeSweep(const Polygon_2& in,
     sweep.transform(kOffset);
     // Find new sweep interception.
     intersections = findIntercections(in, sweep);
+    // Swap directions.
+    counter_clockwise = !counter_clockwise;
+  }
+
+  return true;
+}
+
+bool calculateShortestPath(
+    const visibility_graph::VisibilityGraph& visibility_graph,
+    const Point_2& start, const Point_2& goal,
+    std::vector<Point_2>* shortest_path) {
+  CHECK_NOTNULL(shortest_path);
+  shortest_path->clear();
+
+  Polygon start_visibility, goal_visibility;
+  if (!visibility_graph.getPolygon().computeVisibilityPolygon(
+          start, &start_visibility)) {
+    LOG(ERROR) << "Cannot compute visibility polygon from start query point "
+               << start << " in polygon: " << visibility_graph.getPolygon();
+    return false;
+  }
+  if (!visibility_graph.getPolygon().computeVisibilityPolygon(
+          goal, &goal_visibility)) {
+    LOG(ERROR) << "Cannot compute visibility polygon from goal query point "
+               << goal << " in polygon: " << visibility_graph.getPolygon();
+    return false;
+  }
+  if (!visibility_graph.solve(start, start_visibility, goal, goal_visibility,
+                              shortest_path)) {
+    LOG(ERROR) << "Cannot compute shortest path from " << start << " to "
+               << goal << " in polygon: " << visibility_graph.getPolygon();
+    return false;
+  }
+
+  if (shortest_path->size() < 2) {
+    LOG(ERROR) << "Shortest path too short.";
+    return false;
   }
 
   return true;
