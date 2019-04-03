@@ -61,6 +61,9 @@ bool computeSweep(const Polygon_2& in,
         LOG(ERROR) << "Failed to calculate final sweep.";
         return false;
       }
+      // Do not add super close sweep.
+      if (CGAL::squared_distance(sweep_segment, prev_sweep_segment) < 0.1)
+        break;
     }
     // Check observability of vertices between sweeps.
     if (has_sweep_segment) {
