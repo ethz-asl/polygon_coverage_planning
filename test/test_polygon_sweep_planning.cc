@@ -1,11 +1,16 @@
 #include <mav_2d_coverage_planning/geometry/polygon.h>
+
+#include <mav_2d_coverage_planning/geometry/sweep.h>
+#include <mav_2d_coverage_planning/geometry/weakly_monotone.h>
+#include <mav_2d_coverage_planning/graphs/visibility_graph.h>
+
 #include <mav_coverage_planning_ros/conversions/msg_from_xml_rpc.h>
 #include <mav_coverage_planning_ros/conversions/ros_interface.h>
 #include <mav_planning_msgs/PolygonWithHolesStamped.h>
 #include <ros/ros.h>
 
-#include <limits>
 #include <mav_coverage_planning_comm/cgal_definitions.h>
+#include <limits>
 
 using namespace mav_coverage_planning;
 
@@ -13,35 +18,23 @@ bool computeLineSweepPlans(const Polygon& polygon,
                            std::vector<std::vector<Point_2>>* cluster_sweeps) {
   CHECK_NOTNULL(cluster_sweeps);
   cluster_sweeps->clear();
-  cluster_sweeps->reserve(2 * polygon.getPolygon().outer_boundary().size());
+  const Polygon_2& poly = polygon.getPolygon().outer_boundary();
+  cluster_sweeps->reserve(2 * poly.size());
 
-  // Create all sweep plans.
-  bool cc_orientation = true;
-  std::vector<EdgeConstIterator> dirs_swept;
-  for (size_t start_id = 0;
-       start_id < polygon.getPolygon().outer_boundary().size(); ++start_id) {
-    // Don't sweep same direction multiple times.
-    EdgeConstIterator dir = std::next(
-        polygon.getPolygon().outer_boundary().edges_begin(), start_id);
-    std::vector<EdgeConstIterator>::iterator it =
-        std::find_if(dirs_swept.begin(), dirs_swept.end(),
-                     [&dir](const EdgeConstIterator& dir_swept) {
-                       return CGAL::parallel(*dir, *dir_swept);
-                     });
-    if (it != dirs_swept.end()) {
-      DLOG(INFO) << "Direction already swept.";
-      continue;
-    }
-    dirs_swept.push_back(dir);
+  // Find all sweepable directions.
+  std::vector<Direction_2> dirs = getAllSweepableEdgeDirections(poly);
 
-    // Create 4 sweeps. Along direction, along opposite direction and reverse.
-    std::vector<Point_2> sweep;
+  // Compute all possible sweeps.
+  visibility_graph::VisibilityGraph vis_graph(polygon);
+  for (const Direction_2& dir : dirs) {
+    ROS_INFO_STREAM("Sweepable direction: " << dir);
+
+    bool counter_clockwise = true;
     const double kMaxSweepDistance = 9.0;
-    if (!polygon.computeLineSweepPlan(kMaxSweepDistance, start_id,
-                                      cc_orientation, &sweep)) {
-      LOG(WARNING)
-          << "Could not compute counter clockwise sweep plan for start_id: "
-          << start_id << " in polygon: " << polygon;
+    std::vector<Point_2> sweep;
+    if (!computeSweep(poly, vis_graph, kMaxSweepDistance, dir,
+                      counter_clockwise, &sweep)) {
+      ROS_ERROR_STREAM("Cannot compute counter-clockwise sweep.");
     } else {
       CHECK(!sweep.empty());
       cluster_sweeps->push_back(sweep);
@@ -49,12 +42,9 @@ bool computeLineSweepPlans(const Polygon& polygon,
       cluster_sweeps->push_back(sweep);
     }
 
-    if (!polygon.computeLineSweepPlan(
-            kMaxSweepDistance,
-            (start_id + 1) % polygon.getPolygon().outer_boundary().size(),
-            !cc_orientation, &sweep)) {
-      LOG(WARNING) << "Could not compute clockwise sweep plan for start_id: "
-                   << start_id << " in polygon: " << polygon;
+    if (!computeSweep(poly, vis_graph, kMaxSweepDistance, dir,
+                      !counter_clockwise, &sweep)) {
+      ROS_ERROR_STREAM("Cannot compute clockwise sweep.");
     } else {
       CHECK(!sweep.empty());
       cluster_sweeps->push_back(sweep);
@@ -62,7 +52,6 @@ bool computeLineSweepPlans(const Polygon& polygon,
       cluster_sweeps->push_back(sweep);
     }
   }
-
   return true;
 }
 
@@ -139,8 +128,8 @@ int main(int argc, char** argv) {
     // Start and end text.
     visualization_msgs::Marker start_text, end_text;
     createStartAndEndTextMarkers(waypoints[i].front(), waypoints[i].back(),
-                                 altitude, global_frame_id, "text",
-                                 &start_text, &end_text);
+                                 altitude, global_frame_id, "text", &start_text,
+                                 &end_text);
     all_markers.markers.push_back(start_text);
     all_markers.markers.push_back(end_text);
 
@@ -172,7 +161,7 @@ int main(int argc, char** argv) {
     i = i % waypoints.size();
 
     std::cout << "Press ENTER to continue...";
-    std::cin.ignore( std::numeric_limits<std::streamsize>::max(), '\n' );
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
   }
 
   return 0;
