@@ -6,6 +6,8 @@
 namespace mav_coverage_planning {
 namespace gtspp_product_graph {
 
+const double kTimeOut = 60.0;
+
 bool GtsppProductGraph::create() {
   if (sweep_plan_graph_ == nullptr || boolean_lattice_ == nullptr) {
     LOG(ERROR) << "Sweep plan graph or boolean lattice not set.";
@@ -65,8 +67,15 @@ bool GtsppProductGraph::addStartNode(const NodeProperty& node_property) {
   if (boolean_lattice_ == nullptr) {
     return false;
   }
+  auto start_time = std::chrono::high_resolution_clock::now();
   for (size_t lattice_id = 0; lattice_id < boolean_lattice_->size();
        ++lattice_id) {
+    auto current_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = current_time - start_time;
+    if (elapsed.count() > kTimeOut) {
+      LOG(ERROR) << "Timout addStartNode.";
+      return false;
+    }
     if (lattice_id == boolean_lattice_->getStartIdx()) {
       start_idx_ = graph_.size();
     }
@@ -83,8 +92,15 @@ bool GtsppProductGraph::addGoalNode(const NodeProperty& node_property) {
   if (boolean_lattice_ == nullptr) {
     return false;
   }
+  auto start_time = std::chrono::high_resolution_clock::now();
   for (size_t lattice_id = 0; lattice_id < boolean_lattice_->size();
        ++lattice_id) {
+    auto current_time = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> elapsed = current_time - start_time;
+    if (elapsed.count() > kTimeOut) {
+      LOG(ERROR) << "Timout addGoalNode.";
+      return false;
+    }
     if (lattice_id == boolean_lattice_->getGoalIdx()) {
       goal_idx_ = graph_.size();
     }
@@ -417,11 +433,9 @@ bool GtsppProductGraph::createDijkstra(Solution* solution) {
   }
   cost[start_idx_] = 0.0;
 
-
   auto start_time = std::chrono::high_resolution_clock::now();
   while (!open_set.empty()) {
     auto current_time = std::chrono::high_resolution_clock::now();
-    const double kTimeOut = 60.0;
     std::chrono::duration<double> elapsed = current_time - start_time;
     if (elapsed.count() > kTimeOut) {
       LOG(ERROR) << "Timout createDijkstra.";
