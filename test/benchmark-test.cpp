@@ -86,12 +86,12 @@ size_t computeNoHoleVertices(const Polygon& poly) {
   return no_hole_vertices;
 }
 
-bool loadAllInstances(std::vector<std::vector<Polygon>>* polys,
-                      std::vector<std::vector<std::string>>* names) {
+bool loadAllInstances(std::vector<Polygon>* polys,
+                      std::vector<std::string>* names) {
   CHECK_NOTNULL(polys);
   CHECK_NOTNULL(names);
-  polys->resize(kObstacleBins, std::vector<Polygon>(kNoInstances));
-  names->resize(kObstacleBins, std::vector<std::string>(kNoInstances));
+  polys->reserve(kObstacleBins * kNoInstances);
+  names->reserve(kObstacleBins * kNoInstances);
 
   std::string instances_path = ros::package::getPath(kPackageName);
   instances_path = instances_path.substr(0, instances_path.find("/src/"));
@@ -104,10 +104,10 @@ bool loadAllInstances(std::vector<std::vector<Polygon>>* polys,
     for (size_t j = 0; j < kNoInstances; ++j) {
       std::stringstream ss;
       ss << std::setw(4) << std::setfill('0') << j;
-      if (!loadPWHFromFile(subfolder + ss.str() + ".yaml", &(*polys)[i][j]))
+      polys->push_back(Polygon());
+      if (!loadPWHFromFile(subfolder + ss.str() + ".yaml", &polys->back()))
         return false;
-
-      (*names)[i][j] = std::to_string(i * kNthObstacle) + "/" + ss.str();
+      names->push_back(std::to_string(i * kNthObstacle) + "/" + ss.str());
     }
   }
 
@@ -249,9 +249,10 @@ bool runPlanner(StripmapPlanner* planner, Result* result) {
   return true;
 }
 
+
 TEST(BenchmarkTest, Benchmark) {
-  std::vector<std::vector<Polygon>> polys;
-  std::vector<std::vector<std::string>> names;
+  std::vector<Polygon> polys;
+  std::vector<std::string> names;
 
   // Load polygons.
   ROS_INFO_STREAM("Loading " << kObstacleBins * kNoInstances
@@ -260,21 +261,20 @@ TEST(BenchmarkTest, Benchmark) {
 
   // Run planners.
   for (size_t i = 0; i < polys.size(); ++i) {
-    for (size_t j = 0; j < polys[i].size(); ++j) {
-      ROS_INFO_STREAM("Number of holes: " << i * kNthObstacle);
-      ROS_INFO_STREAM("Polygon number: " << j);
+      ROS_INFO_STREAM("Polygon number: " << i);
+      ROS_INFO_STREAM("Polygon name: " << names[i]);
 
       // Number of hole vertices.
-      size_t num_hole_vertices = computeNoHoleVertices(polys[i][j]);
-      size_t num_holes = polys[i][j].getPolygon().number_of_holes();
-      EXPECT_EQ(i * kNthObstacle, polys[i][j].getPolygon().number_of_holes());
+      size_t num_hole_vertices = computeNoHoleVertices(polys[i]);
+      size_t num_holes = polys[i].getPolygon().number_of_holes();
+      ROS_INFO_STREAM("Number of holes: " << num_holes);
 
       // Create results.
       Result our_bcd_result;
       our_bcd_result.num_holes = num_holes;
       our_bcd_result.num_hole_vertices = num_hole_vertices;
       our_bcd_result.planner = "our_bcd";
-      our_bcd_result.instance = names[i][j];
+      our_bcd_result.instance = names[i];
 
       Result our_tcd_result = our_bcd_result;
       our_tcd_result.planner = "our_tcd";
@@ -291,19 +291,19 @@ TEST(BenchmarkTest, Benchmark) {
       // Create settings.
       PolygonStripmapPlanner::Settings our_bcd_settings =
           createSettings<PolygonStripmapPlanner>(
-              polys[i][j], DecompositionType::kBoustrophedeon, false);
+              polys[i], DecompositionType::kBoustrophedeon, false);
       PolygonStripmapPlanner::Settings our_tcd_settings =
           createSettings<PolygonStripmapPlanner>(
-              polys[i][j], DecompositionType::kTrapezoidal, false);
+              polys[i], DecompositionType::kTrapezoidal, false);
       PolygonStripmapPlanner::Settings one_dir_gkma_settings =
           createSettings<PolygonStripmapPlanner>(
-              polys[i][j], DecompositionType::kBoustrophedeon, true);
+              polys[i], DecompositionType::kBoustrophedeon, true);
       PolygonStripmapPlanner::Settings gtsp_exact_settings =
           createSettings<PolygonStripmapPlanner>(
-              polys[i][j], DecompositionType::kBoustrophedeon, false);
+              polys[i], DecompositionType::kBoustrophedeon, false);
       PolygonStripmapPlanner::Settings one_dir_exact_settings =
           createSettings<PolygonStripmapPlanner>(
-              polys[i][j], DecompositionType::kBoustrophedeon, true);
+              polys[i], DecompositionType::kBoustrophedeon, true);
 
       // Create planners.
       PolygonStripmapPlanner our_bcd(our_bcd_settings);
@@ -327,7 +327,7 @@ TEST(BenchmarkTest, Benchmark) {
           &one_dir_exact, &one_dir_exact_result);
 
       // Save results.
-      if (i == 0 && j == 0) EXPECT_TRUE(initCsv(kResultsFile, our_bcd_result));
+      if (i == 0) EXPECT_TRUE(initCsv(kResultsFile, our_bcd_result));
 
       EXPECT_TRUE(resultToCsv(kResultsFile, our_bcd_result));
       EXPECT_TRUE(resultToCsv(kResultsFile, our_tcd_result));
@@ -337,7 +337,6 @@ TEST(BenchmarkTest, Benchmark) {
         EXPECT_TRUE(resultToCsv(kResultsFile, gtsp_exact_result));
       if (success_one_dir_exact)
         EXPECT_TRUE(resultToCsv(kResultsFile, one_dir_exact_result));
-    }
   }
 }
 
