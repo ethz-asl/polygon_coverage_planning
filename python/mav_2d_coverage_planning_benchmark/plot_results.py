@@ -14,6 +14,8 @@ def plotResults(file):
     df = pd.read_csv(file, sep=",")
     # Plotting.
     plotTimes(df)
+    plotCosts(df)
+    plt.show()
 
 def plotTimes(df):
     t = df[['timer_setup_total','timer_solve_total']].values
@@ -23,4 +25,6 @@ def plotTimes(df):
     df_t_total = df_planner.join(df_t_total)
 
     sns.lmplot('num_hole_vertices', 't_total', data=df_t_total, hue='planner', fit_reg=False)
-    plt.show()
+
+def plotCosts(df):
+    sns.lmplot('num_hole_vertices', 'cost', data=df, hue='planner', fit_reg=False)
