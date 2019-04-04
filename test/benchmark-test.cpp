@@ -20,10 +20,10 @@
 
 const std::string kPackageName = "mav_coverage_planning_ros";
 const std::string kResultsFile = "/tmp/coverage_results.txt";
-const size_t kMaxNoObstacles = 5;
+const size_t kMaxNoObstacles = 15;
 const size_t kNthObstacle = 1;
 const size_t kObstacleBins = kMaxNoObstacles / kNthObstacle + 1;
-const size_t kNoInstances = 10;
+const size_t kNoInstances = 100;
 const double kSweepDistance = 3.0;
 const double kOverlap = 0.0;
 const double kVMax = 3.0;
@@ -318,34 +318,17 @@ TEST(BenchmarkTest, Benchmark) {
           runPlanner<PolygonStripmapPlanner>(&our_tcd, &our_tcd_result));
       EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>(&one_dir_gkma,
                                                      &one_dir_gkma_result));
-      static bool skip_gtsp_exact = false;
 
-      size_t kMaxCellsExact = 6;
       bool success_gtsp_exact = false;
-      if (!skip_gtsp_exact && our_bcd_result.num_cells < kMaxCellsExact)
+      if (our_bcd_result.num_cells <= 7)
         EXPECT_TRUE(success_gtsp_exact =
                         runPlanner<PolygonStripmapPlannerExact>(
                             &gtsp_exact, &gtsp_exact_result));
-      static bool skip_one_dir_exact = false;
       bool success_one_dir_exact = false;
-      if (!skip_one_dir_exact && our_bcd_result.num_cells < 2 * kMaxCellsExact)
+      if (our_bcd_result.num_cells <= 10)
         EXPECT_TRUE(success_one_dir_exact =
                         runPlanner<PolygonStripmapPlannerExact>(
                             &one_dir_exact, &one_dir_exact_result));
-
-      double kTimeOut = 60.0;
-      if (gtsp_exact_result.times["timer_setup_total"] > kTimeOut ||
-          gtsp_exact_result.times["timer_solve_total"] > kTimeOut) {
-        LOG(WARNING) << "Skipping gtsp_exact because running longer than: "
-                     << kTimeOut;
-        skip_gtsp_exact = true;
-      }
-      if (one_dir_exact_result.times["timer_setup_total"] > kTimeOut ||
-          one_dir_exact_result.times["timer_solve_total"] > kTimeOut) {
-        LOG(WARNING) << "Skipping one_dir_exact because running longer than: "
-                     << kTimeOut;
-        skip_one_dir_exact = true;
-      }
 
       // Save results.
       if (i == 0 && j == 0) EXPECT_TRUE(initCsv(kResultsFile, our_bcd_result));
