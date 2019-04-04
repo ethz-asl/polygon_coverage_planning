@@ -320,15 +320,11 @@ TEST(BenchmarkTest, Benchmark) {
                                                      &one_dir_gkma_result));
 
       bool success_gtsp_exact = false;
-      if (our_bcd_result.num_cells <= 7)
-        EXPECT_TRUE(success_gtsp_exact =
-                        runPlanner<PolygonStripmapPlannerExact>(
-                            &gtsp_exact, &gtsp_exact_result));
+      success_gtsp_exact = runPlanner<PolygonStripmapPlannerExact>(
+          &gtsp_exact, &gtsp_exact_result);
       bool success_one_dir_exact = false;
-      if (our_bcd_result.num_cells <= 10)
-        EXPECT_TRUE(success_one_dir_exact =
-                        runPlanner<PolygonStripmapPlannerExact>(
-                            &one_dir_exact, &one_dir_exact_result));
+      success_one_dir_exact = runPlanner<PolygonStripmapPlannerExact>(
+          &one_dir_exact, &one_dir_exact_result);
 
       // Save results.
       if (i == 0 && j == 0) EXPECT_TRUE(initCsv(kResultsFile, our_bcd_result));
