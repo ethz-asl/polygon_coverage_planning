@@ -53,8 +53,10 @@ bool computeSweep(const Polygon_2& in,
     has_sweep_segment = findSweepSegment(in, sweep, &sweep_segment);
     // Add a final sweep.
     if (!has_sweep_segment &&
-        !(*std::prev(waypoints->end(), 1) == sorted_pts.back() ||
-          *std::prev(waypoints->end(), 2) == sorted_pts.back())) {
+        !((!waypoints->empty() &&
+           *std::prev(waypoints->end(), 1) == sorted_pts.back()) ||
+          (waypoints->size() > 1 &&
+           *std::prev(waypoints->end(), 2) == sorted_pts.back()))) {
       sweep = Line_2(sorted_pts.back(), dir);
       has_sweep_segment = findSweepSegment(in, sweep, &sweep_segment);
       if (!has_sweep_segment) {
