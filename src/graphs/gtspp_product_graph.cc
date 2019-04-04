@@ -1,4 +1,5 @@
 #include <glog/logging.h>
+#include <chrono>
 
 #include "mav_2d_coverage_planning/graphs/gtspp_product_graph.h"
 
@@ -416,7 +417,16 @@ bool GtsppProductGraph::createDijkstra(Solution* solution) {
   }
   cost[start_idx_] = 0.0;
 
+
+  auto start_time = std::chrono::high_resolution_clock::now();
   while (!open_set.empty()) {
+    auto current_time = std::chrono::high_resolution_clock::now();
+    const double kTimeOut = 60.0;
+    std::chrono::duration<double> elapsed = current_time - start_time;
+    if (elapsed.count() > kTimeOut) {
+      LOG(ERROR) << "Timout createDijkstra.";
+      return false;
+    }
     // Pop vertex with lowest score from open set.
     size_t current = *std::min_element(
         open_set.begin(), open_set.end(),
