@@ -6,7 +6,7 @@
 namespace mav_coverage_planning {
 namespace gtspp_product_graph {
 
-const double kTimeOut = 60.0;
+const double kTimeOut = 30.0;
 
 bool GtsppProductGraph::create() {
   if (sweep_plan_graph_ == nullptr || boolean_lattice_ == nullptr) {
