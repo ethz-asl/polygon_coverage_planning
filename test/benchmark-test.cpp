@@ -249,7 +249,6 @@ bool runPlanner(StripmapPlanner* planner, Result* result) {
   return true;
 }
 
-
 TEST(BenchmarkTest, Benchmark) {
   std::vector<Polygon> polys;
   std::vector<std::string> names;
@@ -261,82 +260,82 @@ TEST(BenchmarkTest, Benchmark) {
 
   // Run planners.
   for (size_t i = 0; i < polys.size(); ++i) {
-      ROS_INFO_STREAM("Polygon number: " << i);
-      ROS_INFO_STREAM("Polygon name: " << names[i]);
+    ROS_INFO_STREAM("Polygon number: " << i);
+    ROS_INFO_STREAM("Polygon name: " << names[i]);
 
-      // Number of hole vertices.
-      size_t num_hole_vertices = computeNoHoleVertices(polys[i]);
-      size_t num_holes = polys[i].getPolygon().number_of_holes();
-      ROS_INFO_STREAM("Number of holes: " << num_holes);
+    // Number of hole vertices.
+    size_t num_hole_vertices = computeNoHoleVertices(polys[i]);
+    size_t num_holes = polys[i].getPolygon().number_of_holes();
+    ROS_INFO_STREAM("Number of holes: " << num_holes);
 
-      // Create results.
-      Result our_bcd_result;
-      our_bcd_result.num_holes = num_holes;
-      our_bcd_result.num_hole_vertices = num_hole_vertices;
-      our_bcd_result.planner = "our_bcd";
-      our_bcd_result.instance = names[i];
+    // Create results.
+    Result our_bcd_result;
+    our_bcd_result.num_holes = num_holes;
+    our_bcd_result.num_hole_vertices = num_hole_vertices;
+    our_bcd_result.planner = "our_bcd";
+    our_bcd_result.instance = names[i];
 
-      Result our_tcd_result = our_bcd_result;
-      our_tcd_result.planner = "our_tcd";
+    Result our_tcd_result = our_bcd_result;
+    our_tcd_result.planner = "our_tcd";
 
-      Result one_dir_gkma_result = our_bcd_result;
-      one_dir_gkma_result.planner = "one_dir_gkma";
+    Result one_dir_gkma_result = our_bcd_result;
+    one_dir_gkma_result.planner = "one_dir_gkma";
 
-      Result gtsp_exact_result = our_bcd_result;
-      gtsp_exact_result.planner = "gtsp_exact";
+    Result gtsp_exact_result = our_bcd_result;
+    gtsp_exact_result.planner = "gtsp_exact";
 
-      Result one_dir_exact_result = our_bcd_result;
-      one_dir_exact_result.planner = "one_dir_exact";
+    Result one_dir_exact_result = our_bcd_result;
+    one_dir_exact_result.planner = "one_dir_exact";
 
-      // Create settings.
-      PolygonStripmapPlanner::Settings our_bcd_settings =
-          createSettings<PolygonStripmapPlanner>(
-              polys[i], DecompositionType::kBoustrophedeon, false);
-      PolygonStripmapPlanner::Settings our_tcd_settings =
-          createSettings<PolygonStripmapPlanner>(
-              polys[i], DecompositionType::kTrapezoidal, false);
-      PolygonStripmapPlanner::Settings one_dir_gkma_settings =
-          createSettings<PolygonStripmapPlanner>(
-              polys[i], DecompositionType::kBoustrophedeon, true);
-      PolygonStripmapPlanner::Settings gtsp_exact_settings =
-          createSettings<PolygonStripmapPlanner>(
-              polys[i], DecompositionType::kBoustrophedeon, false);
-      PolygonStripmapPlanner::Settings one_dir_exact_settings =
-          createSettings<PolygonStripmapPlanner>(
-              polys[i], DecompositionType::kBoustrophedeon, true);
+    // Create settings.
+    PolygonStripmapPlanner::Settings our_bcd_settings =
+        createSettings<PolygonStripmapPlanner>(
+            polys[i], DecompositionType::kBoustrophedeon, false);
+    PolygonStripmapPlanner::Settings our_tcd_settings =
+        createSettings<PolygonStripmapPlanner>(
+            polys[i], DecompositionType::kTrapezoidal, false);
+    PolygonStripmapPlanner::Settings one_dir_gkma_settings =
+        createSettings<PolygonStripmapPlanner>(
+            polys[i], DecompositionType::kBoustrophedeon, true);
+    PolygonStripmapPlanner::Settings gtsp_exact_settings =
+        createSettings<PolygonStripmapPlanner>(
+            polys[i], DecompositionType::kBoustrophedeon, false);
+    PolygonStripmapPlanner::Settings one_dir_exact_settings =
+        createSettings<PolygonStripmapPlanner>(
+            polys[i], DecompositionType::kBoustrophedeon, true);
 
-      // Create planners.
-      PolygonStripmapPlanner our_bcd(our_bcd_settings);
-      PolygonStripmapPlanner our_tcd(our_tcd_settings);
-      PolygonStripmapPlanner one_dir_gkma(one_dir_gkma_settings);
-      PolygonStripmapPlannerExact gtsp_exact(gtsp_exact_settings);
-      PolygonStripmapPlannerExact one_dir_exact(one_dir_exact_settings);
-      // Run planners.
-      EXPECT_TRUE(
-          runPlanner<PolygonStripmapPlanner>(&our_bcd, &our_bcd_result));
-      EXPECT_TRUE(
-          runPlanner<PolygonStripmapPlanner>(&our_tcd, &our_tcd_result));
-      EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>(&one_dir_gkma,
-                                                     &one_dir_gkma_result));
+    // Create planners.
+    PolygonStripmapPlanner our_bcd(our_bcd_settings);
+    PolygonStripmapPlanner our_tcd(our_tcd_settings);
+    PolygonStripmapPlanner one_dir_gkma(one_dir_gkma_settings);
+    PolygonStripmapPlannerExact gtsp_exact(gtsp_exact_settings);
+    PolygonStripmapPlannerExact one_dir_exact(one_dir_exact_settings);
+    // Run planners.
+    EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>(&our_bcd, &our_bcd_result));
+    EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>(&our_tcd, &our_tcd_result));
+    EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>(&one_dir_gkma,
+                                                   &one_dir_gkma_result));
 
-      bool success_gtsp_exact = false;
+    bool success_gtsp_exact = false;
+    bool success_one_dir_exact = false;
+    if (num_holes < 3) {
       success_gtsp_exact = runPlanner<PolygonStripmapPlannerExact>(
           &gtsp_exact, &gtsp_exact_result);
-      bool success_one_dir_exact = false;
       success_one_dir_exact = runPlanner<PolygonStripmapPlannerExact>(
           &one_dir_exact, &one_dir_exact_result);
+    }
 
-      // Save results.
-      if (i == 0) EXPECT_TRUE(initCsv(kResultsFile, our_bcd_result));
+    // Save results.
+    if (i == 0) EXPECT_TRUE(initCsv(kResultsFile, our_bcd_result));
 
-      EXPECT_TRUE(resultToCsv(kResultsFile, our_bcd_result));
-      EXPECT_TRUE(resultToCsv(kResultsFile, our_tcd_result));
-      EXPECT_TRUE(resultToCsv(kResultsFile, one_dir_gkma_result));
+    EXPECT_TRUE(resultToCsv(kResultsFile, our_bcd_result));
+    EXPECT_TRUE(resultToCsv(kResultsFile, our_tcd_result));
+    EXPECT_TRUE(resultToCsv(kResultsFile, one_dir_gkma_result));
 
-      if (success_gtsp_exact)
-        EXPECT_TRUE(resultToCsv(kResultsFile, gtsp_exact_result));
-      if (success_one_dir_exact)
-        EXPECT_TRUE(resultToCsv(kResultsFile, one_dir_exact_result));
+    if (success_gtsp_exact)
+      EXPECT_TRUE(resultToCsv(kResultsFile, gtsp_exact_result));
+    if (success_one_dir_exact)
+      EXPECT_TRUE(resultToCsv(kResultsFile, one_dir_exact_result));
   }
 }
 
