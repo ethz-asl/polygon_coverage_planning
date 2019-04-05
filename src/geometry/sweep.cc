@@ -42,9 +42,12 @@ bool computeSweep(const Polygon_2& in,
       }
     }
     // Traverse sweep.
+    // if (!sweep_segment.is_degenerate()) { FSR visualization hack.
     waypoints->push_back(sweep_segment.source());
     if (!sweep_segment.is_degenerate())
       waypoints->push_back(sweep_segment.target());
+    //}
+
     // Offset sweep.
     sweep = sweep.transform(kOffset);
     // Find new sweep segment.
