@@ -5,7 +5,7 @@ import seaborn as sns
 
 colors = {'our_bcd': 'r',
           'our_tcd': 'g',
-          'one_dir_gkma': 'b',
+          'one_dir_gk': 'b',
           'gtsp_exact': 'c',
           'one_dir_exact': 'm'}
 
@@ -40,19 +40,19 @@ def createFits(df):
     our_tcd_fit['x'], our_tcd_fit['y'] = expFit(df, 'our_tcd')
     our_tcd_fit['planner'] = 'our_tcd'
 
-    one_dir_gkma_fit = pd.DataFrame()
-    one_dir_gkma_fit['x'], one_dir_gkma_fit['y'] = expFit(df, 'one_dir_gkma')
-    one_dir_gkma_fit['planner'] = 'one_dir_gkma'
+    one_dir_gk_fit = pd.DataFrame()
+    one_dir_gk_fit['x'], one_dir_gk_fit['y'] = expFit(df, 'one_dir_gk')
+    one_dir_gk_fit['planner'] = 'one_dir_gk'
 
     gtsp_exact_fit = pd.DataFrame()
     gtsp_exact_fit['x'], gtsp_exact_fit['y'] = expFit(df, 'gtsp_exact', uniform_weight=True)
     gtsp_exact_fit['planner'] = 'gtsp_exact'
 
     one_dir_exact_fit = pd.DataFrame()
-    one_dir_exact_fit['x'], one_dir_exact_fit['y'] = expFit(df, 'one_dir_exact', uniform_weight=False)
+    one_dir_exact_fit['x'], one_dir_exact_fit['y'] = expFit(df, 'one_dir_exact', uniform_weight=True)
     one_dir_exact_fit['planner'] = 'one_dir_exact'
 
-    return pd.concat([our_bcd_fit, our_tcd_fit, one_dir_gkma_fit, gtsp_exact_fit, one_dir_exact_fit])
+    return pd.concat([our_bcd_fit, our_tcd_fit, one_dir_gk_fit, gtsp_exact_fit, one_dir_exact_fit])
 
 def plotResults(file):
     # Open CSV.
@@ -60,6 +60,7 @@ def plotResults(file):
     # Plotting.
     plotTimes(df)
     plotCosts(df)
+    plotCostDiff(df)
     plt.show()
 
 def plotTimes(df):
@@ -87,6 +88,18 @@ def plotTimes(df):
     g.set(ylabel="Runtime [s]")
     g.savefig("./data/time.pdf", bbox_inches='tight')
 
+    print("Maximum computation times:")
+    print("our_bcd: %.3f" %(df_t_total[df['planner'] == 'our_bcd']['t_total'].max()))
+    print("our_tcd: %.3f" %(df_t_total[df['planner'] == 'our_tcd']['t_total'].max()))
+    print("one_dir_gk: %.3f" %(df_t_total[df['planner'] == 'one_dir_gk']['t_total'].max()))
+    print("gtsp_exact: %.3f" %(df_t_total[df['planner'] == 'gtsp_exact']['t_total'].max()))
+    print("one_dir_exact: %.3f" %(df_t_total[df['planner'] == 'one_dir_exact']['t_total'].max()))
+
+    instance = '15/0000'
+    pd.set_option('display.max_columns', None)
+    print("Computation times instance: %s" %(instance))
+    print(df[df['instance'] == instance])
+
 def plotCosts(df):
     g = sns.lmplot('num_hole_vertices', 'cost', data=df, hue='planner', fit_reg=False, size=width, aspect=aspect, legend_out=False)
     g.set(xlim=(df['num_hole_vertices'].min() - 10, df['num_hole_vertices'].max() + 10))
@@ -95,3 +108,53 @@ def plotCosts(df):
     g.set(ylabel="Cost [s]")
     g.ax.legend(loc="upper left")
     g.savefig("./data/cost.pdf", bbox_inches='tight')
+
+def plotCostDiff(df):
+    # Baseline
+    df_our_bcd = df[df['planner'] == 'our_bcd']
+
+    # Comparisons
+    df_our_tcd = df[df['planner'] == 'our_tcd']
+    df_our_tcd = df_our_tcd.merge(df_our_bcd, on=['instance'], how='inner')
+    df_our_tcd_base = df_our_bcd.merge(df_our_tcd, on=['instance'], how='inner')
+
+    df_one_dir_gk = df[df['planner'] == 'one_dir_gk']
+    df_one_dir_gk = df_one_dir_gk.merge(df_our_bcd, on=['instance'], how='inner')
+    df_one_dir_gk_base = df_our_bcd.merge(df_one_dir_gk, on=['instance'], how='inner')
+
+    df_gtsp_exact = df[df['planner'] == 'gtsp_exact']
+    df_gtsp_exact = df_gtsp_exact.merge(df_our_bcd, on=['instance'], how='inner')
+    df_gtsp_exact_base = df_our_bcd.merge(df_gtsp_exact, on=['instance'], how='inner')
+
+    df_one_dir_exact = df[df['planner'] == 'one_dir_exact']
+    df_one_dir_exact = df_one_dir_exact.merge(df_our_bcd, on=['instance'], how='inner')
+    df_one_dir_exact_base = df_our_bcd.merge(df_one_dir_exact, on=['instance'], how='inner')
+
+    # Difference
+    diff_our_bcd =  (df_our_bcd['cost'].values - df_our_bcd['cost'].values) / df_our_bcd['cost'].values
+    diff_our_tcd =  (df_our_tcd['cost_x'].values - df_our_tcd_base['cost'].values) / df_our_tcd_base['cost'].values
+    diff_one_dir_gk =  (df_one_dir_gk['cost_x'].values - df_one_dir_gk_base['cost'].values) / df_one_dir_gk_base['cost'].values
+    diff_gtsp_exact =  (df_gtsp_exact['cost_x'].values - df_gtsp_exact_base['cost'].values) / df_gtsp_exact_base['cost'].values
+    diff_df_one_dir_exact =  (df_one_dir_exact['cost_x'].values - df_one_dir_exact_base['cost'].values) / df_one_dir_exact_base['cost'].values
+
+    # Create common df.
+    df_diff_our_bcd = pd.DataFrame({'planner': df_our_bcd['planner'].values, 'num_hole_vertices': df_our_bcd['num_hole_vertices'], 'diff': diff_our_bcd})
+    df_diff_our_tcd = pd.DataFrame({'planner': df_our_tcd['planner_x'].values, 'num_hole_vertices': df_our_tcd['num_hole_vertices_x'].values, 'diff': diff_our_tcd})
+    df_diff_one_dir_gk = pd.DataFrame({'planner': df_one_dir_gk['planner_x'].values, 'num_hole_vertices': df_one_dir_gk['num_hole_vertices_x'].values, 'diff': diff_one_dir_gk})
+    df_diff_gtsp_exact = pd.DataFrame({'planner': df_gtsp_exact['planner_x'].values, 'num_hole_vertices': df_gtsp_exact['num_hole_vertices_x'].values, 'diff': diff_gtsp_exact})
+    df_diff_df_one_dir_exact = pd.DataFrame({'planner': df_one_dir_exact['planner_x'].values, 'num_hole_vertices': df_one_dir_exact['num_hole_vertices_x'].values, 'diff': diff_df_one_dir_exact})
+
+    df_diff = pd.concat([df_diff_our_bcd, df_diff_our_tcd, df_diff_one_dir_gk, df_diff_gtsp_exact, df_diff_df_one_dir_exact])
+
+    g = sns.lmplot('num_hole_vertices', 'diff', data=df_diff, hue='planner', fit_reg=False, size=width, aspect=aspect, legend_out=False, legend=False)
+    g.set(xlim=(df_diff['num_hole_vertices'].min() - 10, df_diff['num_hole_vertices'].max() + 10))
+    g.set(xlabel="Number of Hole Vertices [1]")
+    g.set(ylabel=r'$\Delta c / c$ [1]')
+    g.savefig("./data/delta.pdf", bbox_inches='tight')
+
+    print("Maximum relative difference:")
+    print("our_bcd: %.3f" %(df_diff[df_diff['planner'] == 'our_bcd']['diff'].max()))
+    print("our_tcd: %.3f" %(df_diff[df_diff['planner'] == 'our_tcd']['diff'].max()))
+    print("one_dir_gk: %.3f" %(df_diff[df_diff['planner'] == 'one_dir_gk']['diff'].max()))
+    print("gtsp_exact: %.3f" %(df_diff[df_diff['planner'] == 'gtsp_exact']['diff'].max()))
+    print("one_dir_exact: %.3f" %(df_diff[df_diff['planner'] == 'one_dir_exact']['diff'].max()))
