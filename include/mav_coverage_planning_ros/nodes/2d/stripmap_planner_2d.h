@@ -96,15 +96,18 @@ class StripmapPlanner2D : public BasePlanner2D {
     ROS_INFO_STREAM("Lateral overlap: " << lateral_overlap);
     ROS_INFO_STREAM("Sweep distance: " << sensor_model_->getSweepDistance());
 
-
-    if (!nh_private_.getParam("sweep_single_direction", sweep_single_direction_)) {
-      ROS_WARN_STREAM("Default sweeping in single direction: " << sweep_single_direction_);
+    if (!nh_private_.getParam("sweep_single_direction",
+                              sweep_single_direction_)) {
+      ROS_WARN_STREAM(
+          "Default sweeping in single direction: " << sweep_single_direction_);
     }
     ROS_INFO_STREAM("Sweep single direction: " << sweep_single_direction_);
 
     // Creating the line sweep planner from the retrieved parameters.
     // This operation may take some time.
-    resetPlanner();
+    if (has_polygon_) {
+      resetPlanner();
+    }
   }
 
  private:

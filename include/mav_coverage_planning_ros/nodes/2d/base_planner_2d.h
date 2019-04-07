@@ -103,6 +103,7 @@ class BasePlanner2D {
 
   // The solution waypoints for a given start and goal.
   std::vector<Point_2> solution_;
+  bool has_polygon_;
 
  private:
   // Set a new polygon through a service call.
@@ -173,6 +174,8 @@ class BasePlanner2D {
   bool odometry_in_global_frame_;
   mav_msgs::EigenOdometry odometry_;
   Transformation T_G_L_;
+
+  visualization_msgs::MarkerArray markers_;
 };
 }  // namespace mav_coverage_planning
 

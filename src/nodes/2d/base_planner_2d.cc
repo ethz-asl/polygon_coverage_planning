@@ -28,6 +28,7 @@ BasePlanner2D::BasePlanner2D(const ros::NodeHandle& nh,
                              const ros::NodeHandle& nh_private)
     : nh_(nh),
       nh_private_(nh_private),
+      has_polygon_(false),
       planning_complete_(false),
       odometry_set_(false),
       odometry_in_global_frame_(true) {
@@ -47,7 +48,7 @@ void BasePlanner2D::subscribeToTopics() {
 void BasePlanner2D::advertiseTopics() {
   // Advertising the visualization and planning messages
   marker_pub_ = nh_private_.advertise<visualization_msgs::MarkerArray>(
-      "path_markers", 1, settings_.latch_topics);
+      "path_markers", 1, true);
   waypoint_list_pub_ = nh_.advertise<geometry_msgs::PoseArray>(
       "waypoint_list", 1, settings_.latch_topics);
   // Services for generating the plan.
@@ -144,12 +145,16 @@ void BasePlanner2D::getParametersFromRos() {
   if (nh_private_.getParam(polygon_param_name, polygon_xml_rpc)) {
     mav_planning_msgs::PolygonWithHolesStamped poly_msg;
     if (PolygonWithHolesStampedMsgFromXmlRpc(polygon_xml_rpc, &poly_msg)) {
-      if (polygonFromMsg(poly_msg, &settings_.polygon, &settings_.altitude,
-                         &settings_.global_frame_id)) {
+      if ((has_polygon_ =
+               polygonFromMsg(poly_msg, &settings_.polygon, &settings_.altitude,
+                              &settings_.global_frame_id))) {
         ROS_INFO_STREAM("Successfully loaded polygon.");
         ROS_INFO_STREAM("Altiude: " << settings_.altitude << "m");
         ROS_INFO_STREAM("Global frame: " << settings_.global_frame_id);
         ROS_INFO_STREAM("Polygon:" << settings_.polygon);
+        // Offset polygon.
+        settings_.polygon_offset = settings_.polygon;
+        settings_.offsetPolygon();
       }
     } else {
       ROS_WARN_STREAM("Failed reading polygon message from parameter server.");
@@ -162,10 +167,6 @@ void BasePlanner2D::getParametersFromRos() {
         << "\"). Expecting "
            "polygon from service call.");
   }
-
-  // Offset polygon.
-  settings_.polygon_offset = settings_.polygon;
-  settings_.offsetPolygon();
 
   // Getting the behaviour flags
   nh_private_.getParam("latch_topics", settings_.latch_topics);
@@ -253,9 +254,13 @@ bool BasePlanner2D::publishVisualization() {
   }
   ROS_INFO_STREAM("Sending visualization messages.");
 
-  // Creating the marker array
-  visualization_msgs::MarkerArray markers;
+  // Delete old markers.
+  for (visualization_msgs::Marker& m : markers_.markers)
+    m.action = visualization_msgs::Marker::DELETE;
+  marker_pub_.publish(markers_);
 
+  // Create new markers.
+  markers_.markers.clear();
   // The planned path:
   visualization_msgs::Marker path_points, path_line_strips;
   const double kPathLineSize = 0.2;
@@ -264,24 +269,24 @@ bool BasePlanner2D::publishVisualization() {
                 "vertices_and_strip", mav_visualization::Color::Gray(),
                 mav_visualization::Color::Gray(), kPathLineSize, kPathPointSize,
                 &path_points, &path_line_strips);
-  markers.markers.push_back(path_points);
-  markers.markers.push_back(path_line_strips);
+  markers_.markers.push_back(path_points);
+  markers_.markers.push_back(path_line_strips);
 
   // Start and end points
   visualization_msgs::Marker start_point, end_point;
   createStartAndEndPointMarkers(solution_.front(), solution_.back(),
                                 settings_.altitude, settings_.global_frame_id,
                                 "points", &start_point, &end_point);
-  markers.markers.push_back(start_point);
-  markers.markers.push_back(end_point);
+  markers_.markers.push_back(start_point);
+  markers_.markers.push_back(end_point);
 
   // Start and end text.
   visualization_msgs::Marker start_text, end_text;
   createStartAndEndTextMarkers(solution_.front(), solution_.back(),
-                                settings_.altitude, settings_.global_frame_id,
-                                "points", &start_text, &end_text);
-  markers.markers.push_back(start_text);
-  markers.markers.push_back(end_text);
+                               settings_.altitude, settings_.global_frame_id,
+                               "points", &start_text, &end_text);
+  markers_.markers.push_back(start_text);
+  markers_.markers.push_back(end_text);
 
   // The original polygon:
   const double kPolygonLineSize = 0.4;
@@ -291,18 +296,18 @@ bool BasePlanner2D::publishVisualization() {
                        mav_visualization::Color::Black(),
                        mav_visualization::Color::Black(), kPolygonLineSize,
                        kPolygonLineSize, &polygon);
-  markers.markers.insert(markers.markers.end(), polygon.markers.begin(),
-                         polygon.markers.end());
+  markers_.markers.insert(markers_.markers.end(), polygon.markers.begin(),
+                          polygon.markers.end());
 
   // The decomposed polygons.
   visualization_msgs::MarkerArray decomposition_markers =
       createDecompositionMarkers();
-  markers.markers.insert(markers.markers.end(),
-                         decomposition_markers.markers.begin(),
-                         decomposition_markers.markers.end());
+  markers_.markers.insert(markers_.markers.end(),
+                          decomposition_markers.markers.begin(),
+                          decomposition_markers.markers.end());
 
   // Publishing
-  marker_pub_.publish(markers);
+  marker_pub_.publish(markers_);
 
   // Success
   return true;
@@ -333,14 +338,22 @@ bool BasePlanner2D::setPolygonCallback(
     mav_planning_msgs::PolygonService::Response& response) {
   planning_complete_ = false;
 
-  if (!polygonFromMsg(request.polygon, &settings_.polygon, &settings_.altitude,
-                      &settings_.global_frame_id)) {
+  if (!(has_polygon_ =
+            polygonFromMsg(request.polygon, &settings_.polygon,
+                           &settings_.altitude, &settings_.global_frame_id))) {
     ROS_ERROR_STREAM("Failed loading correct polygon.");
     ROS_ERROR_STREAM("Planner is in an invalid state.");
     settings_.polygon = Polygon();
+    return false;
   }
 
+  ROS_INFO_STREAM("Successfully loaded polygon.");
+  ROS_INFO_STREAM("Altiude: " << settings_.altitude << "m");
+  ROS_INFO_STREAM("Global frame: " << settings_.global_frame_id);
+  ROS_INFO_STREAM("Polygon:" << settings_.polygon);
+
   // Offset polygon.
+  settings_.polygon_offset = settings_.polygon;
   settings_.offsetPolygon();
 
   response.success = resetPlanner();
