@@ -132,10 +132,10 @@ def plotCostDiff(df):
 
     # Difference
     diff_our_bcd =  (df_our_bcd['cost'].values - df_our_bcd['cost'].values) / df_our_bcd['cost'].values
-    diff_our_tcd =  (df_our_tcd['cost_x'].values - df_our_tcd_base['cost'].values) / df_our_tcd_base['cost'].values
-    diff_one_dir_gk =  (df_one_dir_gk['cost_x'].values - df_one_dir_gk_base['cost'].values) / df_one_dir_gk_base['cost'].values
-    diff_gtsp_exact =  (df_gtsp_exact['cost_x'].values - df_gtsp_exact_base['cost'].values) / df_gtsp_exact_base['cost'].values
-    diff_df_one_dir_exact =  (df_one_dir_exact['cost_x'].values - df_one_dir_exact_base['cost'].values) / df_one_dir_exact_base['cost'].values
+    diff_our_tcd =  (df_our_tcd['cost_x'].values - df_our_tcd_base['cost'].values) / df_our_tcd['cost_x'].values
+    diff_one_dir_gk =  (df_one_dir_gk['cost_x'].values - df_one_dir_gk_base['cost'].values) / df_one_dir_gk['cost_x'].values
+    diff_gtsp_exact =  (df_gtsp_exact['cost_x'].values - df_gtsp_exact_base['cost'].values) / df_gtsp_exact['cost_x'].values
+    diff_df_one_dir_exact =  (df_one_dir_exact['cost_x'].values - df_one_dir_exact_base['cost'].values) / df_one_dir_exact['cost_x'].values
 
     # Create common df.
     df_diff_our_bcd = pd.DataFrame({'planner': df_our_bcd['planner'].values, 'num_hole_vertices': df_our_bcd['num_hole_vertices'], 'diff': diff_our_bcd})
