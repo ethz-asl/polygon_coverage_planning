@@ -5,7 +5,7 @@ Bähnemann, Rik, et al.
 "Revisiting Boustrophedon Coverage Path Planning as a Generalized Traveling Salesman Problem."
 Field and Service Robotics (submitted). Springer, 2019.
 ```
-and contains algorithms to compute coverage patterns and shortest paths in general polygon with holes.
+It contains implementations to compute coverage patterns and shortest paths in general polygon with holes.
 
 ## Installation
 Install [ROS](http://wiki.ros.org/kinetic/Installation/Ubuntu).
@@ -113,3 +113,16 @@ bounding_box: {x: 0.0, y: 0.0, z: 0.0}"
 ```
 
 ![An example shortest path.](https://user-images.githubusercontent.com/11293852/46402328-b4f95780-c6ff-11e8-97c4-03d33a303ecd.png)
+
+## Licensing
+This repository is subject to GNU General Public License version 3 or later due to its dependencies.
+
+The underlying (exact) geometric operations rely on [CGAL](https://www.cgal.org/license.html).
+
+The underlying optimization the [memetic solver](https://csee.essex.ac.uk/staff/dkarap/?page=publications&key=Gutin2009a) presented in
+```
+Gutin, Gregory, and Daniel Karapetyan.
+"A memetic algorithm for the generalized traveling salesman problem."
+Natural Computing 9.1 (2010): 47-60.
+```
+which is free of charge for non-commercial purposes only.
