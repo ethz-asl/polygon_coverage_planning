@@ -118,7 +118,7 @@ bounding_box: {x: 0.0, y: 0.0, z: 0.0}"
 ## Licensing
 This repository is subject to GNU General Public License version 3 or later due to its dependencies.
 
-The underlying (exact) geometric operations rely on [CGAL](https://www.cgal.org/license.html) which is restricted at most by GNU General Public License version 3 or later due to its dependencies.
+The underlying (exact) geometric operations rely on [CGAL](https://www.cgal.org/license.html) which is restricted at most by GNU General Public License version 3 or later.
 
 The underlying optimization the [memetic solver](https://csee.essex.ac.uk/staff/dkarap/?page=publications&key=Gutin2009a) presented in
 ```
