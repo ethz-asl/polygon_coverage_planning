@@ -30,6 +30,7 @@ cd ~/catkin_ws/src
 git clone git@github.com:ethz-asl/polygon_coverage_planning.git
 wstool init
 wstool merge polygon_coverage_planning/install/dependencies.rosinstall
+wstool update
 ```
 
 Install [CGAL](https://www.cgal.org/) dependencies for catkinized package [cgal_catkin](https://www.github.com/ethz-asl/cgal_catkin.git).
@@ -117,7 +118,7 @@ bounding_box: {x: 0.0, y: 0.0, z: 0.0}"
 ## Licensing
 This repository is subject to GNU General Public License version 3 or later due to its dependencies.
 
-The underlying (exact) geometric operations rely on [CGAL](https://www.cgal.org/license.html).
+The underlying (exact) geometric operations rely on [CGAL](https://www.cgal.org/license.html) which is restricted at most by GNU General Public License version 3 or later due to its dependencies.
 
 The underlying optimization the [memetic solver](https://csee.essex.ac.uk/staff/dkarap/?page=publications&key=Gutin2009a) presented in
 ```
@@ -125,4 +126,4 @@ Gutin, Gregory, and Daniel Karapetyan.
 "A memetic algorithm for the generalized traveling salesman problem."
 Natural Computing 9.1 (2010): 47-60.
 ```
-which is free of charge for non-commercial purposes only.
+is free of charge for non-commercial purposes only.
