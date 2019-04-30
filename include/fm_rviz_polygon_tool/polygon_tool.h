@@ -3,7 +3,6 @@
 
 #include <OGRE/OgreSceneNode.h>
 #include <OgreVector3.h>
-#include <mav_2d_coverage_planning/geometry/polygon.h>
 #include <rviz/ogre_helpers/shape.h>
 #include <rviz/tool.h>
 #include <rviz/properties/vector_property.h>
@@ -33,7 +32,6 @@ class PolygonTool : public rviz::Tool {
   std::vector<Ogre::SceneNode*> vertex_nodes_;
   Ogre::SceneNode* moving_vertex_node_;
   rviz::VectorProperty* current_vertex_property_;
-  Polygon polygon_;
 
   // Point display.
   rviz::Shape* vertex_;
