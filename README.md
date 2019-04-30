@@ -1,5 +1,5 @@
 # polygon_coverage_planning
-This package accompanies our submission
+This repository accompanies our submission
 ```
 Bähnemann, Rik, et al.
 "Revisiting Boustrophedon Coverage Path Planning as a Generalized Traveling Salesman Problem."
