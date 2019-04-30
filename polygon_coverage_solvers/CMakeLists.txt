@@ -14,7 +14,7 @@ pkg_check_modules(MONO mono-2 REQUIRED)
 include_directories(${MONO_INCLUDE_DIRS})
 
 # Compile gk_ma.
-set(GKMA_INCLUDE_DIR include/mav_coverage_graph_solvers/gk_ma/gk_ma)
+set(GKMA_INCLUDE_DIR include/polygon_coverage_solvers/gk_ma/gk_ma)
 set(GKMA_FULL_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/${GKMA_INCLUDE_DIR})
 set(GKMA gkma)
 add_custom_target(${GKMA} ALL

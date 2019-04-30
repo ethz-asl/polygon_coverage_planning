@@ -1,5 +1,5 @@
-#ifndef MAV_COVERAGE_GRAPH_SOLVERS_GRAPH_BASE_IMPL_H_
-#define MAV_COVERAGE_GRAPH_SOLVERS_GRAPH_BASE_IMPL_H_
+#ifndef POLYGON_COVERAGE_SOLVERS_GRAPH_BASE_IMPL_H_
+#define POLYGON_COVERAGE_SOLVERS_GRAPH_BASE_IMPL_H_
 
 #include <algorithm>
 #include <set>
@@ -336,4 +336,4 @@ GraphBase<NodeProperty, EdgeProperty>::getAdjacencyMatrix() const {
 
 }  // namespace mav_coverage_planning
 
-#endif  // MAV_COVERAGE_GRAPH_SOLVERS_GRAPH_BASE_IMPL_H_
+#endif  // POLYGON_COVERAGE_SOLVERS_GRAPH_BASE_IMPL_H_

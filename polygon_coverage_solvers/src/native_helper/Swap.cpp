@@ -1,4 +1,4 @@
-#include "mav_coverage_graph_solvers/gk_ma/native_helper/Swap.h"
+#include "polygon_coverage_solvers/gk_ma/native_helper/Swap.h"
 
 #include <limits.h>
 

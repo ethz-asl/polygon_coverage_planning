@@ -1,5 +1,5 @@
-#ifndef MAV_COVERAGE_GRAPH_SOLVERS_COMBINATORICS_H_
-#define MAV_COVERAGE_GRAPH_SOLVERS_COMBINATORICS_H_
+#ifndef POLYGON_COVERAGE_SOLVERS_COMBINATORICS_H_
+#define POLYGON_COVERAGE_SOLVERS_COMBINATORICS_H_
 
 #include <cstddef>
 #include <set>
@@ -28,4 +28,4 @@ void getAllCombinationsOfKElementsFromN(
 
 }  // namespace mav_coverage_planning
 
-#endif /* MAV_COVERAGE_GRAPH_SOLVERS_COMBINATORICS_H_ */
+#endif /* POLYGON_COVERAGE_SOLVERS_COMBINATORICS_H_ */

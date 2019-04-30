@@ -1,5 +1,5 @@
-#ifndef MAV_COVERAGE_GRAPH_SOLVERS_GRAPH_BASE_H_
-#define MAV_COVERAGE_GRAPH_SOLVERS_GRAPH_BASE_H_
+#ifndef POLYGON_COVERAGE_SOLVERS_GRAPH_BASE_H_
+#define POLYGON_COVERAGE_SOLVERS_GRAPH_BASE_H_
 
 #include <cmath>
 #include <limits>
@@ -121,6 +121,6 @@ class GraphBase {
 };
 }  // namespace mav_coverage_planning
 
-#include "mav_coverage_graph_solvers/impl/graph_base_impl.h"
+#include "polygon_coverage_solvers/impl/graph_base_impl.h"
 
-#endif  // MAV_COVERAGE_GRAPH_SOLVERS_GRAPH_BASE_H_
+#endif  // POLYGON_COVERAGE_SOLVERS_GRAPH_BASE_H_

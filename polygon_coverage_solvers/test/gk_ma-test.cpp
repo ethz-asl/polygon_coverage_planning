@@ -5,12 +5,12 @@
 #include <gtest/gtest.h>
 #include <ros/package.h>
 
-#include "mav_coverage_graph_solvers/gk_ma.h"
+#include "polygon_coverage_solvers/gk_ma.h"
 
 using namespace mav_coverage_planning;
 using namespace gk_ma;
 
-const std::string kPackageName = "mav_coverage_graph_solvers";
+const std::string kPackageName = "polygon_coverage_solvers";
 
 TEST(GkMa, LoadFromFile) {
   GkMa& instance = GkMa::getInstance();

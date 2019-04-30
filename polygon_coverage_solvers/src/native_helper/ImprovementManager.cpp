@@ -1,10 +1,10 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include "mav_coverage_graph_solvers/gk_ma/native_helper/ImprovementManager.h"
-#include "mav_coverage_graph_solvers/gk_ma/native_helper/Swap.h"
-#include "mav_coverage_graph_solvers/gk_ma/native_helper/Insert.h"
-#include "mav_coverage_graph_solvers/gk_ma/native_helper/KOpt.h"
-#include "mav_coverage_graph_solvers/gk_ma/native_helper/ClusterOptimisation.h"
+#include "polygon_coverage_solvers/gk_ma/native_helper/ImprovementManager.h"
+#include "polygon_coverage_solvers/gk_ma/native_helper/Swap.h"
+#include "polygon_coverage_solvers/gk_ma/native_helper/Insert.h"
+#include "polygon_coverage_solvers/gk_ma/native_helper/KOpt.h"
+#include "polygon_coverage_solvers/gk_ma/native_helper/ClusterOptimisation.h"
 
 struct LocalSearchHeuristic
 {

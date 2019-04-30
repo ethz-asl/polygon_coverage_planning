@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "mav_coverage_graph_solvers/combinatorics.h"
+#include "polygon_coverage_solvers/combinatorics.h"
 
 using namespace mav_coverage_planning;
 

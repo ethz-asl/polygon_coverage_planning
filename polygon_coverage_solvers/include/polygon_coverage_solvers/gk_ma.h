@@ -1,5 +1,5 @@
-#ifndef MAV_COVERAGE_GRAPH_SOLVERS_GK_MA_H_
-#define MAV_COVERAGE_GRAPH_SOLVERS_GK_MA_H_
+#ifndef POLYGON_COVERAGE_SOLVERS_GK_MA_H_
+#define POLYGON_COVERAGE_SOLVERS_GK_MA_H_
 
 #include <string>
 #include <vector>
@@ -52,4 +52,4 @@ class GkMa {
 }  // namespace gk_ma
 }  // namespace mav_coverage_planning
 
-#endif  // MAV_COVERAGE_GRAPH_SOLVERS_GK_MA_H_
+#endif  // POLYGON_COVERAGE_SOLVERS_GK_MA_H_

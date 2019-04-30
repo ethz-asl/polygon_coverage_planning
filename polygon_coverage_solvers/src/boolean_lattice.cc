@@ -3,8 +3,8 @@
 
 #include <glog/logging.h>
 
-#include "mav_coverage_graph_solvers/boolean_lattice.h"
-#include "mav_coverage_graph_solvers/combinatorics.h"
+#include "polygon_coverage_solvers/boolean_lattice.h"
+#include "polygon_coverage_solvers/combinatorics.h"
 
 namespace mav_coverage_planning {
 namespace boolean_lattice {

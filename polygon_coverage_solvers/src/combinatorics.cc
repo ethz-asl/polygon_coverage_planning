@@ -1,4 +1,4 @@
-#include "mav_coverage_graph_solvers/combinatorics.h"
+#include "polygon_coverage_solvers/combinatorics.h"
 
 #include <glog/logging.h>
 
