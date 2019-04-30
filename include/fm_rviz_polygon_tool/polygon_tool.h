@@ -3,6 +3,7 @@
 
 #include <OGRE/OgreSceneNode.h>
 #include <OgreVector3.h>
+#include <rviz/ogre_helpers/line.h>
 #include <rviz/ogre_helpers/shape.h>
 #include <rviz/tool.h>
 #include <rviz/properties/vector_property.h>
@@ -28,14 +29,23 @@ class PolygonTool : public rviz::Tool {
 
  private:
   void makeVertex(const Ogre::Vector3& position);
+  void pointClicked(rviz::ViewportMouseEvent& event);
+  void rightClicked(rviz::ViewportMouseEvent &event);
+  void drawLines();
 
+  std::vector<rviz::Shape*> active_spheres_;
   std::vector<Ogre::SceneNode*> vertex_nodes_;
   Ogre::SceneNode* moving_vertex_node_;
   rviz::VectorProperty* current_vertex_property_;
 
+  std::vector<rviz::Line*> active_lines_;
   // Point display.
   rviz::Shape* vertex_;
-};
+
+  //point scale
+  float pt_scale_=0.5;
+  float delete_tol=0.2;
+  };
 
 }  // namespace mav_coverage_planning
 
