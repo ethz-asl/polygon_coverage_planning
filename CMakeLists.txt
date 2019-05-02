@@ -44,9 +44,12 @@ endif()
 # Header files as explained in https://answers.ros.org/question/215487/could-not-load-panel-in-rviz-pluginlibfactory-the-plugin-for-class/
 set(HEADER_FILES
   include/fm_rviz_polygon_tool/polygon_tool.h
+  include/fm_rviz_polygon_tool/polygon_pannel.h
+
 )
 set(SRC_FILES
   src/polygon_tool.cc
+  src/polygon_pannel.cc
 )
 cs_add_library(${PROJECT_NAME} ${SRC_FILES} ${HEADER_FILES})
 target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${YamlCpp_LIBRARIES})

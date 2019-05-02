@@ -1,15 +1,3 @@
-#include <OGRE/OgreEntity.h>
-#include <OGRE/OgreSceneManager.h>
-#include <OGRE/OgreSceneNode.h>
-
-#include <ros/console.h>
-
-#include <rviz/geometry.h>
-#include <rviz/ogre_helpers/shape.h>
-#include <rviz/properties/vector_property.h>
-#include <rviz/viewport_mouse_event.h>
-#include <rviz/visualization_manager.h>
-
 #include "fm_rviz_polygon_tool/polygon_tool.h"
 
 namespace mav_coverage_planning {
@@ -61,7 +49,6 @@ void PolygonTool::deactivate() {
 }
 
 int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
-  // std::cout << "called PolygonTool processMouseEvent" << std::endl;
   if (!moving_vertex_node_) {
     return Render;
   }
@@ -69,6 +56,7 @@ int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
   // Project mouse pointer on polygon plane.
   Ogre::Vector3 intersection;
   ////TODO(rikba): Change to actual polygon plane.
+  // linked to altitude??
   Ogre::Plane polygon_plane(Ogre::Vector3::UNIT_Z, 0.0f);
 
   if (rviz::getPointOnPlaneFromWindowXY(event.viewport, polygon_plane, event.x,
@@ -103,7 +91,19 @@ void PolygonTool::makeVertex(const Ogre::Vector3 &position) {
   active_spheres_.push_back(local_sphere);
   node->setPosition(position);
   vertex_nodes_.push_back(node);
+
+  Point local_2d_pt = Point(position[0], position[1]);
+  polygon_.push_back(local_2d_pt);
+
   drawLines();
+  checkCGalPolygon();
+}
+
+// check geometric propetries of the CGal polygon
+void PolygonTool::checkCGalPolygon(){
+  std::cout << " Polygon is simple: " <<polygon_.is_simple()<<std::endl;
+  std::cout << " Polygon is convex: " <<polygon_.is_convex()<<std::endl;
+
 }
 
 void PolygonTool::drawLines() {
@@ -148,10 +148,13 @@ void PolygonTool::pointClicked(rviz::ViewportMouseEvent &event) {
   std::cout << "size of vertex_nodes_ " << vertex_nodes_.size() << std::endl;
 }
 
+//called when the right mouse boutton is clicked
+//used to delete nodes within the range of the cursor node
 void PolygonTool::rightClicked(rviz::ViewportMouseEvent &event) {
   // get the x y z coodinates of the click
   Ogre::Vector3 intersection;
   Ogre::Plane polygon_plane(Ogre::Vector3::UNIT_Z, 0.0f);
+  VertexIterator vi = polygon_.vertices_begin();
   if (rviz::getPointOnPlaneFromWindowXY(event.viewport, polygon_plane, event.x,
                                         event.y, intersection)) {
     for (auto i = 0; i < vertex_nodes_.size(); ++i) {
@@ -163,6 +166,8 @@ void PolygonTool::rightClicked(rviz::ViewportMouseEvent &event) {
         active_spheres_[i]->setColor(0.0, 0, 0, 0.0);
         active_spheres_.erase(active_spheres_.begin() + i);
         vertex_nodes_.erase(vertex_nodes_.begin() + i);
+        // erase elements in the CGAL polygon
+        polygon_.erase(vi + i);
         drawLines();
         break;
       }
@@ -208,6 +213,10 @@ void PolygonTool::load(const rviz::Config &config) {
     getPropertyContainer()->addChild(prop);
     makeVertex(prop->getVector()); // Make vertex visible.
   }
+}
+
+CGAL::Polygon_2<CGAL::Exact_predicates_inexact_constructions_kernel> PolygonTool::getPolygon(){
+  return polygon_;
 }
 
 } // namespace mav_coverage_planning

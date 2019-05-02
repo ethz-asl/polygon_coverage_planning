@@ -15,6 +15,7 @@
 
   <depend>roscpp</depend>
   <depend>rviz</depend>
+  <depend>cgal_catkin</depend>
   <depend>mav_2d_coverage_planning</depend>
 
   <export>
