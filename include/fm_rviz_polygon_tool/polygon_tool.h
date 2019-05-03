@@ -46,7 +46,7 @@ private:
   typedef Polygon_2::Vertex_iterator VertexIterator;
 
   void makeVertex(const Ogre::Vector3 &position);
-  void pointClicked(rviz::ViewportMouseEvent &event);
+  void leftClicked(rviz::ViewportMouseEvent &event);
   void rightClicked(rviz::ViewportMouseEvent &event);
   void drawLines();
   void checkCGalPolygon();
@@ -57,6 +57,7 @@ private:
   rviz::VectorProperty *current_vertex_property_;
   std::vector<rviz::Line *> active_lines_;
   std::list<Point> points_for_poly_;
+  
   Polygon_2 polygon_;
   // Point display.
   rviz::Shape *vertex_;

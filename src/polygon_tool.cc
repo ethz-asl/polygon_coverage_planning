@@ -10,7 +10,6 @@ PolygonTool::PolygonTool()
 PolygonTool::~PolygonTool() {
   std::cout << "called PolygonTool destructor" << std::endl;
   delete vertex_;
-
   for (Ogre::SceneNode *vertex_node : vertex_nodes_)
     scene_manager_->destroySceneNode(vertex_node);
 }
@@ -30,7 +29,6 @@ void PolygonTool::activate() {
   // Make vertex node visible and add property to property container.
   if (moving_vertex_node_) {
     moving_vertex_node_->setVisible(true);
-
     current_vertex_property_ = new rviz::VectorProperty(
         "Vertex " + QString::number(vertex_nodes_.size()));
     current_vertex_property_->setReadOnly(true);
@@ -64,7 +62,7 @@ int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
     moving_vertex_node_->setVisible(true);
     moving_vertex_node_->setPosition(intersection);
     if (event.leftDown()) {
-      pointClicked(event);
+      leftClicked(event);
     } else if (event.rightDown()) {
       rightClicked(event);
     }
@@ -103,18 +101,19 @@ void PolygonTool::makeVertex(const Ogre::Vector3 &position) {
 void PolygonTool::checkCGalPolygon(){
   std::cout << " Polygon is simple: " <<polygon_.is_simple()<<std::endl;
   std::cout << " Polygon is convex: " <<polygon_.is_convex()<<std::endl;
-
 }
 
 void PolygonTool::drawLines() {
   // lines have to be set to invisible before being deleted
-  for (auto j = 0; j < active_lines_.size(); ++j) {
+  for (size_t j = 0; j < active_lines_.size(); ++j) {
     active_lines_[j]->setVisible(false);
   }
   active_lines_.clear();
+  // only draw lines if there are 3 or more points,
+  // otherwise the polygon is degenerate
   if (vertex_nodes_.size() > 2) {
     // draw lines!
-    // last one
+    // last one is done seperately
     active_lines_.clear();
     rviz::Line *last_line =
         new rviz::Line(scene_manager_, scene_manager_->getRootSceneNode());
@@ -125,7 +124,7 @@ void PolygonTool::drawLines() {
     active_lines_.push_back(last_line);
 
     // all the other lines
-    for (auto i = 1; i < vertex_nodes_.size(); ++i) {
+    for (size_t i = 1; i < vertex_nodes_.size(); ++i) {
       rviz::Line *local_line =
           new rviz::Line(scene_manager_, scene_manager_->getRootSceneNode());
       local_line->setColor(0.0, 1.0, 0.0, 1.0);
@@ -137,7 +136,7 @@ void PolygonTool::drawLines() {
 }
 
 // called by the callback when the user clicks the left mouse button
-void PolygonTool::pointClicked(rviz::ViewportMouseEvent &event) {
+void PolygonTool::leftClicked(rviz::ViewportMouseEvent &event) {
   Ogre::Vector3 intersection;
   // TODO(rikba): Change to actual polygon plane.
   Ogre::Plane polygon_plane(Ogre::Vector3::UNIT_Z, 0.0f);
@@ -157,7 +156,7 @@ void PolygonTool::rightClicked(rviz::ViewportMouseEvent &event) {
   VertexIterator vi = polygon_.vertices_begin();
   if (rviz::getPointOnPlaneFromWindowXY(event.viewport, polygon_plane, event.x,
                                         event.y, intersection)) {
-    for (auto i = 0; i < vertex_nodes_.size(); ++i) {
+    for (size_t i = 0; i < vertex_nodes_.size(); ++i) {
       // compare the distance from the center of the nodes already drawn
       Ogre::Vector3 distance_vec =
           intersection - vertex_nodes_[i]->getPosition();

@@ -59,8 +59,10 @@ PolygonPanel::PolygonPanel( QWidget* parent )
 
 void PolygonPanel::createNewPoly(){
   std::cout<<"clicked on createNewPoly"<<std::endl;
+  //rviz::ToolManager* toolM = vis_manager_->tool_manager_;
   //tool_manager_
   //polygn_tl_ = new mav_coverage_planning::PolygonTool();
+  vis_manager_->getToolManager()->addTool("PolygonSelection");
   //->onInitialize();
   //polygn_tl_->activate();
 }
