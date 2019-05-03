@@ -22,7 +22,8 @@ ExternalProject_Add(
   PATCH_COMMAND \\
     patch NativeHelper/ClusterOptimisation.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/cluster_optimisation.patch && \\
     patch NativeHelper/ImprovementManager.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/improvement_manager.patch && \\
-    patch NativeHelper/Insert.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/insert.patch
+    patch NativeHelper/Insert.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/insert.patch && \\
+    patch NativeHelper/NativeHelper.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/native_helper.patch
   UPDATE_COMMAND ""
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
