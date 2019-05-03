@@ -23,20 +23,6 @@ else()
   set(QT_LIBRARIES Qt5::Widgets)
 endif()
 
-############
-# YAML-CPP #
-############
-# Link against system catkin yaml-cpp if installed.
-find_package(PkgConfig)
-find_package(yaml_cpp_catkin QUIET)
-if(${yaml_cpp_catkin_FOUND})
-    message(STATUS "Found yaml_cpp_catkin, using instead of system library.")
-    set(YamlCpp_LIBRARIES ${yaml_cpp_catkin_LIBRARIES})
-    set(YamlCpp_INCLUDE_DIRS ${yaml_cpp_catkin_INCLUDE_DIRS})
-else()
-    message(STATUS "No yaml_cpp_catkin, using yaml-cpp system library instead.")
-    pkg_check_modules(YamlCpp REQUIRED yaml-cpp>=0.5)
-endif()
 
 #############
 # LIBRARIES #
@@ -44,15 +30,12 @@ endif()
 # Header files as explained in https://answers.ros.org/question/215487/could-not-load-panel-in-rviz-pluginlibfactory-the-plugin-for-class/
 set(HEADER_FILES
   include/fm_rviz_polygon_tool/polygon_tool.h
-  include/fm_rviz_polygon_tool/polygon_pannel.h
-
 )
 set(SRC_FILES
   src/polygon_tool.cc
-  src/polygon_pannel.cc
 )
 cs_add_library(${PROJECT_NAME} ${SRC_FILES} ${HEADER_FILES})
-target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${YamlCpp_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES})
 
 cs_install()
 cs_export()

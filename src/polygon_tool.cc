@@ -2,7 +2,7 @@
 
 // use this line to launch it programatically
 // vis_manager_->getToolManager()->addTool("fm_rviz_polygon_tool/PolygonSelection");
-namespace mav_coverage_planning {
+namespace mav_polygon_tool {
 
 PolygonTool::PolygonTool()
     : Tool(), moving_vertex_node_(nullptr), current_vertex_property_(nullptr) {
@@ -52,11 +52,7 @@ int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
   if (!moving_vertex_node_) {
     return Render;
   }
-
-  // Project mouse pointer on polygon plane.
   Ogre::Vector3 intersection;
-  ////TODO(rikba): Change to actual polygon plane.
-  // linked to altitude??
   Ogre::Plane polygon_plane(Ogre::Vector3::UNIT_Z, 0.0f);
 
   if (rviz::getPointOnPlaneFromWindowXY(event.viewport, polygon_plane, event.x,
@@ -85,7 +81,7 @@ void PolygonTool::makeVertex(const Ogre::Vector3 &position) {
   rviz::Shape *local_sphere =
       new rviz::Shape(rviz::Shape::Sphere, scene_manager_);
   local_sphere->setColor(1.0, 0, 0, 1.0);
-  Ogre::Vector3 scale(pt_scale_, pt_scale_, pt_scale_);
+  Ogre::Vector3 scale(kPtScale, kPtScale, kPtScale);
   local_sphere->setScale(scale);
   local_sphere->setPosition(position);
   active_spheres_.push_back(local_sphere);
@@ -140,7 +136,6 @@ void PolygonTool::drawLines() {
 // called by the callback when the user clicks the left mouse button
 void PolygonTool::leftClicked(rviz::ViewportMouseEvent &event) {
   Ogre::Vector3 intersection;
-  // TODO(rikba): Change to actual polygon plane.
   Ogre::Plane polygon_plane(Ogre::Vector3::UNIT_Z, 0.0f);
   if (rviz::getPointOnPlaneFromWindowXY(event.viewport, polygon_plane, event.x,
                                         event.y, intersection)) {
@@ -162,7 +157,7 @@ void PolygonTool::rightClicked(rviz::ViewportMouseEvent &event) {
       // compare the distance from the center of the nodes already drawn
       Ogre::Vector3 distance_vec =
           intersection - vertex_nodes_[i]->getPosition();
-      if (distance_vec.length() < delete_tol) {
+      if (distance_vec.length() < kDeleteTol) {
         vertex_nodes_[i]->setVisible(false);
         active_spheres_[i]->setColor(0.0, 0, 0, 0.0);
         active_spheres_.erase(active_spheres_.begin() + i);
@@ -216,11 +211,11 @@ void PolygonTool::load(const rviz::Config &config) {
   }
 }
 
-CGAL::Polygon_2<CGAL::Exact_predicates_inexact_constructions_kernel> PolygonTool::getPolygon(){
+Polygon_2 PolygonTool::getPolygon(){
   return polygon_;
 }
 
-} // namespace mav_coverage_planning
+} // namespace mav_polygon_tool
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mav_coverage_planning::PolygonTool, rviz::Tool)
+PLUGINLIB_EXPORT_CLASS(mav_polygon_tool::PolygonTool, rviz::Tool)
