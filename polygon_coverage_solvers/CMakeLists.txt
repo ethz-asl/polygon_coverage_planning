@@ -13,6 +13,20 @@ find_package(PkgConfig)
 pkg_check_modules(MONO mono-2 REQUIRED)
 include_directories(${MONO_INCLUDE_DIRS})
 
+# Download gk_ma
+include(ExternalProject)
+message(WARNING ${CMAKE_CURRENT_SOURCE_DIR})
+ExternalProject_Add(
+  gk_ma
+  URL http://www.cs.nott.ac.uk/~dxk/gtsp_ma_source_codes.zip
+  URL_MD5 765fad8e3746fa3dd9b81be0afb34d35
+  PATCH_COMMAND patch NativeHelper/ClusterOptimisation.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/cluster_optimisation.patch
+  UPDATE_COMMAND ""
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+  INSTALL_COMMAND ""
+)
+
 # Compile gk_ma.
 set(GKMA_INCLUDE_DIR include/polygon_coverage_solvers/gk_ma/gk_ma)
 set(GKMA_FULL_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/${GKMA_INCLUDE_DIR})
