@@ -1,6 +1,6 @@
 #include "fm_rviz_polygon_tool/polygon_tool.h"
 
-namespace mav_coverage_planning {
+namespace mav_polygon_tool {
 
 PolygonTool::PolygonTool()
     : Tool(), moving_vertex_node_(nullptr), current_vertex_property_(nullptr) {
@@ -36,7 +36,7 @@ void PolygonTool::activate() {
 }
 
 void PolygonTool::deactivate() {
-  // Make moving vertex invisible and delete current flag property.
+  // Make moving vertex invisible
   if (moving_vertex_node_) {
     moving_vertex_node_->setVisible(false);
     delete current_vertex_property_;
@@ -48,13 +48,9 @@ int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
   if (!moving_vertex_node_) {
     return Render;
   }
-
   // Project mouse pointer on polygon plane.
   Ogre::Vector3 intersection;
-  ////TODO(rikba): Change to actual polygon plane.
-  // linked to altitude??
   Ogre::Plane polygon_plane(Ogre::Vector3::UNIT_Z, 0.0f);
-
   if (rviz::getPointOnPlaneFromWindowXY(event.viewport, polygon_plane, event.x,
                                         event.y, intersection)) {
     moving_vertex_node_->setVisible(true);
@@ -79,7 +75,7 @@ void PolygonTool::makeVertex(const Ogre::Vector3 &position) {
   rviz::Shape *local_sphere =
       new rviz::Shape(rviz::Shape::Sphere, scene_manager_);
   local_sphere->setColor(1.0, 0, 0, 1.0);
-  Ogre::Vector3 scale(pt_scale_, pt_scale_, pt_scale_);
+  Ogre::Vector3 scale(kPtScale, kPtScale, kPtScale);
   local_sphere->setScale(scale);
   local_sphere->setPosition(position);
   active_spheres_.push_back(local_sphere);
@@ -132,7 +128,6 @@ void PolygonTool::drawLines() {
 // called by the callback when the user clicks the left mouse button
 void PolygonTool::leftClicked(rviz::ViewportMouseEvent &event) {
   Ogre::Vector3 intersection;
-  // TODO(rikba): Change to actual polygon plane.
   Ogre::Plane polygon_plane(Ogre::Vector3::UNIT_Z, 0.0f);
   if (rviz::getPointOnPlaneFromWindowXY(event.viewport, polygon_plane, event.x,
                                         event.y, intersection)) {
@@ -144,7 +139,6 @@ void PolygonTool::leftClicked(rviz::ViewportMouseEvent &event) {
 // called when the right mouse boutton is clicked
 // used to delete nodes within the range of the cursor node
 void PolygonTool::rightClicked(rviz::ViewportMouseEvent &event) {
-  // get the x y z coodinates of the click
   Ogre::Vector3 intersection;
   Ogre::Plane polygon_plane(Ogre::Vector3::UNIT_Z, 0.0f);
   VertexIterator vi = polygon_.vertices_begin();
@@ -154,7 +148,7 @@ void PolygonTool::rightClicked(rviz::ViewportMouseEvent &event) {
       // compare the distance from the center of the nodes already drawn
       Ogre::Vector3 distance_vec =
           intersection - vertex_nodes_[i]->getPosition();
-      if (distance_vec.length() < delete_tol_) {
+      if (distance_vec.length() < kDeleteTol) {
         vertex_nodes_[i]->setVisible(false);
         active_spheres_[i]->setColor(0.0, 0, 0, 0.0);
         active_spheres_.erase(active_spheres_.begin() + i);
@@ -170,10 +164,8 @@ void PolygonTool::rightClicked(rviz::ViewportMouseEvent &event) {
 
 void PolygonTool::save(rviz::Config config) const {
   config.mapSetValue("Class", getClassId());
-
   // Create child of map to store list of vertices.
   rviz::Config vertices_config = config.mapMakeChild("Vertices");
-
   // To read the positions and names of the vertices, we loop over the children
   // of our Property container:
   rviz::Property *container = getPropertyContainer();
@@ -182,7 +174,6 @@ void PolygonTool::save(rviz::Config config) const {
     // For each Property, we create a new Config object representing a
     // single vertex and append it to the Config list.
     rviz::Config vertex_config = vertices_config.listAppendNew();
-    // Into the flag's config we store its name:
     vertex_config.mapSetValue("Name", position_prop->getName());
     // ... and its position.
     position_prop->save(vertex_config);
@@ -195,8 +186,8 @@ void PolygonTool::load(const rviz::Config &config) {
   for (int i = 0; i < vertices_config.listLength(); i++) {
     rviz::Config vertex_config = vertices_config.listChildAt(i);
     // Provide a default name in case the name is not in the config file.
-    QString name = "Flag " + QString::number(i);
-    vertex_config.mapGetString("Name", &name); // Read name from flag config.
+    QString name = "Vertex " + QString::number(i);
+    vertex_config.mapGetString("Name", &name); // Read name from vertex config.
     // Create an rviz::VectorProperty to display the position.
     rviz::VectorProperty *prop = new rviz::VectorProperty(name);
     // Is this needed?
@@ -206,8 +197,7 @@ void PolygonTool::load(const rviz::Config &config) {
   }
 }
 
-CGAL::Polygon_2<CGAL::Exact_predicates_inexact_constructions_kernel>
-PolygonTool::getPolygon() {
+Polygon_2 PolygonTool::getPolygon() {
   return polygon_;
 }
 

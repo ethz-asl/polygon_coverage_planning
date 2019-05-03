@@ -19,11 +19,16 @@
 #include <rviz/viewport_mouse_event.h>
 #include <rviz/visualization_manager.h>
 
-namespace mav_coverage_planning {
+namespace mav_polygon_tool {
 
 // Declare polygon tool as subclass of rviz::Tool.
 class PolygonTool : public rviz::Tool {
   Q_OBJECT
+  typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+  typedef K::Point_2 Point;
+  typedef CGAL::Polygon_2<K> Polygon_2;
+  typedef Polygon_2::Vertex_iterator VertexIterator;
+
 public:
   PolygonTool();
   virtual ~PolygonTool();
@@ -37,15 +42,10 @@ public:
 
   void load(const rviz::Config &config) override;
   void save(rviz::Config config) const override;
-  CGAL::Polygon_2<CGAL::Exact_predicates_inexact_constructions_kernel>
-  getPolygon();
+
+  Polygon_2 getPolygon();
 
 private:
-  typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
-  typedef K::Point_2 Point;
-  typedef CGAL::Polygon_2<K> Polygon_2;
-  typedef Polygon_2::Vertex_iterator VertexIterator;
-
   void makeVertex(const Ogre::Vector3 &position);
   void leftClicked(rviz::ViewportMouseEvent &event);
   void rightClicked(rviz::ViewportMouseEvent &event);
@@ -60,13 +60,12 @@ private:
   rviz::Shape *vertex_;
   std::vector<rviz::Line *> active_lines_;
 
-
   std::list<Point> points_for_poly_;
   Polygon_2 polygon_;
 
   // point scale
-  float pt_scale_ = 0.5;
-  float delete_tol_ = 0.2;
+  const float kPtScale = 0.5;
+  const float kDeleteTol = 0.2;
 };
 
 } // namespace mav_coverage_planning
