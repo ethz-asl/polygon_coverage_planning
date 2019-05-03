@@ -1,5 +1,7 @@
 #include "fm_rviz_polygon_tool/polygon_tool.h"
 
+// use this line to launch it programatically
+// vis_manager_->getToolManager()->addTool("fm_rviz_polygon_tool/PolygonSelection");
 namespace mav_coverage_planning {
 
 PolygonTool::PolygonTool()

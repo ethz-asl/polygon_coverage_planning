@@ -62,7 +62,7 @@ void PolygonPanel::createNewPoly(){
   //rviz::ToolManager* toolM = vis_manager_->tool_manager_;
   //tool_manager_
   //polygn_tl_ = new mav_coverage_planning::PolygonTool();
-  vis_manager_->getToolManager()->addTool("PolygonSelection");
+  vis_manager_->getToolManager()->addTool("fm_rviz_polygon_tool/PolygonSelection");
   //->onInitialize();
   //polygn_tl_->activate();
 }
