@@ -45,7 +45,7 @@ public:
   void save(rviz::Config config) const override;
   Polygon_2 getPolygon();
 
-private:
+protected:
   void makeVertex(const Ogre::Vector3 &position);
   void leftClicked(rviz::ViewportMouseEvent &event);
   void rightClicked(rviz::ViewportMouseEvent &event);
