@@ -20,10 +20,14 @@ ExternalProject_Add(
   URL http://www.cs.nott.ac.uk/~dxk/gtsp_ma_source_codes.zip
   URL_MD5 765fad8e3746fa3dd9b81be0afb34d35
   PATCH_COMMAND \\
+    patch NativeHelper/ClusterOptimisation.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/cluster_optimisation_cpp.patch && \\
     patch NativeHelper/ClusterOptimisation.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/cluster_optimisation.patch && \\
     patch NativeHelper/ImprovementManager.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/improvement_manager.patch && \\
+    patch NativeHelper/Insert.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/insert_cpp.patch && \\
     patch NativeHelper/Insert.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/insert.patch && \\
-    patch NativeHelper/NativeHelper.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/native_helper.patch
+    patch NativeHelper/NativeHelper.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/native_helper_cpp.patch && \\
+    patch NativeHelper/NativeHelper.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/native_helper.patch && \\
+    patch NativeHelper/Swap.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/swap_cpp.patch
   UPDATE_COMMAND ""
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
@@ -53,17 +57,6 @@ ExternalProject_Add(
 #############
 # LIBRARIES #
 #############
-# GK_MA c++ library
-set(NATIVE_HELPER native_helper)
-cs_add_library(${NATIVE_HELPER}
-  src/native_helper/ClusterOptimisation.cpp
-  src/native_helper/ImprovementManager.cpp
-  src/native_helper/Insert.cpp
-  src/native_helper/KOpt.cpp
-  src/native_helper/NativeHelper.cpp
-  src/native_helper/Swap.cpp
-)
-
 cs_add_library(${PROJECT_NAME}
   src/gk_ma.cc
   src/combinatorics.cc
