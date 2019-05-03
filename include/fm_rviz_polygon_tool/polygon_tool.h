@@ -37,7 +37,8 @@ public:
 
   void load(const rviz::Config &config) override;
   void save(rviz::Config config) const override;
-  CGAL::Polygon_2<CGAL::Exact_predicates_inexact_constructions_kernel> getPolygon();
+  CGAL::Polygon_2<CGAL::Exact_predicates_inexact_constructions_kernel>
+  getPolygon();
 
 private:
   typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
@@ -46,24 +47,26 @@ private:
   typedef Polygon_2::Vertex_iterator VertexIterator;
 
   void makeVertex(const Ogre::Vector3 &position);
-  void pointClicked(rviz::ViewportMouseEvent &event);
+  void leftClicked(rviz::ViewportMouseEvent &event);
   void rightClicked(rviz::ViewportMouseEvent &event);
   void drawLines();
   void checkCGalPolygon();
 
   std::vector<rviz::Shape *> active_spheres_;
   std::vector<Ogre::SceneNode *> vertex_nodes_;
+
   Ogre::SceneNode *moving_vertex_node_;
   rviz::VectorProperty *current_vertex_property_;
+  rviz::Shape *vertex_;
   std::vector<rviz::Line *> active_lines_;
+
+
   std::list<Point> points_for_poly_;
   Polygon_2 polygon_;
-  // Point display.
-  rviz::Shape *vertex_;
 
   // point scale
   float pt_scale_ = 0.5;
-  float delete_tol = 0.2;
+  float delete_tol_ = 0.2;
 };
 
 } // namespace mav_coverage_planning

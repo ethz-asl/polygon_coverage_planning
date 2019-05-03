@@ -8,7 +8,6 @@ PolygonTool::PolygonTool()
 }
 
 PolygonTool::~PolygonTool() {
-  std::cout << "called PolygonTool destructor" << std::endl;
   delete vertex_;
 
   for (Ogre::SceneNode *vertex_node : vertex_nodes_)
@@ -16,7 +15,6 @@ PolygonTool::~PolygonTool() {
 }
 
 void PolygonTool::onInitialize() {
-  std::cout << "called PolygonTool onInitialize" << std::endl;
   moving_vertex_node_ =
       scene_manager_->getRootSceneNode()->createChildSceneNode();
   vertex_ =
@@ -26,7 +24,6 @@ void PolygonTool::onInitialize() {
 }
 
 void PolygonTool::activate() {
-  std::cout << "called PolygonTool activate" << std::endl;
   // Make vertex node visible and add property to property container.
   if (moving_vertex_node_) {
     moving_vertex_node_->setVisible(true);
@@ -39,7 +36,6 @@ void PolygonTool::activate() {
 }
 
 void PolygonTool::deactivate() {
-  std::cout << "called PolygonTool deactivate" << std::endl;
   // Make moving vertex invisible and delete current flag property.
   if (moving_vertex_node_) {
     moving_vertex_node_->setVisible(false);
@@ -64,12 +60,11 @@ int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
     moving_vertex_node_->setVisible(true);
     moving_vertex_node_->setPosition(intersection);
     if (event.leftDown()) {
-      pointClicked(event);
+      leftClicked(event);
     } else if (event.rightDown()) {
       rightClicked(event);
     }
   } else {
-    std::cout << "called PolygonTool processMouseEvent else" << std::endl;
     // Don't show point if not on plane.
     moving_vertex_node_->setVisible(false);
   }
@@ -78,7 +73,6 @@ int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
 
 // adding red points to make a polygon
 void PolygonTool::makeVertex(const Ogre::Vector3 &position) {
-  std::cout << "called PolygonTool makeVertex" << std::endl;
   // Create a new vertex in the Ogre scene and save scene to list.
   Ogre::SceneNode *node =
       scene_manager_->getRootSceneNode()->createChildSceneNode();
@@ -100,15 +94,14 @@ void PolygonTool::makeVertex(const Ogre::Vector3 &position) {
 }
 
 // check geometric propetries of the CGal polygon
-void PolygonTool::checkCGalPolygon(){
-  std::cout << " Polygon is simple: " <<polygon_.is_simple()<<std::endl;
-  std::cout << " Polygon is convex: " <<polygon_.is_convex()<<std::endl;
-
+void PolygonTool::checkCGalPolygon() {
+  std::cout << " Polygon is simple: " << polygon_.is_simple() << std::endl;
+  std::cout << " Polygon is convex: " << polygon_.is_convex() << std::endl;
 }
 
 void PolygonTool::drawLines() {
   // lines have to be set to invisible before being deleted
-  for (auto j = 0; j < active_lines_.size(); ++j) {
+  for (size_t j = 0; j < active_lines_.size(); ++j) {
     active_lines_[j]->setVisible(false);
   }
   active_lines_.clear();
@@ -125,7 +118,7 @@ void PolygonTool::drawLines() {
     active_lines_.push_back(last_line);
 
     // all the other lines
-    for (auto i = 1; i < vertex_nodes_.size(); ++i) {
+    for (size_t i = 1; i < vertex_nodes_.size(); ++i) {
       rviz::Line *local_line =
           new rviz::Line(scene_manager_, scene_manager_->getRootSceneNode());
       local_line->setColor(0.0, 1.0, 0.0, 1.0);
@@ -137,7 +130,7 @@ void PolygonTool::drawLines() {
 }
 
 // called by the callback when the user clicks the left mouse button
-void PolygonTool::pointClicked(rviz::ViewportMouseEvent &event) {
+void PolygonTool::leftClicked(rviz::ViewportMouseEvent &event) {
   Ogre::Vector3 intersection;
   // TODO(rikba): Change to actual polygon plane.
   Ogre::Plane polygon_plane(Ogre::Vector3::UNIT_Z, 0.0f);
@@ -148,8 +141,8 @@ void PolygonTool::pointClicked(rviz::ViewportMouseEvent &event) {
   std::cout << "size of vertex_nodes_ " << vertex_nodes_.size() << std::endl;
 }
 
-//called when the right mouse boutton is clicked
-//used to delete nodes within the range of the cursor node
+// called when the right mouse boutton is clicked
+// used to delete nodes within the range of the cursor node
 void PolygonTool::rightClicked(rviz::ViewportMouseEvent &event) {
   // get the x y z coodinates of the click
   Ogre::Vector3 intersection;
@@ -157,11 +150,11 @@ void PolygonTool::rightClicked(rviz::ViewportMouseEvent &event) {
   VertexIterator vi = polygon_.vertices_begin();
   if (rviz::getPointOnPlaneFromWindowXY(event.viewport, polygon_plane, event.x,
                                         event.y, intersection)) {
-    for (auto i = 0; i < vertex_nodes_.size(); ++i) {
+    for (size_t i = 0; i < vertex_nodes_.size(); ++i) {
       // compare the distance from the center of the nodes already drawn
       Ogre::Vector3 distance_vec =
           intersection - vertex_nodes_[i]->getPosition();
-      if (distance_vec.length() < delete_tol) {
+      if (distance_vec.length() < delete_tol_) {
         vertex_nodes_[i]->setVisible(false);
         active_spheres_[i]->setColor(0.0, 0, 0, 0.0);
         active_spheres_.erase(active_spheres_.begin() + i);
@@ -176,7 +169,6 @@ void PolygonTool::rightClicked(rviz::ViewportMouseEvent &event) {
 }
 
 void PolygonTool::save(rviz::Config config) const {
-  std::cout << "called PolygonTool save" << std::endl;
   config.mapSetValue("Class", getClassId());
 
   // Create child of map to store list of vertices.
@@ -198,7 +190,6 @@ void PolygonTool::save(rviz::Config config) const {
 }
 
 void PolygonTool::load(const rviz::Config &config) {
-  std::cout << "called PolygonTool load" << std::endl;
   // Get the vertices sub-config from the tool config and loop over entries.
   rviz::Config vertices_config = config.mapGetChild("Vertices");
   for (int i = 0; i < vertices_config.listLength(); i++) {
@@ -215,7 +206,8 @@ void PolygonTool::load(const rviz::Config &config) {
   }
 }
 
-CGAL::Polygon_2<CGAL::Exact_predicates_inexact_constructions_kernel> PolygonTool::getPolygon(){
+CGAL::Polygon_2<CGAL::Exact_predicates_inexact_constructions_kernel>
+PolygonTool::getPolygon() {
   return polygon_;
 }
 
