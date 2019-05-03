@@ -19,28 +19,29 @@ ExternalProject_Add(
   gk_ma
   URL http://www.cs.nott.ac.uk/~dxk/gtsp_ma_source_codes.zip
   URL_MD5 765fad8e3746fa3dd9b81be0afb34d35
-  PATCH_COMMAND \\
-    patch NativeHelper/ClusterOptimisation.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/cluster_optimisation_cpp.patch && \\
-    patch NativeHelper/ClusterOptimisation.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/cluster_optimisation.patch && \\
-    patch NativeHelper/ImprovementManager.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/improvement_manager.patch && \\
-    patch NativeHelper/Insert.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/insert_cpp.patch && \\
-    patch NativeHelper/Insert.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/insert.patch && \\
-    patch NativeHelper/NativeHelper.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/native_helper_cpp.patch && \\
-    patch NativeHelper/NativeHelper.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/native_helper.patch && \\
-    patch NativeHelper/Swap.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/swap_cpp.patch
+  # PATCH_COMMAND \\
+  #   patch NativeHelper/ClusterOptimisation.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/cluster_optimisation_cpp.patch && \\
+  #   patch NativeHelper/ClusterOptimisation.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/cluster_optimisation.patch && \\
+  #   patch NativeHelper/ImprovementManager.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/improvement_manager.patch && \\
+  #   patch NativeHelper/Insert.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/insert_cpp.patch && \\
+  #   patch NativeHelper/Insert.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/insert.patch && \\
+  #   patch NativeHelper/NativeHelper.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/native_helper_cpp.patch && \\
+  #   patch NativeHelper/NativeHelper.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/native_helper.patch && \\
+  #   patch NativeHelper/Swap.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/swap_cpp.patch
   UPDATE_COMMAND ""
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
   INSTALL_COMMAND ""
 )
 
-# Compile gk_ma.
-set(GKMA_INCLUDE_DIR include/polygon_coverage_solvers/gk_ma/gk_ma)
-set(GKMA_FULL_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/${GKMA_INCLUDE_DIR})
-set(GKMA gkma)
-add_custom_target(${GKMA} ALL
-  COMMAND $(MAKE) BUILD_PATH="${CMAKE_LIBRARY_OUTPUT_DIRECTORY}"
-  WORKING_DIRECTORY ${GKMA_FULL_INCLUDE_DIR})
+# # Compile gk_ma.
+# set(GKMA_INCLUDE_DIR ${CMAKE_BINARY_DIR}/gk_ma-prefix/src/gk_ma/GkMa)
+# set(GKMA gkma)
+# message(WARNING ${GKMA_INCLUDE_DIR})
+# message(WARNING ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
+# add_custom_target(${GKMA} ALL
+#   COMMAND $(MAKE) BUILD_PATH="${CMAKE_LIBRARY_OUTPUT_DIRECTORY}"
+#   WORKING_DIRECTORY ${GKMA_INCLUDE_DIR})
 
 # Download GTSP test instances.
 include(ExternalProject)
