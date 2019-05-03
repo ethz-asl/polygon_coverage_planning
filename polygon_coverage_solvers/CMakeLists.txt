@@ -21,7 +21,8 @@ ExternalProject_Add(
   URL_MD5 765fad8e3746fa3dd9b81be0afb34d35
   PATCH_COMMAND \\
     patch NativeHelper/ClusterOptimisation.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/cluster_optimisation.patch && \\
-    patch NativeHelper/ImprovementManager.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/improvement_manager.patch
+    patch NativeHelper/ImprovementManager.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/improvement_manager.patch && \\
+    patch NativeHelper/Insert.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/insert.patch
   UPDATE_COMMAND ""
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ""
