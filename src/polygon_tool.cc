@@ -201,7 +201,7 @@ Polygon_2 PolygonTool::getPolygon() {
   return polygon_;
 }
 
-} // namespace mav_coverage_planning
+} // namespace mav_polygon_tool
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mav_coverage_planning::PolygonTool, rviz::Tool)
+PLUGINLIB_EXPORT_CLASS(mav_polygon_tool::PolygonTool, rviz::Tool)

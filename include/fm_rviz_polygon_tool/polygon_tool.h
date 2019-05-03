@@ -21,13 +21,14 @@
 
 namespace mav_polygon_tool {
 
+typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
+typedef K::Point_2 Point;
+typedef CGAL::Polygon_2<K> Polygon_2;
+typedef Polygon_2::Vertex_iterator VertexIterator;
+
 // Declare polygon tool as subclass of rviz::Tool.
 class PolygonTool : public rviz::Tool {
   Q_OBJECT
-  typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
-  typedef K::Point_2 Point;
-  typedef CGAL::Polygon_2<K> Polygon_2;
-  typedef Polygon_2::Vertex_iterator VertexIterator;
 
 public:
   PolygonTool();
@@ -68,6 +69,6 @@ private:
   const float kDeleteTol = 0.2;
 };
 
-} // namespace mav_coverage_planning
+} // namespace mav_polygon_tool
 
 #endif // FM_RVIZ_POLYGON_TOOL_POLYGON_TOOL_H_
