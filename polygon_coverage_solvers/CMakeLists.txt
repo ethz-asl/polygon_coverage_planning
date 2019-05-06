@@ -14,6 +14,7 @@ pkg_check_modules(MONO mono-2 REQUIRED)
 include_directories(${MONO_INCLUDE_DIRS})
 
 # Download gk_ma
+set(GKMA_INCLUDE_DIR ${CMAKE_BINARY_DIR}/gk_ma-prefix/src/gk_ma/GkMa)
 include(ExternalProject)
 ExternalProject_Add(
   gk_ma
@@ -28,20 +29,13 @@ ExternalProject_Add(
   #   patch NativeHelper/NativeHelper.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/native_helper_cpp.patch && \\
   #   patch NativeHelper/NativeHelper.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/native_helper.patch && \\
   #   patch NativeHelper/Swap.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/swap_cpp.patch
-  UPDATE_COMMAND ""
+  UPDATE_COMMAND cp ${PROJECT_SOURCE_DIR}/patches/Makefile ${GKMA_INCLUDE_DIR}/Makefile
   CONFIGURE_COMMAND ""
-  BUILD_COMMAND ""
+  BUILD_COMMAND \\
+    cd ${GKMA_INCLUDE_DIR} && \\
+    $(MAKE) -f ${GKMA_INCLUDE_DIR}/Makefile BUILD_PATH="${CMAKE_LIBRARY_OUTPUT_DIRECTORY}" WORKING_DIRECTORY ${GKMA_INCLUDE_DIR}
   INSTALL_COMMAND ""
 )
-
-# # Compile gk_ma.
-# set(GKMA_INCLUDE_DIR ${CMAKE_BINARY_DIR}/gk_ma-prefix/src/gk_ma/GkMa)
-# set(GKMA gkma)
-# message(WARNING ${GKMA_INCLUDE_DIR})
-# message(WARNING ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
-# add_custom_target(${GKMA} ALL
-#   COMMAND $(MAKE) BUILD_PATH="${CMAKE_LIBRARY_OUTPUT_DIRECTORY}"
-#   WORKING_DIRECTORY ${GKMA_INCLUDE_DIR})
 
 # Download GTSP test instances.
 include(ExternalProject)
