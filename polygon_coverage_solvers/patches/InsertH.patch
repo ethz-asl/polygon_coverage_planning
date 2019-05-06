@@ -1,0 +1,4 @@
+3c3
+< 	__declspec(dllexport) int InsertsWithCO(int *solution);
+---
+>   __attribute__ ((visibility ("default"))) int InsertsWithCO(int *solution);
