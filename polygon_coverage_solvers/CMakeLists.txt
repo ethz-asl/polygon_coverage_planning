@@ -20,15 +20,18 @@ ExternalProject_Add(
   gk_ma
   URL http://www.cs.nott.ac.uk/~dxk/gtsp_ma_source_codes.zip
   URL_MD5 765fad8e3746fa3dd9b81be0afb34d35
-  # PATCH_COMMAND \\
-  #   patch NativeHelper/ClusterOptimisation.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/cluster_optimisation_cpp.patch && \\
-  #   patch NativeHelper/ClusterOptimisation.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/cluster_optimisation.patch && \\
-  #   patch NativeHelper/ImprovementManager.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/improvement_manager.patch && \\
-  #   patch NativeHelper/Insert.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/insert_cpp.patch && \\
-  #   patch NativeHelper/Insert.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/insert.patch && \\
-  #   patch NativeHelper/NativeHelper.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/native_helper_cpp.patch && \\
-  #   patch NativeHelper/NativeHelper.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/native_helper.patch && \\
-  #   patch NativeHelper/Swap.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/swap_cpp.patch
+  PATCH_COMMAND \\
+    patch GkMa/OurHeuristic/Algorithm.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Algorithm.patch && \\
+    patch GkMa/OurHeuristic/Types/Generation.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Generation.patch && \\
+    patch GkMa/OurHeuristic/GeneticAlgorithm.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/GeneticAlgorithm.patch && \\
+    patch GkMa/Helper.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Helper.patch && \\
+    patch GkMa/OurHeuristic/NativeHelper.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/NativeHelper.patch && \\
+    patch GkMa/OurSolver.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/OurSolver.patch && \\
+    patch GkMa/OurHeuristic/Types/Permutation.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Permutation.patch && \\
+    patch GkMa/Program.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Program.patch && \\
+    patch GkMa/Solver.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Solver.patch && \\
+    patch GkMa/Loader/Task.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Task.patch && \\
+    patch GkMa/OurHeuristic/Types/Tour.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Tour.patch
   UPDATE_COMMAND cp ${PROJECT_SOURCE_DIR}/patches/Makefile ${GKMA_INCLUDE_DIR}/Makefile
   CONFIGURE_COMMAND ""
   BUILD_COMMAND \\

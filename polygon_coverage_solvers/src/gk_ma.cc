@@ -15,8 +15,7 @@ const std::string kPackageName = "polygon_coverage_solvers";
 const std::string kPackagePath = ros::package::getPath(kPackageName);
 const std::string kCatkinPath =
     kPackagePath.substr(0, kPackagePath.find("/src/"));
-const std::string kLibraryPath = kCatkinPath + "/build/" + kPackageName +
-                                 "/gk_ma-prefix/src/gk_ma/GkMa/obj/Release";
+const std::string kLibraryPath = kCatkinPath + "/devel/lib";
 const std::string kExecutablePath = kLibraryPath + "/" + kFile;
 
 bool Task::mIsSquare() const {
