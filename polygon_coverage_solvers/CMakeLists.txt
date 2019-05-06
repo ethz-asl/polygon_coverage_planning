@@ -14,7 +14,7 @@ pkg_check_modules(MONO mono-2 REQUIRED)
 include_directories(${MONO_INCLUDE_DIRS})
 
 # Download gk_ma
-set(GKMA_INCLUDE_DIR ${CMAKE_BINARY_DIR}/gk_ma-prefix/src/gk_ma/GkMa)
+set(GKMA_INCLUDE_DIR ${CMAKE_BINARY_DIR}/gk_ma-prefix/src/gk_ma)
 include(ExternalProject)
 ExternalProject_Add(
   gk_ma
@@ -40,11 +40,13 @@ ExternalProject_Add(
     patch GkMa/Solver.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Solver.patch && \\
     patch GkMa/Loader/Task.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Task.patch && \\
     patch GkMa/OurHeuristic/Types/Tour.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Tour.patch
-  UPDATE_COMMAND cp ${PROJECT_SOURCE_DIR}/patches/Makefile ${GKMA_INCLUDE_DIR}/Makefile
-  CONFIGURE_COMMAND ""
+  UPDATE_COMMAND ""
+  CONFIGURE_COMMAND \\
+    cp ${PROJECT_SOURCE_DIR}/patches/MakefileCpp ./MakefileCpp && \\
+    cp ${PROJECT_SOURCE_DIR}/patches/MakefileCs ./MakefileCs
   BUILD_COMMAND \\
-    cd ${GKMA_INCLUDE_DIR} && \\
-    $(MAKE) -f ${GKMA_INCLUDE_DIR}/Makefile BUILD_PATH="${CMAKE_LIBRARY_OUTPUT_DIRECTORY}" WORKING_DIRECTORY ${GKMA_INCLUDE_DIR}
+    $(MAKE) -f MakefileCs BUILD_PATH="${CMAKE_LIBRARY_OUTPUT_DIRECTORY}" \\
+    COMMAND $(MAKE) -f MakefileCpp BUILD_PATH="${CMAKE_LIBRARY_OUTPUT_DIRECTORY}"
   INSTALL_COMMAND ""
 )
 
