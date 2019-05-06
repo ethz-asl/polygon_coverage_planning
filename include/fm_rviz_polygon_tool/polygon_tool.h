@@ -11,11 +11,13 @@
 #include <CGAL/Polygon_2.h>
 
 #include <OgreVector3.h>
+#include <OgreColourValue.h>
 #include <rviz/geometry.h>
 #include <rviz/ogre_helpers/line.h>
 #include <rviz/ogre_helpers/shape.h>
 #include <rviz/properties/vector_property.h>
 #include <rviz/tool.h>
+#include <rviz/render_panel.h>
 #include <rviz/viewport_mouse_event.h>
 #include <rviz/visualization_manager.h>
 
@@ -38,12 +40,12 @@ public:
 
   void activate() override;
   void deactivate() override;
-
+  int processKeyEvent(QKeyEvent *event, rviz::RenderPanel *pane) override;
   int processMouseEvent(rviz::ViewportMouseEvent &event) override;
 
   void load(const rviz::Config &config) override;
   void save(rviz::Config config) const override;
-  Polygon_2 getPolygon();
+  std::vector<Polygon_2> getPolygon();
 
 protected:
   void makeVertex(const Ogre::Vector3 &position);
@@ -52,20 +54,30 @@ protected:
   void drawLines();
   void checkCGalPolygon();
 
-  std::vector<rviz::Shape *> active_spheres_;
-  std::vector<Ogre::SceneNode *> vertex_nodes_;
+  std::vector<std::vector<rviz::Shape *>> active_spheres_;
+  std::vector<std::vector<Ogre::SceneNode *>> vertex_nodes_;
   Ogre::SceneNode *moving_vertex_node_;
   rviz::VectorProperty *current_vertex_property_;
-  std::vector<rviz::Line *> active_lines_;
-  std::list<Point> points_for_poly_;
+  std::vector<std::vector<rviz::Line *>> active_lines_;
+  std::vector<std::list<Point>> points_for_poly_;
 
-  Polygon_2 polygon_;
+  std::vector<Polygon_2> polygon_;
   // Point display.
   rviz::Shape *vertex_;
+  rviz::Shape *vertex2_;
 
   // point scale
   const float kPtScale = 0.5;
   const float kDeleteTol = 0.2;
+
+private:
+  Ogre::ColourValue red_, blue_, pink_, green_;
+  void pushBackElements();
+  void setColor(const Ogre::ColourValue &line_color, const Ogre::ColourValue &sphere_color);
+  int current_polygon_ = 0;
+  int current_type_;
+  std::vector<int> type_of_polygons_;
+  bool mouse_down_ = false;
 };
 
 } // namespace mav_polygon_tool
