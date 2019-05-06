@@ -5,7 +5,7 @@
 
 #include "polygon_coverage_solvers/graph_base.h"
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 namespace boolean_lattice {
 // Internal node property. Stores the set of visited clusters.
 struct NodeProperty {
@@ -71,6 +71,6 @@ class BooleanLattice : public GraphBase<NodeProperty, EdgeProperty> {
   size_t goal_cluster_;   // Unique goal cluster.
 };
 }  // namespace boolean_lattice
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning
 
 #endif  // POLYGON_COVERAGE_SOLVERS_BOOLEAN_LATTICE_H_

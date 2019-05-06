@@ -1,12 +1,12 @@
 #include <cmath>
 #include <numeric>
 
-#include <glog/logging.h>
+#include <ros/console.h>
 
 #include "polygon_coverage_solvers/boolean_lattice.h"
 #include "polygon_coverage_solvers/combinatorics.h"
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 namespace boolean_lattice {
 
 void BooleanLattice::clear() {
@@ -34,8 +34,9 @@ bool BooleanLattice::create() {
     }
   }
 
-  LOG(INFO) << "Successfully created boolean lattice with " << graph_.size()
-            << " nodes and " << edge_properties_.size() << " edges.";
+  ROS_INFO_STREAM("Successfully created boolean lattice with "
+                  << graph_.size() << " nodes and " << edge_properties_.size()
+                  << " edges.");
 
   is_created_ = true;
   return graph_.size() == std::exp2(num_clusters_)  // 2^n elements.
@@ -47,7 +48,7 @@ bool BooleanLattice::create() {
 
 bool BooleanLattice::addEdges() {
   if (graph_.empty()) {
-    LOG(ERROR) << "Cannot add edges to an empty graph.";
+    ROS_INFO_STREAM("Cannot add edges to an empty graph.");
     return false;
   }
 
@@ -87,7 +88,7 @@ bool BooleanLattice::isConnected(const EdgeId& edge_id) {
 
 bool BooleanLattice::addStartNode(const NodeProperty& node_property) {
   if (!is_created_) {
-    LOG(ERROR) << "create() needs to be called first.";
+    ROS_ERROR_STREAM("create() needs to be called first.");
     return false;
   }
 
@@ -116,7 +117,7 @@ bool BooleanLattice::addStartNode() { return addStartNode(NodeProperty()); }
 
 bool BooleanLattice::addGoalNode(const NodeProperty& node_property) {
   if (!is_created_) {
-    LOG(ERROR) << "create() needs to be called first.";
+    ROS_ERROR_STREAM("create() needs to be called first.");
     return false;
   }
 
@@ -148,4 +149,4 @@ bool BooleanLattice::addGoalNode(const NodeProperty& node_property) {
 bool BooleanLattice::addGoalNode() { return addGoalNode(NodeProperty()); }
 
 }  // namespace boolean_lattice
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning

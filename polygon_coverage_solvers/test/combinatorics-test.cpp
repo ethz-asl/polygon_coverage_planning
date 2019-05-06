@@ -2,7 +2,7 @@
 
 #include "polygon_coverage_solvers/combinatorics.h"
 
-using namespace mav_coverage_planning;
+using namespace polygon_coverage_planning;
 
 TEST(MathTest, KElementsFromNTest) {
   std::vector<size_t> sorted_elements = {0, 1, 2};

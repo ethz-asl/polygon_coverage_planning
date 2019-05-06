@@ -7,7 +7,7 @@
 #include <mono/metadata/object.h>
 
 // Interfaces with the GK MA GTSP solver.
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 namespace gk_ma {
 struct Task {
   Task(const std::vector<std::vector<int>>& m,
@@ -50,6 +50,6 @@ class GkMa {
   std::vector<int> solution_;
 };
 }  // namespace gk_ma
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning
 
 #endif  // POLYGON_COVERAGE_SOLVERS_GK_MA_H_

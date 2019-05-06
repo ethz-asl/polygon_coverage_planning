@@ -7,7 +7,7 @@
 #include <vector>
 
 // Utilities to create graphs.
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 
 const double kToMilli = 1000;
 const double kFromMilli = 1.0 / kToMilli;
@@ -58,7 +58,7 @@ class GraphBase {
   virtual void clear();
   void clearEdges();
   // Create graph given the internal settings.
-  virtual bool create();
+  virtual bool create() = 0;
 
   inline size_t size() const { return graph_.size(); }
   inline size_t getNumberOfEdges() const { return edge_properties_.size(); }
@@ -100,7 +100,7 @@ class GraphBase {
  protected:
   // Called from addNode. Creates all edges to the node at the back of the
   // graph.
-  virtual bool addEdges();
+  virtual bool addEdges() = 0;
   // Given the goal, calculate and set the heuristic for all nodes in the graph.
   virtual bool calculateHeuristic(size_t goal, Heuristic* heuristic) const;
 
@@ -119,7 +119,7 @@ class GraphBase {
   size_t goal_idx_;
   bool is_created_;
 };
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning
 
 #include "polygon_coverage_solvers/impl/graph_base_impl.h"
 

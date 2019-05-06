@@ -4,9 +4,10 @@
 #include <algorithm>
 #include <set>
 
-#include <glog/logging.h>
+#include <ros/assert.h>
+#include <ros/console.h>
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 
 template <class NodeProperty, class EdgeProperty>
 bool GraphBase<NodeProperty, EdgeProperty>::addNode(
@@ -33,7 +34,7 @@ bool GraphBase<NodeProperty, EdgeProperty>::addStartNode(
   if (addNode(node_property)) {
     return true;
   } else {
-    LOG(ERROR) << "Failed adding start node.";
+    ROS_ERROR_STREAM("Failed adding start node.");
     return false;
   }
 }
@@ -46,7 +47,7 @@ bool GraphBase<NodeProperty, EdgeProperty>::addGoalNode(
   if (addNode(node_property)) {
     return true;
   } else {
-    LOG(ERROR) << "Failed adding goal node.";
+    ROS_ERROR_STREAM("Failed adding goal node.");
     return false;
   }
 }
@@ -67,12 +68,6 @@ void GraphBase<NodeProperty, EdgeProperty>::clearEdges() {
   for (std::map<size_t, double>& neighbors : graph_) {
     neighbors.clear();
   }
-}
-
-template <class NodeProperty, class EdgeProperty>
-bool GraphBase<NodeProperty, EdgeProperty>::create() {
-  LOG(ERROR) << "create() not implemented.";
-  return false;
 }
 
 template <class NodeProperty, class EdgeProperty>
@@ -101,14 +96,14 @@ bool GraphBase<NodeProperty, EdgeProperty>::edgePropertyExists(
 template <class NodeProperty, class EdgeProperty>
 bool GraphBase<NodeProperty, EdgeProperty>::getEdgeCost(const EdgeId& edge_id,
                                                         double* cost) const {
-  CHECK_NOTNULL(cost);
+  ROS_ASSERT(cost);
 
   if (edgeExists(edge_id)) {
     *cost = graph_.at(edge_id.first).at(edge_id.second);
     return true;
   } else {
-    LOG(ERROR) << "Edge from " << edge_id.first << " to " << edge_id.second
-               << " does not exist.";
+    ROS_ERROR_STREAM("Edge from " << edge_id.first << " to " << edge_id.second
+                                  << " does not exist.");
     *cost = -1.0;
     return false;
   }
@@ -120,7 +115,7 @@ const NodeProperty* GraphBase<NodeProperty, EdgeProperty>::getNodeProperty(
   if (nodePropertyExists(node_id)) {
     return &(node_properties_.at(node_id));
   } else {
-    LOG(ERROR) << "Cannot access node property " << node_id << ".";
+    ROS_ERROR_STREAM("Cannot access node property " << node_id << ".");
     return nullptr;
   }
 }
@@ -132,8 +127,8 @@ GraphBase<NodeProperty, EdgeProperty>::GraphBase::getEdgeProperty(
   if (edgePropertyExists(edge_id)) {
     return &(edge_properties_.at(edge_id));
   } else {
-    LOG(ERROR) << "Cannot access edge property from " << edge_id.first << " to "
-               << edge_id.second << ".";
+    ROS_ERROR_STREAM("Cannot access edge property from "
+                     << edge_id.first << " to " << edge_id.second << ".");
     return nullptr;
   }
 }
@@ -141,7 +136,7 @@ GraphBase<NodeProperty, EdgeProperty>::GraphBase::getEdgeProperty(
 template <class NodeProperty, class EdgeProperty>
 bool GraphBase<NodeProperty, EdgeProperty>::solveDijkstra(
     size_t start, size_t goal, Solution* solution) const {
-  CHECK_NOTNULL(solution);
+  ROS_ASSERT(solution);
   solution->clear();
   if (!nodeExists(start) || !nodeExists(goal)) {
     return false;
@@ -201,14 +196,14 @@ bool GraphBase<NodeProperty, EdgeProperty>::solveDijkstra(
 template <class NodeProperty, class EdgeProperty>
 bool GraphBase<NodeProperty, EdgeProperty>::calculateHeuristic(
     size_t goal, Heuristic* heuristic) const {
-  LOG(ERROR) << "Heuristic not implemented.";
+  ROS_ERROR_STREAM("Heuristic not implemented.");
   return false;
 }
 
 template <class NodeProperty, class EdgeProperty>
 bool GraphBase<NodeProperty, EdgeProperty>::solveAStar(
     size_t start, size_t goal, Solution* solution) const {
-  CHECK_NOTNULL(solution);
+  ROS_ASSERT(solution);
   if (!nodeExists(start) || !nodeExists(goal)) {
     return false;
   }
@@ -284,12 +279,6 @@ bool GraphBase<NodeProperty, EdgeProperty>::solveAStar(
 }
 
 template <class NodeProperty, class EdgeProperty>
-bool GraphBase<NodeProperty, EdgeProperty>::addEdges() {
-  LOG(ERROR) << "addEdges not implemented.";
-  return false;
-}
-
-template <class NodeProperty, class EdgeProperty>
 bool GraphBase<NodeProperty, EdgeProperty>::addEdge(
     const EdgeId& edge_id, const EdgeProperty& edge_property, double cost) {
   if (cost >= 0.0 && nodeExists(edge_id.first)) {
@@ -334,6 +323,6 @@ GraphBase<NodeProperty, EdgeProperty>::getAdjacencyMatrix() const {
   return m;
 }
 
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning
 
 #endif  // POLYGON_COVERAGE_SOLVERS_GRAPH_BASE_IMPL_H_

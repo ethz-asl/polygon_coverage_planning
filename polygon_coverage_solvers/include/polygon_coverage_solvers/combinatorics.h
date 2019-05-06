@@ -5,7 +5,7 @@
 #include <set>
 #include <vector>
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 
 // Calculate the factorial
 inline int factorial(int n) {
@@ -26,6 +26,6 @@ void getAllCombinationsOfKElementsFromN(
     const std::vector<size_t>& sorted_elements, int k, int start_pos,
     std::vector<size_t>* combination, std::vector<std::set<size_t>>* result);
 
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning
 
 #endif /* POLYGON_COVERAGE_SOLVERS_COMBINATORICS_H_ */

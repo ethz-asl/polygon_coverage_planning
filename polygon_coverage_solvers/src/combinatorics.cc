@@ -1,13 +1,14 @@
 #include "polygon_coverage_solvers/combinatorics.h"
 
-#include <glog/logging.h>
+#include <ros/console.h>
+#include <ros/assert.h>
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 
 void getAllCombinationsOfKElementsFromN(
     const std::vector<size_t>& sorted_elements, int k,
     std::vector<std::set<size_t>>* result) {
-  CHECK_NOTNULL(result);
+  ROS_ASSERT(result);
   // Initialization.
   result->clear();
   std::vector<size_t> combination(k);
@@ -19,8 +20,8 @@ void getAllCombinationsOfKElementsFromN(
     const std::vector<size_t>& sorted_elements, int k, int start_pos,
     std::vector<size_t>* combination, std::vector<std::set<size_t>>* result) {
   // https://stackoverflow.com/questions/127704/algorithm-to-return-all-combinations-of-k-elements-from-n
-  CHECK_NOTNULL(combination);
-  CHECK_NOTNULL(result);
+  ROS_ASSERT(combination);
+  ROS_ASSERT(result);
   // New combination found.
   if (k == 0) {
     std::set<size_t> combination_set;
@@ -41,4 +42,4 @@ void getAllCombinationsOfKElementsFromN(
   }
 }
 
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning

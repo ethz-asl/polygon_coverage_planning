@@ -3,17 +3,20 @@
 #include <mono/jit/jit.h>
 #include <mono/metadata/assembly.h>
 
-#include <glog/logging.h>
+#include <ros/assert.h>
+#include <ros/console.h>
 #include <ros/package.h>
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 namespace gk_ma {
 
 const std::string kFile = "GkMa.exe";
 const std::string kPackageName = "polygon_coverage_solvers";
 const std::string kPackagePath = ros::package::getPath(kPackageName);
-const std::string kCatkinPath = kPackagePath.substr(0, kPackagePath.find("/src/"));
-const std::string kLibraryPath = kCatkinPath + "/build/" + kPackageName + "/gk_ma-prefix/src/gk_ma/GkMa/obj/Release";
+const std::string kCatkinPath =
+    kPackagePath.substr(0, kPackagePath.find("/src/"));
+const std::string kLibraryPath = kCatkinPath + "/build/" + kPackageName +
+                                 "/gk_ma-prefix/src/gk_ma/GkMa/obj/Release";
 const std::string kExecutablePath = kLibraryPath + "/" + kFile;
 
 bool Task::mIsSquare() const {
@@ -43,13 +46,13 @@ GkMa::GkMa() {
   domain_ = mono_jit_init(kFile.c_str());
   MonoAssembly* assembly =
       mono_domain_assembly_open(domain_, kExecutablePath.c_str());
-  CHECK(assembly);
+  ROS_ASSERT(assembly);
 
   // Load OurSolver class.
   MonoImage* image = mono_assembly_get_image(assembly);
   solver_class_ = mono_class_from_name(image, "GkMa", "OurSolver");
-  CHECK(solver_class_) << "Cannot find OurSolver in assembly "
-                       << mono_image_get_filename(image);
+  ROS_ASSERT_MSG(solver_class_, "Cannot find OurSolver in assembly %s",
+                 mono_image_get_filename(image));
   solver_ = mono_object_new(domain_, solver_class_);  // Allocate memory.
 }
 
@@ -117,7 +120,7 @@ MonoArray* GkMa::vectorOfVectorToMonoArray(
 bool GkMa::solve() {
   // TODO(rikba): Check if solver ctor was called.
   if (!solver_) {
-    LOG(ERROR) << "Solver not set.";
+    ROS_ERROR_STREAM("Solver not set.");
     return false;
   }
 
@@ -134,9 +137,9 @@ bool GkMa::solve() {
     }
   }
   if (solve == NULL || solution_at_index == NULL) {
-    LOG_IF(ERROR, solve == NULL) << "Method Solve() not found.";
-    LOG_IF(ERROR, solution_at_index == NULL)
-        << "Method SolutionAtIndex(int index) not found.";
+    ROS_ERROR_COND(solve == NULL, "Method Solve() not found.");
+    ROS_ERROR_COND(solution_at_index == NULL,
+                   "Method SolutionAtIndex(int index) not found.");
     return false;
   }
 
@@ -148,7 +151,7 @@ bool GkMa::solve() {
       mono_class_get_property_from_name(solver_class_, "SolutionLength");
   MonoMethod* solution_length = mono_property_get_get_method(prop);
   if (solution_length == NULL) {
-    LOG(ERROR) << "Getter SolutionLength() not found.";
+    ROS_ERROR_STREAM("Getter SolutionLength() not found.");
     return false;
   }
   MonoObject* result =
@@ -168,4 +171,4 @@ bool GkMa::solve() {
 }
 
 }  // namespace gk_ma
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning

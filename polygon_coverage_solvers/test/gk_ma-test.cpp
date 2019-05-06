@@ -7,7 +7,7 @@
 
 #include "polygon_coverage_solvers/gk_ma.h"
 
-using namespace mav_coverage_planning;
+using namespace polygon_coverage_planning;
 using namespace gk_ma;
 
 const std::string kPackageName = "polygon_coverage_solvers";
