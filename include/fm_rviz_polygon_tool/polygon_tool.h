@@ -6,6 +6,8 @@
 #include <OGRE/OgreSceneNode.h>
 
 #include <ros/console.h>
+#include <ros/ros.h>
+#include <std_msgs/Int8.h>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_2.h>
@@ -50,6 +52,7 @@ public:
 private:
   void setColorsLeaving();
   void setColorsArriving();
+  void deletePolygn(int index);
   void makeVertex(const Ogre::Vector3 &position);
   void makeHoleVertex(const Ogre::Vector3 &position);
   void leftClicked(rviz::ViewportMouseEvent &event);
@@ -66,18 +69,27 @@ private:
   std::vector<Polygon_2> polygon_;
   // Point display.
   rviz::Shape *vertex_;
-  rviz::Shape *vertex2_;
   // point scale
   const float kPtScale = 0.5;
   const float kDeleteTol = 0.2;
 
-  Ogre::ColourValue red_, blue_, pink_, green_, yellow_;
+  Ogre::ColourValue red_, blue_, pink_, green_, yellow_,transparent_;
   void pushBackElements(int new_type);
   void setColor(const Ogre::ColourValue &line_color, const Ogre::ColourValue &sphere_color);
   void drawLines(const Ogre::ColourValue &line_color);
   int current_polygon_ = 0;
   int current_type_;
   std::vector<int> type_of_polygons_;
+
+  // ROS messaging
+  bool is_activated_ = false;
+  ros::NodeHandle nh_;
+  ros::Subscriber new_tool_subs_;
+  ros::Subscriber delete_poly_subs_;
+  ros::Subscriber selector_subs_;
+  void toolSelectCallback(const std_msgs::Int8 &tool_num);
+  void newPolyCallback(const std_msgs::Int8 &new_poly_num);
+  void deletePolyCallback(const std_msgs::Int8 &delete_ind);
 };
 
 } // namespace mav_polygon_tool
