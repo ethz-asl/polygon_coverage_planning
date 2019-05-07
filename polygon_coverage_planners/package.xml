@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>polygon_coverage_geometry</name>
+  <name>polygon_coverage_planners</name>
   <version>0.0.0</version>
   <description>
-    This package contains the geometric sweep path generation and polygon operations.
+    Pipeline to solve 3D coverage planning problems.
   </description>
   <author>Rik Bähnemann</author>
   <maintainer email="brik@ethz.ch">Rik Bähnemann</maintainer>
@@ -14,7 +14,8 @@
   <buildtool_depend>catkin_simple</buildtool_depend>
 
   <depend>cgal_catkin</depend>
-  <depend>rosconsole</depend>
-  <depend>roslib</depend>
+  <depend>glog_catkin</depend>
+  <depend>mav_coverage_graph_solvers</depend>
+  <depend>mav_coverage_planning_comm</depend>
 
 </package>
