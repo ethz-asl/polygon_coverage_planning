@@ -1,7 +1,7 @@
 #ifndef POLYGON_COVERAGE_GEOMETRY_WEAKLY_MONOTONE_H_
 #define POLYGON_COVERAGE_GEOMETRY_WEAKLY_MONOTONE_H_
 
-#include <polygon_coverage_geometry/cgal_definitions.h>
+#include "polygon_coverage_geometry/cgal_definitions.h"
 
 namespace polygon_coverage_planning {
 

@@ -1,7 +1,7 @@
 #ifndef POLYGON_COVERAGE_GEOMETRY_BCD_H_
 #define POLYGON_COVERAGE_GEOMETRY_BCD_H_
 
-#include <polygon_coverage_geometry/cgal_definitions.h>
+#include "polygon_coverage_geometry/cgal_definitions.h"
 
 // Choset, Howie. "Coverage of known spaces: The boustrophedon cellular
 // decomposition." Autonomous Robots 9.3 (2000): 247-253.

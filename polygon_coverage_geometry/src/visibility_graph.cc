@@ -1,12 +1,12 @@
-#include "mav_2d_coverage_planning/graphs/visibility_graph.h"
-#include "mav_2d_coverage_planning/cost_functions/path_cost_functions.h"
+#include "polygon_coverage_geometry/visibility_graph.h"
 
-#include <glog/logging.h>
+#include <ros/assert.h>
+#include <ros/console.h>
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 namespace visibility_graph {
 
-VisibilityGraph::VisibilityGraph(const Polygon& polygon)
+VisibilityGraph::VisibilityGraph(const PolygonWithHoles& polygon)
     : GraphBase(), polygon_(polygon) {
   // Build visibility graph.
   is_created_ = create();
@@ -16,15 +16,14 @@ bool VisibilityGraph::create() {
   clear();
   // Select shortest path vertices.
   std::vector<VertexConstCirculator> graph_vertices;
-  if (!polygon_.appendConcaveOuterBoundaryVertices(&graph_vertices))
-    return false;
-  if (!polygon_.appendConvexHoleVertices(&graph_vertices)) return false;
+  polygon_.findConcaveOuterBoundaryVertices(&graph_vertices);
+  polygon_.findConvexHoleVertices(&graph_vertices);
 
   for (const VertexConstCirculator& v : graph_vertices) {
     // Compute visibility polygon.
-    Polygon visibility;
+    Polygon_2 visibility;
     if (!polygon_.computeVisibilityPolygon(*v, &visibility)) {
-      LOG(ERROR) << "Cannot compute visibility polygon.";
+      ROS_ERROR_STREAM("Cannot compute visibility polygon.");
       return false;
     }
     if (!addNode(NodeProperty(*v, visibility))) {
@@ -32,15 +31,49 @@ bool VisibilityGraph::create() {
     }
   }
 
-  DLOG(INFO) << "Created visibility graph with " << graph_.size()
-             << " nodes and " << edge_properties_.size() << " edges.";
+  ROS_DEBUG_STREAM("Created visibility graph with "
+                   << graph_.size() << " nodes and " << edge_properties_.size()
+                   << " edges.");
 
   return true;
 }
 
+void VisibilityGraph::findConcaveOuterBoundaryVertices(
+    std::vector<VertexConstCirculator>* concave_vertices) const {
+  ROS_ASSERT(concave_vertices);
+  ROS_ASSERT(polygon_.outer_boundary().is_simple());
+  ROS_ASSERT(polygon_.outer_boundary().is_counterclockwise_oriented());
+
+  VertexConstCirculator vit = polygon_.outer_boundary().vertices_circulator();
+  do {
+    Triangle_2 triangle(*std::prev(vit), *vit, *std::next(vit));
+    CGAL::Orientation orientation = triangle.orientation();
+    ROS_ASSERT(orientation != CGAL::COLLINEAR);
+    if (orientation == CGAL::CLOCKWISE) concave_vertices->push_back(vit);
+  } while (++vit != polygon_.outer_boundary().vertices_circulator());
+}
+
+void VisibilityGraph::findConvexHoleVertices(
+    std::vector<VertexConstCirculator>* convex_vertices) const {
+  ROS_ASSERT(convex_vertices);
+
+  for (PolygonWithHoles::Hole_const_iterator hit = polygon_.holes_begin();
+       hit != polygon_.holes_end(); ++hit) {
+    ROS_ASSERT(hit->is_simple());
+    ROS_ASSERT(hit->is_clockwise_oriented());
+    VertexConstCirculator vit = hit->vertices_circulator();
+    do {
+      Triangle_2 triangle(*std::prev(vit), *vit, *std::next(vit));
+      CGAL::Orientation orientation = triangle.orientation();
+      ROS_ASSERT(orientation != CGAL::COLLINEAR);
+      if (orientation == CGAL::CLOCKWISE) convex_vertices->push_back(vit);
+    } while (++vit != hit->vertices_circulator());
+  }
+}
+
 bool VisibilityGraph::addEdges() {
   if (graph_.empty()) {
-    LOG(ERROR) << "Cannot add edges to an empty graph.";
+    ROS_ERROR_STREAM("Cannot add edges to an empty graph.");
     return false;
   }
 
@@ -49,7 +82,7 @@ bool VisibilityGraph::addEdges() {
     const NodeProperty* new_node_property = getNodeProperty(new_id);
     const NodeProperty* adj_node_property = getNodeProperty(adj_id);
     if (adj_node_property == nullptr) {
-      LOG(ERROR) << "Cannot access potential neighbor.";
+      ROS_ERROR_STREAM("Cannot access potential neighbor.");
       return false;
     }
     if (new_node_property->visibility.pointInPolygon(
@@ -101,11 +134,11 @@ bool VisibilityGraph::solve(const Point_2& start,
   waypoints->clear();
 
   if (!is_created_) {
-    LOG(ERROR) << "Visibility graph not initialized.";
+    ROS_ERROR_STREAM("Visibility graph not initialized.");
     return false;
   } else if (!polygon_.pointInPolygon(start) ||
              !polygon_.pointInPolygon(goal)) {
-    LOG(ERROR) << "Start or goal is not in polygon.";
+    ROS_ERROR_STREAM("Start or goal is not in polygon.");
     return false;
   }
 
@@ -135,7 +168,8 @@ bool VisibilityGraph::solve(const Point_2& start,
   // Find shortest way using A*.
   Solution solution;
   if (!temp_visibility_graph.solveAStar(start_idx, goal_idx, &solution)) {
-    LOG(ERROR) << "Could not find shortest path. Graph not strongly connected.";
+    ROS_ERROR_STREAM(
+        "Could not find shortest path. Graph not fully connected.");
     return false;
   }
 
@@ -150,7 +184,7 @@ bool VisibilityGraph::getWaypoints(const Solution& solution,
   for (size_t i = 0; i < solution.size(); i++) {
     const NodeProperty* node_property = getNodeProperty(solution[i]);
     if (node_property == nullptr) {
-      LOG(ERROR) << "Cannot reconstruct solution.";
+      ROS_ERROR_STREAM("Cannot reconstruct solution.");
       return false;
     }
     (*waypoints)[i] = node_property->coordinates;
@@ -165,15 +199,15 @@ bool VisibilityGraph::calculateHeuristic(size_t goal,
 
   const NodeProperty* goal_node_property = getNodeProperty(goal);
   if (goal_node_property == nullptr) {
-    LOG(ERROR) << "Cannot find goal node property to calculate heuristic.";
+    ROS_ERROR_STREAM("Cannot find goal node property to calculate heuristic.");
     return false;
   }
 
   for (size_t adj_id = 0; adj_id < graph_.size(); ++adj_id) {
     const NodeProperty* adj_node_property = getNodeProperty(adj_id);
     if (adj_node_property == nullptr) {
-      LOG(ERROR)
-          << "Cannot access adjacent node property to calculate heuristic.";
+      ROS_ERROR_STREAM(
+          "Cannot access adjacent node property to calculate heuristic.");
       return false;
     }
     (*heuristic)[adj_id] = computeEuclideanSegmentCost(
@@ -202,4 +236,4 @@ bool VisibilityGraph::solveWithOutsideStartAndGoal(
 }
 
 }  // namespace visibility_graph
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning

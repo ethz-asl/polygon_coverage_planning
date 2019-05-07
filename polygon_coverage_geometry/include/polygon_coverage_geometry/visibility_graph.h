@@ -1,32 +1,31 @@
-#ifndef MAV_2D_COVERAGE_PLANNING_GRAPHS_VISIBILITY_GRAPH_H_
-#define MAV_2D_COVERAGE_PLANNING_GRAPHS_VISIBILITY_GRAPH_H_
+#ifndef POLYGON_COVERAGE_GEOMETRY_VISIBILITY_GRAPH_H_
+#define POLYGON_COVERAGE_GEOMETRY_VISIBILITY_GRAPH_H_
 
 #include <map>
 
-#include <mav_coverage_graph_solvers/graph_base.h>
+#include <polygon_coverage_solvers/graph_base.h>
 
-#include <mav_coverage_planning_comm/cgal_definitions.h>
-#include "mav_2d_coverage_planning/geometry/polygon.h"
+#include "polygon_coverage_geometry/cgal_definitions.h"
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 namespace visibility_graph {
 
 struct NodeProperty {
   NodeProperty() : coordinates(Point_2(CGAL::ORIGIN)) {}
-  NodeProperty(const Point_2& coordinates, const Polygon& visibility)
+  NodeProperty(const Point_2& coordinates, const Polygon_2& visibility)
       : coordinates(coordinates), visibility(visibility) {}
-  Point_2 coordinates;  // The 2D coordinates.
-  Polygon visibility;   // The visibile polygon from the vertex.
+  Point_2 coordinates;   // The 2D coordinates.
+  Polygon_2 visibility;  // The visibile polygon from the vertex.
 };
 
 struct EdgeProperty {};
 
-// Points-of-visibility pathfinding.
+// Shortest path calculation in the reduced visibility graph.
 // https://www.david-gouveia.com/pathfinding-on-a-2d-polygonal-map
 class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
  public:
   // Creates an undirected, weighted visibility graph.
-  VisibilityGraph(const Polygon& polygon);
+  VisibilityGraph(const PolygonWithHoles& polygon);
 
   VisibilityGraph() : GraphBase() {}
 
@@ -40,8 +39,8 @@ class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
              std::vector<Point_2>* waypoints) const;
   // Same as solve but provide a precomputed visibility graph for the polygon.
   // Note: Start and goal need to be contained in the polygon_.
-  bool solve(const Point_2& start, const Polygon& start_visibility_polygon,
-             const Point_2& goal, const Polygon& goal_visibility_polygon,
+  bool solve(const Point_2& start, const Polygon_2& start_visibility_polygon,
+             const Point_2& goal, const Polygon_2& goal_visibility_polygon,
              std::vector<Point_2>* waypoints) const;
 
   // Convenience function: addtionally adds original start and goal to shortest
@@ -52,7 +51,7 @@ class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
   bool getWaypoints(const Solution& solution,
                     std::vector<Point_2>* waypoints) const;
 
-  inline Polygon getPolygon() const { return polygon_; }
+  inline PolygonWithHoles getPolygon() const { return polygon_; }
 
  private:
   // Adds all line of sight neighbors.
@@ -64,10 +63,17 @@ class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
   virtual bool calculateHeuristic(size_t goal,
                                   Heuristic* heuristic) const override;
 
-  Polygon polygon_;
+  // Find and append concave outer boundary vertices.
+  void findConcaveOuterBoundaryVertices(
+      std::vector<VertexConstCirculator>* concave_vertices) const;
+  // Find and append convex hole vertices.
+  bool findConvexHoleVertices(
+      std::vector<VertexConstCirculator>* convex_vertices) const;
+
+  PolygonWithHoles polygon_;
 };
 
 }  // namespace visibility_graph
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning
 
-#endif /* MAV_2D_COVERAGE_PLANNING_GRAPHS_VISIBILITY_GRAPH_H_ */
+#endif /* POLYGON_COVERAGE_GEOMETRY_VISIBILITY_GRAPH_H_ */

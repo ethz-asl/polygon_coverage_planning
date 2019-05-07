@@ -14,8 +14,6 @@
 
 namespace mav_coverage_planning {
 
-enum DecompositionType { kBoustrophedeon, kTrapezoidal };
-
 class Polygon {
  public:
   Polygon();
@@ -75,26 +73,10 @@ class Polygon {
   bool computeBestTrapezoidalDecompositionFromPolygonWithHoles(
       std::vector<Polygon>* trap_polygons) const;
 
-  // Compute the visibility polygon given a point inside a strictly simple
-  // polygon. Francisc Bungiu, Michael Hemmer, John Hershberger, Kan Huang, and
-  // Alexander Kröller. Efficient computation of visibility polygons. CoRR,
-  // abs/1403.3905, 2014.
-  bool computeVisibilityPolygon(const Point_2& query_point,
-                                Polygon* visibility_polygon) const;
-
   inline const PolygonWithHoles& getPolygon() const { return polygon_; }
   std::vector<Point_2> getHullVertices() const;
   std::vector<std::vector<Point_2>> getHoleVertices() const;
 
-  // Helper to check whether a point is inside or on the boundary of the
-  // polygon.
-  bool pointInPolygon(const Point_2& p) const;
-  bool pointsInPolygon(const std::vector<Point_2>::iterator& begin,
-                       const std::vector<Point_2>::iterator& end) const;
-
-  // Appends all concave outer boundary vertices.
-  bool appendConcaveOuterBoundaryVertices(
-      std::vector<VertexConstCirculator>* concave_vertices) const;
   // Appends all convex hole vertices.
   bool appendConvexHoleVertices(
       std::vector<VertexConstCirculator>* convex_vertices) const;

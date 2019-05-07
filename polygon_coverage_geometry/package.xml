@@ -16,5 +16,6 @@
   <depend>cgal_catkin</depend>
   <depend>rosconsole</depend>
   <depend>roslib</depend>
+  <depend>polygon_coverage_solvers</depend>
 
 </package>
