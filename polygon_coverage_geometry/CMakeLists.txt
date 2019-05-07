@@ -21,7 +21,7 @@ cs_add_library(${PROJECT_NAME}
   #src/geometry/polygon.cc
   #src/geometry/BCD.cpp
   src/bcd.cc
-  #src/geometry/weakly_monotone.cc
+  src/weakly_monotone.cc
   #src/geometry/sweep.cc
 )
 target_link_libraries(${PROJECT_NAME} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES})

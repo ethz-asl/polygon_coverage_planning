@@ -1,6 +1,6 @@
-#include "mav_2d_coverage_planning/geometry/weakly_monotone.h"
+#include "polygon_coverage_geometry/weakly_monotone.h"
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 
 bool isWeaklyMonotone(const Polygon_2& in, const Line_2& x_axis) {
   // Find north and south.
@@ -60,4 +60,4 @@ VertexConstCirculator findNorth(const Polygon_2& in, const Line_2& x_axis) {
   return findSouth(in, x_axis.opposite());
 }
 
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning
