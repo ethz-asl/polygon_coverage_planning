@@ -47,11 +47,13 @@ public:
   void save(rviz::Config config) const override;
   std::vector<Polygon_2> getPolygon();
 
-protected:
+private:
+  void setColorsLeaving();
+  void setColorsArriving();
   void makeVertex(const Ogre::Vector3 &position);
+  void makeHoleVertex(const Ogre::Vector3 &position);
   void leftClicked(rviz::ViewportMouseEvent &event);
   void rightClicked(rviz::ViewportMouseEvent &event);
-  void drawLines();
   void checkCGalPolygon();
 
   std::vector<std::vector<rviz::Shape *>> active_spheres_;
@@ -65,19 +67,17 @@ protected:
   // Point display.
   rviz::Shape *vertex_;
   rviz::Shape *vertex2_;
-
   // point scale
   const float kPtScale = 0.5;
   const float kDeleteTol = 0.2;
 
-private:
-  Ogre::ColourValue red_, blue_, pink_, green_;
-  void pushBackElements();
+  Ogre::ColourValue red_, blue_, pink_, green_, yellow_;
+  void pushBackElements(int new_type);
   void setColor(const Ogre::ColourValue &line_color, const Ogre::ColourValue &sphere_color);
+  void drawLines(const Ogre::ColourValue &line_color);
   int current_polygon_ = 0;
   int current_type_;
   std::vector<int> type_of_polygons_;
-  bool mouse_down_ = false;
 };
 
 } // namespace mav_polygon_tool
