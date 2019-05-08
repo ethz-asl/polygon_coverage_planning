@@ -18,6 +18,25 @@ TEST(OffsetTest, OffsetPolygon) {
   }
 }
 
+TEST(OffsetTest, OffsetEdge) {
+  PolygonWithHoles rectangle_in_rectangle(
+      createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
+  Polygon_2 rectangle(rectangle_in_rectangle.outer_boundary());
+  const double kOffset = 0.1;
+  double area = CGAL::to_double(computeArea(rectangle));
+  for (size_t i = 0; i < 4; ++i) {
+    Polygon_2 offsetted_polygon;
+    EXPECT_TRUE(offsetEdge(rectangle, i, kOffset, &offsetted_polygon));
+    double area_offsetted = CGAL::to_double(computeArea(offsetted_polygon));
+    double expected_difference =
+        kOffset *
+        std::sqrt(CGAL::to_double(rectangle.edge(i).squared_length()));
+    const double kPrecision = 1.0e-3;
+    EXPECT_LE(area - expected_difference - area_offsetted, kPrecision)
+        << offsetted_polygon;
+  }
+}
+
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

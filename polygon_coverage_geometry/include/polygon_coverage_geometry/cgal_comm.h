@@ -23,5 +23,8 @@ Point_2 projectOnPolygon2(const Polygon_2& poly, const Point_2& p,
 Point_2 projectPointOnHull(const PolygonWithHoles& pwh, const Point_2& p);
 
 FT computeArea(const PolygonWithHoles& pwh);
+inline FT computeArea(const Polygon_2& poly) {
+  return computeArea(PolygonWithHoles(poly));
+}
 
 }  // namespace polygon_coverage_planning

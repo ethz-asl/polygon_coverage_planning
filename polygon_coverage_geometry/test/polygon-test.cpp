@@ -13,26 +13,6 @@
 
 using namespace mav_coverage_planning;
 
-TEST(PolygonTest, OffsetEdge) {
-  Polygon rectangle_in_rectangle(
-      createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
-  Polygon rectangle(rectangle_in_rectangle.getPolygon().outer_boundary());
-  const double kOffset = 0.1;
-  double area = CGAL::to_double(rectangle.computeArea());
-  for (size_t i = 0; i < 4; ++i) {
-    Polygon offsetted_polygon;
-    EXPECT_TRUE(rectangle.offsetEdge(i, kOffset, &offsetted_polygon));
-    double area_offsetted = CGAL::to_double(offsetted_polygon.computeArea());
-    double expected_difference =
-        kOffset *
-        std::sqrt(CGAL::to_double(
-            rectangle.getPolygon().outer_boundary().edge(i).squared_length()));
-    const double kPrecision = 1.0e-3;
-    EXPECT_LE(area - expected_difference - area_offsetted, kPrecision)
-        << offsetted_polygon;
-  }
-}
-
 TEST(PolygonTest, BCDecomposition) {
   Polygon rectangle_in_rectangle(
       createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
