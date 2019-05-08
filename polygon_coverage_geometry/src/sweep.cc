@@ -1,13 +1,17 @@
-#include "mav_2d_coverage_planning/geometry/sweep.h"
+#include "polygon_coverage_geometry/sweep.h"
+#include "polygon_coverage_geometry/visibility_polygon.h"
+#include "polygon_coverage_geometry/weakly_monotone.h"
 
-#include "mav_2d_coverage_planning/geometry/weakly_monotone.h"
+#include <ros/assert.h>
+#include <ros/console.h>
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
+
 bool computeSweep(const Polygon_2& in,
                   const visibility_graph::VisibilityGraph& visibility_graph,
                   const FT offset, const Direction_2& dir,
                   bool counter_clockwise, std::vector<Point_2>* waypoints) {
-  CHECK_NOTNULL(waypoints);
+  ROS_ASSERT(waypoints);
   waypoints->clear();
   const FT kSqOffset = offset * offset;
 
@@ -42,11 +46,9 @@ bool computeSweep(const Polygon_2& in,
       }
     }
     // Traverse sweep.
-    // if (!sweep_segment.is_degenerate()) { FSR visualization hack.
     waypoints->push_back(sweep_segment.source());
     if (!sweep_segment.is_degenerate())
       waypoints->push_back(sweep_segment.target());
-    //}
 
     // Offset sweep.
     sweep = sweep.transform(kOffset);
@@ -63,7 +65,7 @@ bool computeSweep(const Polygon_2& in,
       sweep = Line_2(sorted_pts.back(), dir);
       has_sweep_segment = findSweepSegment(in, sweep, &sweep_segment);
       if (!has_sweep_segment) {
-        LOG(ERROR) << "Failed to calculate final sweep.";
+        ROS_ERROR_STREAM("Failed to calculate final sweep.");
         return false;
       }
       // Do not add super close sweep.
@@ -80,8 +82,8 @@ bool computeSweep(const Polygon_2& in,
         sweep = Line_2(*unobservable_point, dir);
         has_sweep_segment = findSweepSegment(in, sweep, &sweep_segment);
         if (!has_sweep_segment) {
-          LOG(ERROR) << "Failed to calculate extra sweep at point: "
-                     << *unobservable_point;
+          ROS_ERROR_STREAM("Failed to calculate extra sweep at point: "
+                           << *unobservable_point);
           return false;
         }
       }
@@ -106,7 +108,7 @@ void checkObservability(
     const Segment_2& prev_sweep, const Segment_2& sweep,
     const std::vector<Point_2>& sorted_pts, const FT max_sq_distance,
     std::vector<Point_2>::const_iterator* lowest_unobservable_point) {
-  CHECK_NOTNULL(lowest_unobservable_point);
+  ROS_ASSERT(lowest_unobservable_point);
   *lowest_unobservable_point = sorted_pts.end();
 
   // Find first point that is between prev_sweep and sweep and unobservable.
@@ -126,27 +128,26 @@ void checkObservability(
   }
 }
 
-bool computeAllSweeps(const Polygon& polygon, const double max_sweep_offset,
+bool computeAllSweeps(const Polygon_2& poly, const double max_sweep_offset,
                       std::vector<std::vector<Point_2>>* cluster_sweeps) {
-  CHECK_NOTNULL(cluster_sweeps);
+  ROS_ASSERT(cluster_sweeps);
   cluster_sweeps->clear();
-  const Polygon_2& poly = polygon.getPolygon().outer_boundary();
   cluster_sweeps->reserve(2 * poly.size());
 
   // Find all sweepable directions.
   std::vector<Direction_2> dirs = getAllSweepableEdgeDirections(poly);
 
   // Compute all possible sweeps.
-  visibility_graph::VisibilityGraph vis_graph(polygon);
+  visibility_graph::VisibilityGraph vis_graph(poly);
   for (const Direction_2& dir : dirs) {
     bool counter_clockwise = true;
     std::vector<Point_2> sweep;
     if (!computeSweep(poly, vis_graph, max_sweep_offset, dir, counter_clockwise,
                       &sweep)) {
-      LOG(ERROR) << "Cannot compute counter-clockwise sweep.";
+      ROS_ERROR_STREAM("Cannot compute counter-clockwise sweep.");
       return false;
     } else {
-      CHECK(!sweep.empty());
+      ROS_ASSERT(!sweep.empty());
       cluster_sweeps->push_back(sweep);
       std::reverse(sweep.begin(), sweep.end());
       cluster_sweeps->push_back(sweep);
@@ -154,10 +155,10 @@ bool computeAllSweeps(const Polygon& polygon, const double max_sweep_offset,
 
     if (!computeSweep(poly, vis_graph, max_sweep_offset, dir,
                       !counter_clockwise, &sweep)) {
-      LOG(ERROR) << "Cannot compute clockwise sweep.";
+      ROS_ERROR_STREAM("Cannot compute clockwise sweep.");
       return false;
     } else {
-      CHECK(!sweep.empty());
+      ROS_ASSERT(!sweep.empty());
       cluster_sweeps->push_back(sweep);
       std::reverse(sweep.begin(), sweep.end());
       cluster_sweeps->push_back(sweep);
@@ -170,31 +171,34 @@ bool calculateShortestPath(
     const visibility_graph::VisibilityGraph& visibility_graph,
     const Point_2& start, const Point_2& goal,
     std::vector<Point_2>* shortest_path) {
-  CHECK_NOTNULL(shortest_path);
+  ROS_ASSERT(shortest_path);
   shortest_path->clear();
 
-  Polygon start_visibility, goal_visibility;
-  if (!visibility_graph.getPolygon().computeVisibilityPolygon(
-          start, &start_visibility)) {
-    LOG(ERROR) << "Cannot compute visibility polygon from start query point "
-               << start << " in polygon: " << visibility_graph.getPolygon();
+  Polygon_2 start_visibility, goal_visibility;
+  if (!computeVisibilityPolygon(visibility_graph.getPolygon(), start,
+                                &start_visibility)) {
+    ROS_ERROR_STREAM("Cannot compute visibility polygon from start query point "
+                     << start
+                     << " in polygon: " << visibility_graph.getPolygon());
     return false;
   }
-  if (!visibility_graph.getPolygon().computeVisibilityPolygon(
-          goal, &goal_visibility)) {
-    LOG(ERROR) << "Cannot compute visibility polygon from goal query point "
-               << goal << " in polygon: " << visibility_graph.getPolygon();
+  if (!computeVisibilityPolygon(visibility_graph.getPolygon(), goal,
+                                &goal_visibility)) {
+    ROS_ERROR_STREAM("Cannot compute visibility polygon from goal query point "
+                     << goal
+                     << " in polygon: " << visibility_graph.getPolygon());
     return false;
   }
   if (!visibility_graph.solve(start, start_visibility, goal, goal_visibility,
                               shortest_path)) {
-    LOG(ERROR) << "Cannot compute shortest path from " << start << " to "
-               << goal << " in polygon: " << visibility_graph.getPolygon();
+    ROS_ERROR_STREAM("Cannot compute shortest path from "
+                     << start << " to " << goal
+                     << " in polygon: " << visibility_graph.getPolygon());
     return false;
   }
 
   if (shortest_path->size() < 2) {
-    LOG(ERROR) << "Shortest path too short.";
+    ROS_ERROR_STREAM("Shortest path too short.");
     return false;
   }
 
@@ -246,4 +250,4 @@ std::vector<Point_2> findIntersections(const Polygon_2& p, const Line_2& l) {
   return intersections;
 }
 
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning

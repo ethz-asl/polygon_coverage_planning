@@ -1,11 +1,11 @@
-#ifndef MAV_2D_COVERAGE_PLANNING_GEOMETRY_SWEEP_H_
-#define MAV_2D_COVERAGE_PLANNING_GEOMETRY_SWEEP_H_
+#ifndef POLYGON_COVERAGE_GEOMETRY_SWEEP_H_
+#define POLYGON_COVERAGE_GEOMETRY_SWEEP_H_
 
-#include <mav_coverage_planning_comm/cgal_definitions.h>
-#include "mav_2d_coverage_planning/geometry/polygon.h"
-#include "mav_2d_coverage_planning/graphs/visibility_graph.h"
+#include "polygon_coverage_geometry/cgal_definitions.h"
+#include "polygon_coverage_geometry/visibility_graph.h"
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
+
 // Compute the sweep by moving from the bottom to the top of the polygon.
 bool computeSweep(const Polygon_2& in,
                   const visibility_graph::VisibilityGraph& visibility_graph,
@@ -14,7 +14,7 @@ bool computeSweep(const Polygon_2& in,
 
 // Compute sweeps in all sweepable directions, starting counter-clockwise,
 // clockwise, and reverse.
-bool computeAllSweeps(const Polygon& polygon, const double max_sweep_offset,
+bool computeAllSweeps(const Polygon_2& poly, const double max_sweep_offset,
                       std::vector<std::vector<Point_2>>* cluster_sweeps);
 
 // A segment is observable if all vertices between two sweeps are observable.
@@ -40,6 +40,6 @@ bool calculateShortestPath(
     const Point_2& start, const Point_2& goal,
     std::vector<Point_2>* shortest_path);
 
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning
 
-#endif  // MAV_2D_COVERAGE_PLANNING_GEOMETRY_SWEEP_H_
+#endif  // POLYGON_COVERAGE_GEOMETRY_SWEEP_H_

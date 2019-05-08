@@ -26,6 +26,8 @@ class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
  public:
   // Creates an undirected, weighted visibility graph.
   VisibilityGraph(const PolygonWithHoles& polygon);
+  VisibilityGraph(const Polygon_2& polygon)
+      : VisibilityGraph(PolygonWithHoles(polygon)) {}
 
   VisibilityGraph() : GraphBase() {}
 
@@ -71,7 +73,8 @@ class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
       std::vector<VertexConstCirculator>* convex_vertices) const;
 
   // Given two waypoints, compute its euclidean distance.
-  double computeEuclideanSegmentCost(const Point_2& from, const Point_2& to) const;
+  double computeEuclideanSegmentCost(const Point_2& from,
+                                     const Point_2& to) const;
 
   PolygonWithHoles polygon_;
 };

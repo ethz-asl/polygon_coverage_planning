@@ -25,7 +25,7 @@ cs_add_library(${PROJECT_NAME}
   src/visibility_graph.cc
   src/visibility_polygon.cc
   src/weakly_monotone.cc
-  #src/geometry/sweep.cc
+  src/sweep.cc
 )
 target_link_libraries(${PROJECT_NAME} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES})
 
