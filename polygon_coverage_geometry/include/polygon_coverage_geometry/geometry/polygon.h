@@ -37,16 +37,6 @@ class Polygon {
                             bool counter_clockwise,
                             std::vector<Point_2>* waypoints) const;
 
-
-  // Offsets a specific polygon edge by cropping an along the edge infinitly
-  // long rectangular window with offset width.
-  bool offsetEdge(const size_t& edge_id, double offset,
-                  Polygon* offset_polygon) const;
-
-  // Offset at most radial_offset from corner.
-  bool offsetEdgeWithRadialOffset(const size_t& edge_id, double radial_offset,
-                                  Polygon* offset_polygon) const;
-
   bool computeBCDFromPolygonWithHoles(std::vector<Polygon>* bcd_polygons) const;
 
   // Compute BCDs for every edge direction. Return any with the smallest number

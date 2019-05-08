@@ -2,6 +2,7 @@
 #define POLYGON_COVERAGE_GEOMETRY_CGAL_DEFINITIONS_H_
 
 #include <CGAL/Exact_predicates_exact_constructions_kernel.h>
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_with_holes_2.h>
 
 typedef CGAL::Exact_predicates_exact_constructions_kernel K;
@@ -21,6 +22,7 @@ typedef Polygon_2::Vertex_const_circulator VertexConstCirculator;
 typedef Polygon_2::Edge_const_iterator EdgeConstIterator;
 typedef Polygon_2::Edge_const_circulator EdgeConstCirculator;
 typedef CGAL::Polygon_with_holes_2<K> PolygonWithHoles;
+typedef CGAL::Exact_predicates_inexact_constructions_kernel InexactKernel;
 
 enum DecompositionType { kBoustrophedeon, kTrapezoidal };
 

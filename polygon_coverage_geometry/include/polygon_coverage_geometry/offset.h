@@ -1,5 +1,5 @@
-#ifndef POLYGON_COVERAGE_GEOMETRY_BCD_H_
-#define POLYGON_COVERAGE_GEOMETRY_BCD_H_
+#ifndef POLYGON_COVERAGE_GEOMETRY_OFFSET_H_
+#define POLYGON_COVERAGE_GEOMETRY_OFFSET_H_
 
 #include "polygon_coverage_geometry/cgal_definitions.h"
 
@@ -17,6 +17,16 @@ bool checkValidOffset(
     const PolygonWithHoles& original,
     const std::vector<boost::shared_ptr<PolygonWithHoles>>& offset);
 
-}  // namespace polygon_coverage_geometry
+// Offsets a specific polygon edge by cropping an along the edge infinitly
+// long rectangular window with offset width.
+bool offsetEdge(const Polygon_2& poly, const size_t& edge_id, double offset,
+                Polygon_2* offset_polygon);
 
-#endif  // POLYGON_COVERAGE_GEOMETRY_BCD_H_
+// Offset at most radial_offset from corner.
+bool offsetEdgeWithRadialOffset(const Polygon_2& poly, const size_t& edge_id,
+                                double radial_offset,
+                                Polygon_2* offset_polygon);
+
+}  // namespace polygon_coverage_planning
+
+#endif  // POLYGON_COVERAGE_GEOMETRY_OFFSET_H_
