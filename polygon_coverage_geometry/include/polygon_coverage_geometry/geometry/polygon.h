@@ -91,7 +91,6 @@ class Polygon {
 
   bool intersect(const Polygon& p, Polygon* intersection) const;
 
-  bool isStrictlySimple() const { return is_strictly_simple_; }
   bool isConvex() const { return is_convex_; }
 
   friend std::ostream& operator<<(std::ostream& stream, const Polygon& p);
@@ -114,9 +113,6 @@ class Polygon {
       const PolygonWithHoles& original,
       const std::vector<boost::shared_ptr<PolygonWithHoles>>& offset) const;
 
-  // Definition according to
-  // https://doc.cgal.org/latest/Straight_skeleton_2/index.html
-  bool checkStrictlySimple() const;
   bool checkConvexity() const;
 
   // Project a point on a polygon.

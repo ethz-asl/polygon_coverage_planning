@@ -29,4 +29,11 @@ bool pointsInPolygon(const PolygonWithHoles& pwh,
   return true;
 }
 
+bool isStrictlySimple(const PolygonWithHoles& pwh) {
+  for (PolygonWithHoles::Hole_const_iterator hi = pwh.holes_begin();
+       hi != pwh.holes_end(); ++hi)
+    if (!hi->is_simple()) return false;
+  return pwh.outer_boundary().is_simple();
+}
+
 }  // namespace polygon_coverage_planning

@@ -1,4 +1,5 @@
 #include "polygon_coverage_geometry/visibility_graph.h"
+#include "polygon_coverage_geometry/cgal_comm.h"
 
 #include <ros/assert.h>
 #include <ros/console.h>

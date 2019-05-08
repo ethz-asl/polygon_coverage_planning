@@ -9,7 +9,7 @@ namespace polygon_coverage_planning {
 // polygon. Francisc Bungiu, Michael Hemmer, John Hershberger, Kan Huang, and
 // Alexander Kröller. Efficient computation of visibility polygons. CoRR,
 // abs/1403.3905, 2014.
-bool computeVisibilityPolygon(const PolygonWithHoles& poly,
+bool computeVisibilityPolygon(const PolygonWithHoles& pwh,
                               const Point_2& query_point,
                               Polygon_2* visibility_polygon);
 

@@ -1,48 +1,44 @@
 #include <ros/assert.h>
 #include <ros/console.h>
 
+#include <CGAL/Arr_naive_point_location.h>
+#include <CGAL/Triangular_expansion_visibility_2.h>
+#include <CGAL/Arr_segment_traits_2.h>
+
+#include "polygon_coverage_geometry/cgal_comm.h"
 #include "polygon_coverage_geometry/visibility_polygon.h"
 
 namespace polygon_coverage_planning {
 
-bool computeVisibilityPolygon(const PolygonWithHoles& poly,
+bool computeVisibilityPolygon(const PolygonWithHoles& pwh,
                               const Point_2& query_point,
                               Polygon_2* visibility_polygon) {
   ROS_ASSERT(visibility_polygon);
 
   // Preconditions.
-  if (!pointInPolygon(query_point)) {
-    LOG(ERROR) << "Query point " << query_point
-               << " outside of polygon. Cannot create visibility polygon.";
-    return false;
-  }
-  if (!is_strictly_simple_) {
-    LOG(ERROR) << "Polygon not strictly simple.";
-    return false;
-  }
+  ROS_ASSERT_MSG(pointInPolygon(pwh, query_point),
+                 "Query point outside of polygon.");
+  ROS_ASSERT_MSG(isStrictlySimple(pwh), "Polygon is not strictly simple.");
 
   // Create 2D arrangement.
   typedef CGAL::Arr_segment_traits_2<K> VisibilityTraits;
   typedef CGAL::Arrangement_2<VisibilityTraits> VisibilityArrangement;
   VisibilityArrangement poly;
-  CGAL::insert(poly, polygon_.outer_boundary().edges_begin(),
-               polygon_.outer_boundary().edges_end());
+  CGAL::insert(poly, pwh.outer_boundary().edges_begin(),
+               pwh.outer_boundary().edges_end());
   // Store main face.
-  if (poly.number_of_unbounded_faces() != 1) {
-    LOG(ERROR) << "Polygon has unbounded curves.";
-    return false;
-  }
-  if (poly.number_of_faces() != 2) {
-    LOG(ERROR) << "More than one bounded face in polygon.";
-    return false;
-  }
+  ROS_ASSERT_MSG(poly.number_of_unbounded_faces() == 1,
+                 "Polygon has unbounded curves.");
+  ROS_ASSERT_MSG(poly.number_of_faces() == 2,
+                 "More than one bounded face in polygon.");
+
   VisibilityArrangement::Face_const_handle main_face = poly.faces_begin();
   while (main_face->is_unbounded()) {
     main_face++;
   }
 
-  for (PolygonWithHoles::Hole_const_iterator hit = polygon_.holes_begin();
-       hit != polygon_.holes_end(); ++hit)
+  for (PolygonWithHoles::Hole_const_iterator hit = pwh.holes_begin();
+       hit != pwh.holes_end(); ++hit)
     CGAL::insert(poly, hit->edges_begin(), hit->edges_end());
 
   // Create Triangular Expansion Visibility object.
@@ -77,7 +73,7 @@ bool computeVisibilityPolygon(const PolygonWithHoles& poly,
            (he->face() != main_face)) {
       he++;
       if (he == poly.halfedges_end()) {
-        LOG(ERROR) << "Cannot find halfedge corresponding to vertex.";
+        ROS_ERROR_STREAM("Cannot find halfedge corresponding to vertex.");
         return false;
       }
     }
@@ -91,28 +87,26 @@ bool computeVisibilityPolygon(const PolygonWithHoles& poly,
         (*e)->face() == main_face ? (*e) : (*e)->twin();
     fh = tev.compute_visibility(query_point, he, visibility_arr);
   } else {
-    LOG(ERROR) << "Cannot locate query point on arrangement.";
+    ROS_ERROR_STREAM("Cannot locate query point on arrangement.");
     return false;
   }
 
   // Result assertion.
   if (fh->is_fictitious()) {
-    LOG(ERROR) << "Visibility polygon is fictitious.";
+    ROS_ERROR_STREAM("Visibility polygon is fictitious.");
     return false;
   }
   if (fh->is_unbounded()) {
-    LOG(ERROR) << "Visibility polygon is unbounded.";
+    ROS_ERROR_STREAM("Visibility polygon is unbounded.");
     return false;
   }
 
   // Convert to polygon.
   VisibilityArrangement::Ccb_halfedge_circulator curr = fh->outer_ccb();
-  Polygon_2 vis_poly_2;
+  *visibility_polygon = Polygon_2();
   do {
-    vis_poly_2.push_back(curr->source()->point());
+    visibility_polygon->push_back(curr->source()->point());
   } while (++curr != fh->outer_ccb());
-
-  *visibility_polygon = Polygon(vis_poly_2);
 
   return true;
 }

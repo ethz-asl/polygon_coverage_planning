@@ -9,4 +9,8 @@ bool pointsInPolygon(const PolygonWithHoles& pwh,
                      const std::vector<Point_2>::iterator& begin,
                      const std::vector<Point_2>::iterator& end);
 
+// Definition according to
+// https://doc.cgal.org/latest/Straight_skeleton_2/index.html
+bool isStrictlySimple(const PolygonWithHoles& pwh);
+
 }  // namespace polygon_coverage_planning

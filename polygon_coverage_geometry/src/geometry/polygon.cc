@@ -3,7 +3,6 @@
 #include <algorithm>
 #include <limits>
 
-#include <CGAL/Arr_naive_point_location.h>
 #include <CGAL/Boolean_set_operations_2.h>
 #include <CGAL/Cartesian_converter.h>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
@@ -13,7 +12,6 @@
 #include <CGAL/Polygon_convex_decomposition_2.h>
 #include <CGAL/Polygon_triangulation_decomposition_2.h>
 #include <CGAL/Triangle_2.h>
-#include <CGAL/Triangular_expansion_visibility_2.h>
 #include <CGAL/connect_holes.h>
 #include <CGAL/create_offset_polygons_from_polygon_with_holes_2.h>
 #include <CGAL/is_y_monotone_2.h>
@@ -546,13 +544,6 @@ FT Polygon::computeArea() const {
     area -= CGAL::abs(
         CGAL::polygon_area_2(hi->vertices_begin(), hi->vertices_end(), K()));
   return area;
-}
-
-bool Polygon::checkStrictlySimple() const {
-  for (PolygonWithHoles::Hole_const_iterator hi = polygon_.holes_begin();
-       hi != polygon_.holes_end(); ++hi)
-    if (!hi->is_simple()) return false;
-  return polygon_.outer_boundary().is_simple();
 }
 
 bool Polygon::checkConvexity() const {
