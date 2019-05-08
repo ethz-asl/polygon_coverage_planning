@@ -16,12 +16,9 @@ set(CMAKE_BUILD_TYPE Release)
 # LIBRARIES #
 #############
 cs_add_library(${PROJECT_NAME}
-  #src/geometry/plane_transformation.cc
-  #src/geometry/polygon_triangulation.cc
-  #src/geometry/polygon.cc
-  #src/geometry/BCD.cpp
   src/bcd.cc
   src/cgal_comm.cc
+  src/offset.cc
   src/visibility_graph.cc
   src/visibility_polygon.cc
   src/weakly_monotone.cc

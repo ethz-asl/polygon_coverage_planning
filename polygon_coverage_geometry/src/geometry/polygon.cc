@@ -13,7 +13,6 @@
 #include <CGAL/Polygon_triangulation_decomposition_2.h>
 #include <CGAL/Triangle_2.h>
 #include <CGAL/connect_holes.h>
-#include <CGAL/create_offset_polygons_from_polygon_with_holes_2.h>
 #include <CGAL/is_y_monotone_2.h>
 #include <CGAL/partition_2.h>
 #include <glog/logging.h>
@@ -67,44 +66,6 @@ std::vector<std::vector<Point_2>> Polygon::getHoleVertices() const {
       *it = *vit;
   }
   return hole_vertices;
-}
-
-bool Polygon::computeOffsetPolygon(FT max_offset,
-                                   Polygon* offset_polygon) const {
-  CHECK_NOTNULL(offset_polygon);
-
-  // TODO(rikba): Check weak simplicity.
-
-  // Try maximum offsetting.
-  std::vector<boost::shared_ptr<PolygonWithHoles>> result =
-      CGAL::create_interior_skeleton_and_offset_polygons_with_holes_2(
-          max_offset, polygon_);
-  if (checkValidOffset(polygon_, result)) {
-    *offset_polygon = Polygon(*(result.front()));
-    return true;
-  } else {
-    result = {boost::make_shared<PolygonWithHoles>(polygon_)};
-  }
-
-  // Binary search for smaller valid offset.
-  FT min = 0.0;
-  FT max = max_offset;
-  const FT kBinarySearchResolution = 0.1;
-  while (max - min > kBinarySearchResolution) {
-    const FT mid = (min + max) / 2.0;
-    std::vector<boost::shared_ptr<PolygonWithHoles>> temp_result =
-        CGAL::create_interior_skeleton_and_offset_polygons_with_holes_2(
-            mid, polygon_);
-    if (checkValidOffset(polygon_, temp_result)) {
-      min = mid;
-      result = temp_result;
-    } else {
-      max = mid;
-    }
-  }
-
-  *offset_polygon = Polygon(*(result.front()));
-  return true;
 }
 
 bool Polygon::computeTrapezoidalDecompositionFromPolygonWithHoles(
@@ -484,27 +445,6 @@ bool Polygon::computeBCDFromPolygonWithHoles(
     bcd_polygons->emplace_back(p);
   }
 
-  return true;
-}
-
-bool Polygon::checkValidOffset(
-    const PolygonWithHoles& original,
-    const std::vector<boost::shared_ptr<PolygonWithHoles>>& offset) const {
-  // Valid if number of vertices remains constant.
-  if (offset.size() != 1) return false;
-  if (original.number_of_holes() != offset.front()->number_of_holes())
-    return false;
-  if (original.outer_boundary().size() !=
-      offset.front()->outer_boundary().size())
-    return false;
-
-  PolygonWithHoles::Hole_const_iterator offset_hit =
-      offset.front()->holes_begin();
-  for (PolygonWithHoles::Hole_const_iterator
-           original_hit = original.holes_begin();
-       original_hit != original.holes_end(); ++original_hit, ++offset_hit) {
-    if (original_hit->size() != offset_hit->size()) return false;
-  }
   return true;
 }
 

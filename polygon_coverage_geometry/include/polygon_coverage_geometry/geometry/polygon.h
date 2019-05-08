@@ -37,12 +37,6 @@ class Polygon {
                             bool counter_clockwise,
                             std::vector<Point_2>* waypoints) const;
 
-  // Given a non-degenerate counter-clockwise weakly-simple polygon with
-  // holes, compute the maximum offset polygon such that no edge collapses.
-  // Aichholzer, Oswin, et al. "A novel type of skeleton for polygons." J. UCS
-  // The Journal of Universal Computer Science. Springer, Berlin, Heidelberg,
-  // 1996. 752-761.
-  bool computeOffsetPolygon(FT max_offset, Polygon* offset_polygon) const;
 
   // Offsets a specific polygon edge by cropping an along the edge infinitly
   // long rectangular window with offset width.
@@ -107,9 +101,6 @@ class Polygon {
                          Direction_2* sweep_dir = nullptr) const;
 
  private:
-  bool checkValidOffset(
-      const PolygonWithHoles& original,
-      const std::vector<boost::shared_ptr<PolygonWithHoles>>& offset) const;
 
   bool checkConvexity() const;
 
