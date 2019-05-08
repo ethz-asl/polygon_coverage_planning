@@ -22,6 +22,7 @@ cs_add_library(${PROJECT_NAME}
   #src/geometry/BCD.cpp
   src/bcd.cc
   src/cgal_comm.cc
+  src/visibility_graph.cc
   src/visibility_polygon.cc
   src/weakly_monotone.cc
   #src/geometry/sweep.cc

@@ -80,8 +80,6 @@ class Polygon {
   // Appends all convex hole vertices.
   bool appendConvexHoleVertices(
       std::vector<VertexConstCirculator>* convex_vertices) const;
-  // Project a point on the polygon boundary.
-  Point_2 projectPointOnHull(const Point_2& p) const;
 
   FT computeArea() const;
 
@@ -114,10 +112,6 @@ class Polygon {
       const std::vector<boost::shared_ptr<PolygonWithHoles>>& offset) const;
 
   bool checkConvexity() const;
-
-  // Project a point on a polygon.
-  Point_2 projectOnPolygon2(const Polygon_2& poly, const Point_2& p,
-                            FT* squared_distance) const;
 
   // Sort boundary to be counter-clockwise and holes to be clockwise.
   void sortCC();

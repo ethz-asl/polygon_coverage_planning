@@ -67,8 +67,11 @@ class VisibilityGraph : public GraphBase<NodeProperty, EdgeProperty> {
   void findConcaveOuterBoundaryVertices(
       std::vector<VertexConstCirculator>* concave_vertices) const;
   // Find and append convex hole vertices.
-  bool findConvexHoleVertices(
+  void findConvexHoleVertices(
       std::vector<VertexConstCirculator>* convex_vertices) const;
+
+  // Given two waypoints, compute its euclidean distance.
+  double computeEuclideanSegmentCost(const Point_2& from, const Point_2& to) const;
 
   PolygonWithHoles polygon_;
 };

@@ -1,5 +1,6 @@
 #include "polygon_coverage_geometry/visibility_graph.h"
 #include "polygon_coverage_geometry/cgal_comm.h"
+#include "polygon_coverage_geometry/visibility_polygon.h"
 
 #include <ros/assert.h>
 #include <ros/console.h>
@@ -17,13 +18,13 @@ bool VisibilityGraph::create() {
   clear();
   // Select shortest path vertices.
   std::vector<VertexConstCirculator> graph_vertices;
-  polygon_.findConcaveOuterBoundaryVertices(&graph_vertices);
-  polygon_.findConvexHoleVertices(&graph_vertices);
+  findConcaveOuterBoundaryVertices(&graph_vertices);
+  findConvexHoleVertices(&graph_vertices);
 
   for (const VertexConstCirculator& v : graph_vertices) {
     // Compute visibility polygon.
     Polygon_2 visibility;
-    if (!polygon_.computeVisibilityPolygon(*v, &visibility)) {
+    if (!computeVisibilityPolygon(polygon_, *v, &visibility)) {
       ROS_ERROR_STREAM("Cannot compute visibility polygon.");
       return false;
     }
@@ -86,8 +87,8 @@ bool VisibilityGraph::addEdges() {
       ROS_ERROR_STREAM("Cannot access potential neighbor.");
       return false;
     }
-    if (new_node_property->visibility.pointInPolygon(
-            adj_node_property->coordinates)) {
+    if (pointInPolygon(new_node_property->visibility,
+                       adj_node_property->coordinates)) {
       EdgeId forwards_edge_id(new_id, adj_id);
       EdgeId backwards_edge_id(adj_id, new_id);
       const double cost = computeEuclideanSegmentCost(
@@ -104,20 +105,21 @@ bool VisibilityGraph::addEdges() {
 
 bool VisibilityGraph::solve(const Point_2& start, const Point_2& goal,
                             std::vector<Point_2>* waypoints) const {
-  CHECK_NOTNULL(waypoints);
+  ROS_ASSERT(waypoints);
   waypoints->clear();
 
   // Make sure start and end are inside the polygon.
-  const Point_2 start_new = polygon_.pointInPolygon(start)
+  const Point_2 start_new = pointInPolygon(polygon_, start)
                                 ? start
-                                : polygon_.projectPointOnHull(start);
-  const Point_2 goal_new =
-      polygon_.pointInPolygon(goal) ? goal : polygon_.projectPointOnHull(goal);
+                                : projectPointOnHull(polygon_, start);
+  const Point_2 goal_new = pointInPolygon(polygon_, goal)
+                               ? goal
+                               : projectPointOnHull(polygon_, goal);
 
   // Compute start and goal visibility polygon.
-  Polygon start_visibility, goal_visibility;
-  if (!polygon_.computeVisibilityPolygon(start_new, &start_visibility) ||
-      !polygon_.computeVisibilityPolygon(goal_new, &goal_visibility)) {
+  Polygon_2 start_visibility, goal_visibility;
+  if (!computeVisibilityPolygon(polygon_, start_new, &start_visibility) ||
+      !computeVisibilityPolygon(polygon_, goal_new, &goal_visibility)) {
     return false;
   }
 
@@ -127,18 +129,18 @@ bool VisibilityGraph::solve(const Point_2& start, const Point_2& goal,
 }
 
 bool VisibilityGraph::solve(const Point_2& start,
-                            const Polygon& start_visibility_polygon,
+                            const Polygon_2& start_visibility_polygon,
                             const Point_2& goal,
-                            const Polygon& goal_visibility_polygon,
+                            const Polygon_2& goal_visibility_polygon,
                             std::vector<Point_2>* waypoints) const {
-  CHECK_NOTNULL(waypoints);
+  ROS_ASSERT(waypoints);
   waypoints->clear();
 
   if (!is_created_) {
     ROS_ERROR_STREAM("Visibility graph not initialized.");
     return false;
-  } else if (!polygon_.pointInPolygon(start) ||
-             !polygon_.pointInPolygon(goal)) {
+  } else if (!pointInPolygon(polygon_, start) ||
+             !pointInPolygon(polygon_, goal)) {
     ROS_ERROR_STREAM("Start or goal is not in polygon.");
     return false;
   }
@@ -160,7 +162,7 @@ bool VisibilityGraph::solve(const Point_2& start,
   if (start_node_property == nullptr) {
     return false;
   }
-  if (start_node_property->visibility.pointInPolygon(goal)) {
+  if (pointInPolygon(start_node_property->visibility, goal)) {
     waypoints->push_back(start);
     waypoints->push_back(goal);
     return true;
@@ -180,7 +182,7 @@ bool VisibilityGraph::solve(const Point_2& start,
 
 bool VisibilityGraph::getWaypoints(const Solution& solution,
                                    std::vector<Point_2>* waypoints) const {
-  CHECK_NOTNULL(waypoints);
+  ROS_ASSERT(waypoints);
   waypoints->resize(solution.size());
   for (size_t i = 0; i < solution.size(); i++) {
     const NodeProperty* node_property = getNodeProperty(solution[i]);
@@ -195,7 +197,7 @@ bool VisibilityGraph::getWaypoints(const Solution& solution,
 
 bool VisibilityGraph::calculateHeuristic(size_t goal,
                                          Heuristic* heuristic) const {
-  CHECK_NOTNULL(heuristic);
+  ROS_ASSERT(heuristic);
   heuristic->clear();
 
   const NodeProperty* goal_node_property = getNodeProperty(goal);
@@ -221,19 +223,24 @@ bool VisibilityGraph::calculateHeuristic(size_t goal,
 bool VisibilityGraph::solveWithOutsideStartAndGoal(
     const Point_2& start, const Point_2& goal,
     std::vector<Point_2>* waypoints) const {
-  CHECK_NOTNULL(waypoints);
+  ROS_ASSERT(waypoints);
 
   if (solve(start, goal, waypoints)) {
-    if (!polygon_.pointInPolygon(start)) {
+    if (!pointInPolygon(polygon_, start)) {
       waypoints->insert(waypoints->begin(), start);
     }
-    if (!polygon_.pointInPolygon(goal)) {
+    if (!pointInPolygon(polygon_, goal)) {
       waypoints->push_back(goal);
     }
     return true;
   } else {
     return false;
   }
+}
+
+double VisibilityGraph::computeEuclideanSegmentCost(const Point_2& from,
+                                                    const Point_2& to) const {
+  return std::sqrt(CGAL::to_double(Segment_2(from, to).squared_length()));
 }
 
 }  // namespace visibility_graph
