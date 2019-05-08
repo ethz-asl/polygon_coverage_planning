@@ -12,14 +12,14 @@
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_2.h>
 
-#include <OgreVector3.h>
 #include <OgreColourValue.h>
+#include <OgreVector3.h>
 #include <rviz/geometry.h>
 #include <rviz/ogre_helpers/line.h>
 #include <rviz/ogre_helpers/shape.h>
 #include <rviz/properties/vector_property.h>
-#include <rviz/tool.h>
 #include <rviz/render_panel.h>
+#include <rviz/tool.h>
 #include <rviz/viewport_mouse_event.h>
 #include <rviz/visualization_manager.h>
 
@@ -73,9 +73,10 @@ private:
   const float kPtScale = 0.5;
   const float kDeleteTol = 0.2;
 
-  Ogre::ColourValue red_, blue_, pink_, green_, yellow_,transparent_;
+  Ogre::ColourValue red_, blue_, pink_, green_, yellow_, transparent_;
   void pushBackElements(int new_type);
-  void setColor(const Ogre::ColourValue &line_color, const Ogre::ColourValue &sphere_color);
+  void setColor(const Ogre::ColourValue &line_color,
+                const Ogre::ColourValue &sphere_color);
   void drawLines(const Ogre::ColourValue &line_color);
   int current_polygon_ = 0;
   int current_type_;

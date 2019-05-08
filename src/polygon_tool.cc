@@ -140,21 +140,25 @@ int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
   return Render;
 }
 
-//remove all the elements at index
-void PolygonTool::deletePolygn(int index){
-  if(index<active_spheres_.size() && is_activated_){
+// remove all the elements at index
+void PolygonTool::deletePolygn(int index) {
+  if (index < active_spheres_.size() && is_activated_) {
     current_polygon_ = index;
     setColor(transparent_, transparent_);
-    //delete the vectors
-    if(index >=0 && active_spheres_.size()>1){
-      active_spheres_.erase(active_spheres_.begin()+index);
-      vertex_nodes_.erase(vertex_nodes_.begin()+index);
-      active_lines_.erase(active_lines_.begin()+index);
-      points_for_poly_.erase(points_for_poly_.begin()+index);
-      polygon_.erase(polygon_.begin()+index);
+    // delete the vectors
+    if (index >= 0 && active_spheres_.size() > 1) {
+      active_spheres_.erase(active_spheres_.begin() + index);
+      vertex_nodes_.erase(vertex_nodes_.begin() + index);
+      active_lines_.erase(active_lines_.begin() + index);
+      points_for_poly_.erase(points_for_poly_.begin() + index);
+      polygon_.erase(polygon_.begin() + index);
+      type_of_polygons_.erase(type_of_polygons_.begin() + index);
+      // must be done to avoid out of bounds error when deleting the last one
+      current_type_ = type_of_polygons_[index - 1];
+      current_polygon_ = index - 1;
     }
-    //only clear the vectors
-    else if(index == 0 && active_spheres_.size() == 1){
+    // only clear the vectors, don't delete them
+    else if (index == 0 && active_spheres_.size() == 1) {
       active_spheres_[0].clear();
       vertex_nodes_[0].clear();
       active_lines_[0].clear();
@@ -164,6 +168,7 @@ void PolygonTool::deletePolygn(int index){
       polygon_.push_back(dummy_poly);
     }
   }
+  setColorsArriving();
 }
 // adding red points to make a polygon
 void PolygonTool::makeVertex(const Ogre::Vector3 &position) {
@@ -205,7 +210,7 @@ void PolygonTool::drawLines(const Ogre::ColourValue &line_color) {
   }
   active_lines_[current_polygon_].clear();
   // only draw lines if there are 3 or more points,
-  // otherwise the polygon is degenerate
+  // otherwise the polygon is degenerate/a simple line
   if (vertex_nodes_[current_polygon_].size() > 2) {
     // draw lines!
     // last one is done seperately
@@ -390,7 +395,6 @@ std::vector<Polygon_2> PolygonTool::getPolygon() { return polygon_; }
 void PolygonTool::toolSelectCallback(const std_msgs::Int8 &tool_num) {
   if (is_activated_) {
     int incomming_num = tool_num.data;
-    std::cout << "called set tool " << incomming_num << std::endl;
     if (incomming_num < vertex_nodes_.size()) {
       setColorsLeaving();
       current_polygon_ = incomming_num;
@@ -409,16 +413,12 @@ void PolygonTool::newPolyCallback(const std_msgs::Int8 &new_poly_type) {
     pushBackElements(incomming_type);
     // needs to be done here using old size (before push back!)
     current_polygon_ = new_current_poly;
-    std::cout << "called new poly " << incomming_type << std::endl;
-    // if longer than init new tool
-    // else pick tool
   }
 }
 
 void PolygonTool::deletePolyCallback(const std_msgs::Int8 &delete_ind) {
   if (is_activated_) {
     int delete_location = delete_ind.data;
-    std::cout << "delete node nr. " << delete_location << std::endl;
     deletePolygn(delete_location);
   }
 }
