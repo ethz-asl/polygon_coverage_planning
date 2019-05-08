@@ -4,7 +4,7 @@
 #include <ros/assert.h>
 #include <boost/make_shared.hpp>
 
-namespace polygon_coverage_geometry {
+namespace polygon_coverage_planning {
 
 void computeOffsetPolygon(const PolygonWithHoles& pwh, FT max_offset,
                           PolygonWithHoles* offset_polygon) {

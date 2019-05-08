@@ -475,17 +475,6 @@ std::ostream& operator<<(std::ostream& stream, const Polygon& p) {
   return stream;
 }
 
-FT Polygon::computeArea() const {
-  FT area = CGAL::abs(
-      CGAL::polygon_area_2(polygon_.outer_boundary().vertices_begin(),
-                           polygon_.outer_boundary().vertices_end(), K()));
-  for (PolygonWithHoles::Hole_const_iterator hi = polygon_.holes_begin();
-       hi != polygon_.holes_end(); ++hi)
-    area -= CGAL::abs(
-        CGAL::polygon_area_2(hi->vertices_begin(), hi->vertices_end(), K()));
-  return area;
-}
-
 bool Polygon::checkConvexity() const {
   if (polygon_.number_of_holes() > 0) return false;
   return polygon_.outer_boundary().is_convex();

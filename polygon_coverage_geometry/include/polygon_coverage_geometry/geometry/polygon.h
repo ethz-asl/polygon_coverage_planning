@@ -75,8 +75,6 @@ class Polygon {
   bool appendConvexHoleVertices(
       std::vector<VertexConstCirculator>* convex_vertices) const;
 
-  FT computeArea() const;
-
   inline bool doIntersect(const Polygon& p) const {
     return CGAL::do_intersect(p.getPolygon(), polygon_);
   }

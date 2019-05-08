@@ -3,7 +3,7 @@
 
 #include "polygon_coverage_geometry/cgal_definitions.h"
 
-namespace polygon_coverage_geometry {
+namespace polygon_coverage_planning {
 
 // Given a non-degenerate counter-clockwise weakly-simple polygon with
 // holes, compute the maximum offset polygon such that no edge collapses.

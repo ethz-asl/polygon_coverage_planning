@@ -13,17 +13,6 @@
 
 using namespace mav_coverage_planning;
 
-TEST(PolygonTest, Offset) {
-  Polygon poly(createSophisticatedPolygon<Polygon_2, PolygonWithHoles>());
-
-  for (size_t i = 0; i < 100; ++i) {
-    FT max_offset = createRandomDouble(0.0, 10.0);
-    Polygon offset_polygon;
-    EXPECT_TRUE(poly.computeOffsetPolygon(max_offset, &offset_polygon));
-    EXPECT_LE(offset_polygon.computeArea(), poly.computeArea());
-  }
-}
-
 TEST(PolygonTest, OffsetEdge) {
   Polygon rectangle_in_rectangle(
       createRectangleInRectangle<Polygon_2, PolygonWithHoles>());

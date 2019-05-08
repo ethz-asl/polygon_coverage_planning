@@ -29,10 +29,10 @@ target_link_libraries(${PROJECT_NAME} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARI
 #########
 # TESTS #
 #########
-#catkin_add_gtest(test_polygon
-#  test/polygon-test.cpp
-#)
-#target_link_libraries(test_polygon ${PROJECT_NAME})
+catkin_add_gtest(test_offset
+  test/offset-test.cpp
+)
+target_link_libraries(test_offset ${PROJECT_NAME})
 
 ##########
 # EXPORT #

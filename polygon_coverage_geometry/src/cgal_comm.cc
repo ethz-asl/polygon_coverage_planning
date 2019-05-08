@@ -95,4 +95,15 @@ Point_2 projectPointOnHull(const PolygonWithHoles& pwh, const Point_2& p) {
   return projection;
 }
 
+FT computeArea(const PolygonWithHoles& pwh) {
+  FT area =
+      CGAL::abs(CGAL::polygon_area_2(pwh.outer_boundary().vertices_begin(),
+                                     pwh.outer_boundary().vertices_end(), K()));
+  for (PolygonWithHoles::Hole_const_iterator hi = pwh.holes_begin();
+       hi != pwh.holes_end(); ++hi)
+    area -= CGAL::abs(
+        CGAL::polygon_area_2(hi->vertices_begin(), hi->vertices_end(), K()));
+  return area;
+}
+
 }  // namespace polygon_coverage_planning

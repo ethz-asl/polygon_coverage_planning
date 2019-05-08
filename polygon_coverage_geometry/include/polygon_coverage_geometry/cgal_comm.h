@@ -22,4 +22,6 @@ Point_2 projectOnPolygon2(const Polygon_2& poly, const Point_2& p,
 // Project a point on the polygon boundary.
 Point_2 projectPointOnHull(const PolygonWithHoles& pwh, const Point_2& p);
 
+FT computeArea(const PolygonWithHoles& pwh);
+
 }  // namespace polygon_coverage_planning

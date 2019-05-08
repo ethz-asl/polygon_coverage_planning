@@ -1,7 +1,6 @@
-#ifndef MAV_2D_COVERAGE_PLANNING_TESTS_TEST_HELPERS_H_
-#define MAV_2D_COVERAGE_PLANNING_TESTS_TEST_HELPERS_H_
+#ifndef POLYGON_COVERAGE_PLANNING_TEST_COMMON_H_
+#define POLYGON_COVERAGE_PLANNING_TEST_COMMON_H_
 
-#include <glog/logging.h>
 #include <cstdlib>
 
 #include <CGAL/Kernel/global_functions.h>
@@ -10,9 +9,10 @@
 #include <CGAL/point_generators_2.h>
 #include <CGAL/point_generators_3.h>
 #include <CGAL/random_polygon_2.h>
-#include <mav_coverage_planning_comm/cgal_definitions.h>
 
-namespace mav_coverage_planning {
+#include "polygon_coverage_geometry/cgal_definitions.h"
+
+namespace polygon_coverage_planning {
 
 double createRandomDouble(double min, double max) {
   return (max - min) * (static_cast<double>(std::rand()) /
@@ -22,17 +22,18 @@ double createRandomDouble(double min, double max) {
 
 template <class Polygon, class PolygonWithHoles>
 PolygonWithHoles createRectangleInRectangle() {
+  typedef typename Polygon::Point_2 Point_2;
   Polygon outer;
-  outer.push_back(typename Polygon::Point_2(0.0, 0.0));
-  outer.push_back(typename Polygon::Point_2(2.0, 0.0));
-  outer.push_back(typename Polygon::Point_2(2.0, 2.0));
-  outer.push_back(typename Polygon::Point_2(0.0, 2.0));
+  outer.push_back(Point_2(0.0, 0.0));
+  outer.push_back(Point_2(2.0, 0.0));
+  outer.push_back(Point_2(2.0, 2.0));
+  outer.push_back(Point_2(0.0, 2.0));
 
   Polygon hole;
-  hole.push_back(typename Polygon::Point_2(1.0, 1.25));
-  hole.push_back(typename Polygon::Point_2(1.0, 1.75));
-  hole.push_back(typename Polygon::Point_2(0.5, 1.75));
-  hole.push_back(typename Polygon::Point_2(0.5, 1.25));
+  hole.push_back(Point_2(1.0, 1.25));
+  hole.push_back(Point_2(1.0, 1.75));
+  hole.push_back(Point_2(0.5, 1.75));
+  hole.push_back(Point_2(0.5, 1.25));
 
   PolygonWithHoles poly_with_holes(outer);
   poly_with_holes.add_hole(hole);
@@ -41,24 +42,26 @@ PolygonWithHoles createRectangleInRectangle() {
 
 template <class Polygon>
 Polygon createDiamond() {
+  typedef typename Polygon::Point_2 Point_2;
   Polygon diamond;
-  diamond.push_back(typename Polygon::Point_2(1.0, 0.0));
-  diamond.push_back(typename Polygon::Point_2(2.0, 1.0));
-  diamond.push_back(typename Polygon::Point_2(1.0, 2.0));
-  diamond.push_back(typename Polygon::Point_2(0.0, 1.0));
+  diamond.push_back(Point_2(1.0, 0.0));
+  diamond.push_back(Point_2(2.0, 1.0));
+  diamond.push_back(Point_2(1.0, 2.0));
+  diamond.push_back(Point_2(0.0, 1.0));
 
   return diamond;
 }
 
 template <class Polygon>
 Polygon createBCDCell() {
+  typedef typename Polygon::Point_2 Point_2;
   Polygon bcd_cell;
 
-  bcd_cell.push_back(typename Polygon::Point_2(-5.5, 9.1));
-  bcd_cell.push_back(typename Polygon::Point_2(-5.5, 5.9));
-  bcd_cell.push_back(typename Polygon::Point_2(-0.252786, 5.9));
-  bcd_cell.push_back(typename Polygon::Point_2(3.5, 4.02361));
-  bcd_cell.push_back(typename Polygon::Point_2(3.5, 9.1));
+  bcd_cell.push_back(Point_2(-5.5, 9.1));
+  bcd_cell.push_back(Point_2(-5.5, 5.9));
+  bcd_cell.push_back(Point_2(-0.252786, 5.9));
+  bcd_cell.push_back(Point_2(3.5, 4.02361));
+  bcd_cell.push_back(Point_2(3.5, 9.1));
 
   return bcd_cell;
 }
@@ -113,24 +116,24 @@ PolygonWithHoles createUltimateBCDTest() {
 template <class Polygon, class PolygonWithHoles>
 PolygonWithHoles createSophisticatedPolygon() {
   Polygon outer;
-  outer.push_back(typename Polygon::Point_2(0.0, 0.0));
-  outer.push_back(typename Polygon::Point_2(10.0, 0.0));
-  outer.push_back(typename Polygon::Point_2(10.0, 4.5));
-  outer.push_back(typename Polygon::Point_2(12.0, 4.5));
-  outer.push_back(typename Polygon::Point_2(12.0, 2.0));
-  outer.push_back(typename Polygon::Point_2(16.0, 2.0));
-  outer.push_back(typename Polygon::Point_2(16.0, 8.0));
-  outer.push_back(typename Polygon::Point_2(12.0, 8.0));
-  outer.push_back(typename Polygon::Point_2(12.0, 5.5));
-  outer.push_back(typename Polygon::Point_2(10.0, 5.5));
-  outer.push_back(typename Polygon::Point_2(10.0, 10.0));
-  outer.push_back(typename Polygon::Point_2(0.0, 10.0));
+  outer.push_back(Point_2(0.0, 0.0));
+  outer.push_back(Point_2(10.0, 0.0));
+  outer.push_back(Point_2(10.0, 4.5));
+  outer.push_back(Point_2(12.0, 4.5));
+  outer.push_back(Point_2(12.0, 2.0));
+  outer.push_back(Point_2(16.0, 2.0));
+  outer.push_back(Point_2(16.0, 8.0));
+  outer.push_back(Point_2(12.0, 8.0));
+  outer.push_back(Point_2(12.0, 5.5));
+  outer.push_back(Point_2(10.0, 5.5));
+  outer.push_back(Point_2(10.0, 10.0));
+  outer.push_back(Point_2(0.0, 10.0));
 
   Polygon hole;
-  hole.push_back(typename Polygon::Point_2(3.0, 3.0));
-  hole.push_back(typename Polygon::Point_2(3.0, 7.0));
-  hole.push_back(typename Polygon::Point_2(7.0, 7.0));
-  hole.push_back(typename Polygon::Point_2(7.0, 3.0));
+  hole.push_back(Point_2(3.0, 3.0));
+  hole.push_back(Point_2(3.0, 7.0));
+  hole.push_back(Point_2(7.0, 7.0));
+  hole.push_back(Point_2(7.0, 3.0));
 
   PolygonWithHoles poly_with_holes(outer);
   poly_with_holes.add_hole(hole);
@@ -211,6 +214,6 @@ typename Kernel::Plane_3 createRandomPlane(double a, CGAL::Random& random) {
   return Plane_3(p0, p1, p2);
 }
 
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning
 
-#endif  // MAV_2D_COVERAGE_PLANNING_TESTS_TEST_HELPERS_H_
+#endif  // POLYGON_COVERAGE_PLANNING_TEST_COMMON_H_
