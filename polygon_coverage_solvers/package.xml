@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>polygon_coverage_solvers</name>
+  <version>0.0.0</version>
+  <description>
+    Solvers for the underlying graph optimization problems.
+  </description>
+  <author>Rik Bähnemann</author>
+  <maintainer email="brik@ethz.ch">Rik Bähnemann</maintainer>
+
+  <license>GPL v3</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>catkin_simple</buildtool_depend>
+
+  <depend>rosconsole</depend>
+  <depend>roslib</depend>
+
+</package>
