@@ -8,6 +8,8 @@
 #include <ros/console.h>
 #include <ros/ros.h>
 #include <std_msgs/Int8.h>
+#include <std_srvs/SetBool.h>
+#include <std_srvs/Empty.h>
 
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_2.h>
@@ -50,6 +52,8 @@ public:
   std::vector<Polygon_2> getPolygon();
 
 private:
+  ros::Publisher my_publisher_;
+  bool constructPolyWithHoles(std_srvs::SetBool::Request& request, std_srvs::SetBool::Response& response);
   void setColorsLeaving();
   void setColorsArriving();
   void deletePolygn(int index);
@@ -82,8 +86,11 @@ private:
   int current_type_;
   std::vector<int> type_of_polygons_;
 
-  // ROS messaging
   bool is_activated_ = false;
+  bool check_performed_ = false;
+
+  // ROS messaging
+  ros::ServiceServer traj_service_;
   ros::NodeHandle nh_;
   ros::Subscriber new_tool_subs_;
   ros::Subscriber delete_poly_subs_;

@@ -13,6 +13,7 @@ PolygonTool::PolygonTool()
   pink_ = Ogre::ColourValue(1.f, 0.f, 1.f, 1.0);
   yellow_ = Ogre::ColourValue(1.f, 1.f, 0.f, 1.0);
   transparent_ = Ogre::ColourValue(0.f, 0.f, 0.f, 0.0);
+
 }
 
 PolygonTool::~PolygonTool() {
@@ -36,6 +37,8 @@ void PolygonTool::onInitialize() {
       nh_.subscribe("new_poly", 1, &PolygonTool::newPolyCallback, this);
   delete_poly_subs_ =
       nh_.subscribe("delete_poly", 1, &PolygonTool::deletePolyCallback, this);
+  my_publisher_ = nh_.advertise<std_msgs::Int8>("where_does_this_show",1);
+  traj_service_ = nh_.advertiseService("construct_and_check_polygon", &PolygonTool::constructPolyWithHoles,this);
 }
 
 void PolygonTool::activate() {
@@ -78,7 +81,7 @@ void PolygonTool::pushBackElements(int new_type) {
   current_type_ = new_type;
   type_of_polygons_.push_back(current_type_);
 }
-
+//*
 int PolygonTool::processKeyEvent(QKeyEvent *e, rviz::RenderPanel *pane) {
   std::cout << "processKeyEvent called " << e->key() << std::endl;
   // click on n
@@ -114,8 +117,10 @@ int PolygonTool::processKeyEvent(QKeyEvent *e, rviz::RenderPanel *pane) {
   }
   return 1;
 }
-
+//*/
 int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
+
+  my_publisher_.publish(1);
   if (!moving_vertex_node_) {
     return Render;
   }
@@ -193,7 +198,7 @@ void PolygonTool::makeVertex(const Ogre::Vector3 &position) {
   } else {
     drawLines(yellow_);
   }
-  checkCGalPolygon();
+  //checkCGalPolygon();
 }
 
 // check geometric propetries of the CGal polygon
@@ -202,6 +207,7 @@ void PolygonTool::checkCGalPolygon() {
   // <<polygon_[current_polygon_].is_simple()<<std::endl; std::cout << " Polygon
   // is convex: " <<polygon_[current_polygon_].is_convex()<<std::endl;
 }
+//ros::spin();
 
 void PolygonTool::drawLines(const Ogre::ColourValue &line_color) {
   // lines have to be set to invisible before being deleted
@@ -391,6 +397,13 @@ void PolygonTool::load(const rviz::Config &config) {
 }
 
 std::vector<Polygon_2> PolygonTool::getPolygon() { return polygon_; }
+
+bool PolygonTool::constructPolyWithHoles(std_srvs::SetBool::Request& request,
+                                      std_srvs::SetBool::Response& response){
+  response.success = true;
+  std::cout<<"called constructPolyWithHoles in tool"<<std::endl;
+  return true;
+}
 
 void PolygonTool::toolSelectCallback(const std_msgs::Int8 &tool_num) {
   if (is_activated_) {
