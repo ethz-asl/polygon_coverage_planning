@@ -11,7 +11,6 @@
 #include <CGAL/Polygon_triangulation_decomposition_2.h>
 #include <CGAL/Triangle_2.h>
 #include <CGAL/connect_holes.h>
-#include <CGAL/is_y_monotone_2.h>
 #include <CGAL/partition_2.h>
 #include <glog/logging.h>
 #include <mav_coverage_planning_comm/eigen_conversions.h>
@@ -340,35 +339,6 @@ void Polygon::sortCC() {
   for (PolygonWithHoles::Hole_iterator hi = polygon_.holes_begin();
        hi != polygon_.holes_end(); ++hi)
     if (hi->is_counterclockwise_oriented()) hi->reverse_orientation();
-}
-
-void Polygon::simplifyPolygon(Polygon_2* polygon) {
-  CHECK_NOTNULL(polygon);
-
-  std::vector<Polygon_2::Vertex_circulator> v_to_erase;
-
-  Polygon_2::Vertex_circulator vc = polygon->vertices_circulator();
-  // Find collinear vertices.
-  do {
-    if (CGAL::collinear(*std::prev(vc), *vc, *std::next(vc))) {
-      v_to_erase.push_back(vc);
-    }
-  } while (++vc != polygon->vertices_circulator());
-
-  // Remove intermediate vertices.
-  for (std::vector<Polygon_2::Vertex_circulator>::reverse_iterator rit =
-           v_to_erase.rbegin();
-       rit != v_to_erase.rend(); ++rit) {
-    polygon->erase(*rit);
-  }
-}
-
-void Polygon::simplify() {
-  simplifyPolygon(&polygon_.outer_boundary());
-
-  for (PolygonWithHoles::Hole_iterator hi = polygon_.holes_begin();
-       hi != polygon_.holes_end(); ++hi)
-    simplifyPolygon(&*hi);
 }
 
 bool Polygon::computeLineSweepPlan(double max_sweep_distance,

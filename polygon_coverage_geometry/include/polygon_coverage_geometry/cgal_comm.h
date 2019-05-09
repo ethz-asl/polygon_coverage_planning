@@ -27,4 +27,8 @@ inline FT computeArea(const Polygon_2& poly) {
   return computeArea(PolygonWithHoles(poly));
 }
 
+// Remove collinear vertices.
+void simplifyPolygon(Polygon_2* polygon);
+void simplifyPolygon(PolygonWithHoles* pwh);
+
 }  // namespace polygon_coverage_planning

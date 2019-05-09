@@ -106,4 +106,35 @@ FT computeArea(const PolygonWithHoles& pwh) {
   return area;
 }
 
+void simplifyPolygon(Polygon_2* polygon) {
+  ROS_ASSERT(polygon);
+
+  std::vector<Polygon_2::Vertex_circulator> v_to_erase;
+
+  Polygon_2::Vertex_circulator vc = polygon->vertices_circulator();
+  // Find collinear vertices.
+  do {
+    if (CGAL::collinear(*std::prev(vc), *vc, *std::next(vc))) {
+      v_to_erase.push_back(vc);
+    }
+  } while (++vc != polygon->vertices_circulator());
+
+  // Remove intermediate vertices.
+  for (std::vector<Polygon_2::Vertex_circulator>::reverse_iterator rit =
+           v_to_erase.rbegin();
+       rit != v_to_erase.rend(); ++rit) {
+    polygon->erase(*rit);
+  }
+}
+
+void simplifyPolygon(PolygonWithHoles* pwh) {
+  ROS_ASSERT(pwh);
+
+  simplifyPolygon(&pwh->outer_boundary());
+
+  for (PolygonWithHoles::Hole_iterator hi = pwh->holes_begin();
+       hi != pwh->holes_end(); ++hi)
+    simplifyPolygon(&*hi);
+}
+
 }  // namespace polygon_coverage_planning

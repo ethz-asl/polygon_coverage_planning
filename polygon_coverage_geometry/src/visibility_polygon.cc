@@ -2,8 +2,8 @@
 #include <ros/console.h>
 
 #include <CGAL/Arr_naive_point_location.h>
-#include <CGAL/Triangular_expansion_visibility_2.h>
 #include <CGAL/Arr_segment_traits_2.h>
+#include <CGAL/Triangular_expansion_visibility_2.h>
 
 #include "polygon_coverage_geometry/cgal_comm.h"
 #include "polygon_coverage_geometry/visibility_polygon.h"
@@ -107,6 +107,10 @@ bool computeVisibilityPolygon(const PolygonWithHoles& pwh,
   do {
     visibility_polygon->push_back(curr->source()->point());
   } while (++curr != fh->outer_ccb());
+
+  simplifyPolygon(visibility_polygon);
+  if (visibility_polygon->is_clockwise_oriented())
+    visibility_polygon->reverse_orientation();
 
   return true;
 }
