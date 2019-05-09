@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>polygon_coverage_geometry</name>
+  <version>0.0.0</version>
+  <description>
+    This package contains the geometric sweep path generation and polygon operations.
+  </description>
+  <author>Rik Bähnemann</author>
+  <maintainer email="brik@ethz.ch">Rik Bähnemann</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>catkin_simple</buildtool_depend>
+
+  <depend>cgal_catkin</depend>
+  <depend>rosconsole</depend>
+  <depend>roslib</depend>
+  <depend>polygon_coverage_solvers</depend>
+
+</package>
