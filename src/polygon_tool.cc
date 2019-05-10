@@ -13,7 +13,6 @@ PolygonTool::PolygonTool()
   pink_ = Ogre::ColourValue(1.f, 0.f, 1.f, 1.0);
   yellow_ = Ogre::ColourValue(1.f, 1.f, 0.f, 1.0);
   transparent_ = Ogre::ColourValue(0.f, 0.f, 0.f, 0.0);
-
 }
 
 PolygonTool::~PolygonTool() {
@@ -31,14 +30,16 @@ void PolygonTool::onInitialize() {
       new rviz::Shape(rviz::Shape::Sphere, scene_manager_, moving_vertex_node_);
   // or else the ball is visible in the middle of the scene
   moving_vertex_node_->setVisible(false);
+  std::string ns = ros::this_node::getNamespace();
+  std::cout<<"this is ns "<<ns<<" finished "<<std::endl;
   selector_subs_ =
       nh_.subscribe("select_poly", 1, &PolygonTool::toolSelectCallback, this);
   new_tool_subs_ =
       nh_.subscribe("new_poly", 1, &PolygonTool::newPolyCallback, this);
   delete_poly_subs_ =
       nh_.subscribe("delete_poly", 1, &PolygonTool::deletePolyCallback, this);
-  my_publisher_ = nh_.advertise<std_msgs::Int8>("where_does_this_show",1);
-  traj_service_ = nh_.advertiseService("construct_and_check_polygon", &PolygonTool::constructPolyWithHoles,this);
+  my_publisher_ = nh_.advertise<std_msgs::Int8>("/where_does_this_show",10);
+  traj_service_ = nh_.advertiseService("/construct_and_check_polygon", &PolygonTool::constructPolyWithHoles,this);
 }
 
 void PolygonTool::activate() {
@@ -120,7 +121,6 @@ int PolygonTool::processKeyEvent(QKeyEvent *e, rviz::RenderPanel *pane) {
 //*/
 int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
 
-  my_publisher_.publish(1);
   if (!moving_vertex_node_) {
     return Render;
   }
@@ -134,6 +134,7 @@ int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
 
     if (event.leftUp()) {
       leftClicked(event);
+      my_publisher_.publish(1);
     } else if (event.rightUp()) {
       rightClicked(event);
     }
@@ -314,6 +315,8 @@ void PolygonTool::leftClicked(rviz::ViewportMouseEvent &event) {
 // called when the right mouse boutton is clicked
 // used to delete nodes within the range of the cursor node
 void PolygonTool::rightClicked(rviz::ViewportMouseEvent &event) {
+  std::string ns = ros::this_node::getNamespace();
+  std::cout<<"this is ns "<<ns<<" in right clicked "<<std::endl;
   // get the x y z coodinates of the click
   Ogre::Vector3 intersection;
   Ogre::Plane polygon_plane(Ogre::Vector3::UNIT_Z, 0.0f);
