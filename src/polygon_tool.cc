@@ -23,13 +23,18 @@ PolygonTool::~PolygonTool() {
 }
 
 void PolygonTool::onInitialize() {
+  std::string node_name = "polygon_tool";
+  //ros::init(0, 0, node_name);
+
   std::cout << "called PolygonTool onInitialize" << std::endl;
+  std::cout<<"status "<<ros::isStarted()<<std::endl;
   moving_vertex_node_ =
       scene_manager_->getRootSceneNode()->createChildSceneNode();
   vertex_ =
       new rviz::Shape(rviz::Shape::Sphere, scene_manager_, moving_vertex_node_);
   // or else the ball is visible in the middle of the scene
   moving_vertex_node_->setVisible(false);
+  nh_=ros::NodeHandle("/");
   std::string ns = ros::this_node::getNamespace();
   std::cout<<"this is ns "<<ns<<" finished "<<std::endl;
   selector_subs_ =
