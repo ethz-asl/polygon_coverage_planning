@@ -34,17 +34,18 @@ void PolygonTool::onInitialize() {
       new rviz::Shape(rviz::Shape::Sphere, scene_manager_, moving_vertex_node_);
   // or else the ball is visible in the middle of the scene
   moving_vertex_node_->setVisible(false);
-  nh_=ros::NodeHandle("/");
-  std::string ns = ros::this_node::getNamespace();
-  std::cout<<"this is ns "<<ns<<" finished "<<std::endl;
+  //nh_=ros::NodeHandle("/");
   selector_subs_ =
       nh_.subscribe("select_poly", 1, &PolygonTool::toolSelectCallback, this);
   new_tool_subs_ =
       nh_.subscribe("new_poly", 1, &PolygonTool::newPolyCallback, this);
   delete_poly_subs_ =
       nh_.subscribe("delete_poly", 1, &PolygonTool::deletePolyCallback, this);
-  my_publisher_ = nh_.advertise<std_msgs::Int8>("/where_does_this_show",10);
-  traj_service_ = nh_.advertiseService("/construct_and_check_polygon", &PolygonTool::constructPolyWithHoles,this);
+  check_poly_subs_=
+      nh_.subscribe("check_polygon_request", 1, &PolygonTool::checkStatusCallback, this);
+  status_update_publisher_ =
+      nh_.advertise<std_msgs::Bool>("polygon_status_update", 1, true);
+
 }
 
 void PolygonTool::activate() {
@@ -139,7 +140,6 @@ int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
 
     if (event.leftUp()) {
       leftClicked(event);
-      my_publisher_.publish(1);
     } else if (event.rightUp()) {
       rightClicked(event);
     }
@@ -152,7 +152,7 @@ int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
 }
 
 // remove all the elements at index
-void PolygonTool::deletePolygn(int index) {
+void PolygonTool::deletePolygn(size_t index) {
   if (index < active_spheres_.size() && is_activated_) {
     current_polygon_ = index;
     setColor(transparent_, transparent_);
@@ -204,18 +204,81 @@ void PolygonTool::makeVertex(const Ogre::Vector3 &position) {
   } else {
     drawLines(yellow_);
   }
-  //checkCGalPolygon();
+
 }
 
 // check geometric propetries of the CGal polygon
-void PolygonTool::checkCGalPolygon() {
-  // std::cout << " Polygon is simple: "
-  // <<polygon_[current_polygon_].is_simple()<<std::endl; std::cout << " Polygon
-  // is convex: " <<polygon_[current_polygon_].is_convex()<<std::endl;
+bool PolygonTool::checkCGalPolygon() {
+  bool to_be_ret = false;
+
+  for(size_t i = 0; i<polygon_.size(); ++i){
+    //polygons should be simple and have at least 3 pts!
+    if(polygon_[i].size()<3 || !polygon_[i].is_simple()){
+      break;
+    }
+    else if(polygon_[i].is_simple() && i==(polygon_.size()-1)){
+      to_be_ret = true;
+    }
+  }
+
+  //construct polygon with holes
+  //Polygon_2 local_combo=polygon_[0];
+  std::cout<<"debug 1"<<std::endl;
+  if(to_be_ret){
+    std::cout<<"debug 2"<<std::endl;
+
+    main_polygon_.clear();
+    CGAL::join(polygon_[0],polygon_[0],main_polygon_);
+    for(size_t i = 1; i<polygon_.size(); ++i){
+      // only interested in the polygons
+      if(type_of_polygons_[i] == 0){
+
+        std::cout<<"debug 3"<<std::endl;
+        Polygon_2_WH local_copy(main_polygon_);
+        Polygon_2_WH local_copy_result(main_polygon_);
+
+        std::cout<<"debug 3.1"<<std::endl;
+
+        for(size_t j=i;j<polygon_.size();++j){
+          std::cout<<"debug 3.15"<<std::endl;
+          if(CGAL::join(local_copy,polygon_[j],local_copy_result)){
+            main_polygon_=local_copy_result;
+            std::cout<<"debug 3.2"<<std::endl;
+            j=polygon_.size()+1;
+          }
+          else if(j==(polygon_.size()-1)) {
+            std::cout<<"debug 3.3"<<std::endl;
+            if(CGAL::join(local_copy,polygon_[j],main_polygon_)) {
+              std::cout<<"debug 3.4"<<std::endl;
+              }
+            else{
+              to_be_ret=false;
+              i=polygon_.size()+1;
+              break;
+            }
+          }
+        }
+
+      }
+    }
+    if(main_polygon_.is_unbounded()){
+      std::cout<<"debug 4"<<std::endl;
+    }
+    else{
+      std::cout<<"debug 5"<<std::endl;
+      //to_be_ret = false;
+      //std::cout<<"test not passed "<<std::endl;
+    }
+  }
+  return to_be_ret;
 }
-//ros::spin();
+
 
 void PolygonTool::drawLines(const Ogre::ColourValue &line_color) {
+  // something has changed, set verification to false
+  std_msgs::Bool to_send;
+  to_send.data = false;
+  status_update_publisher_.publish(to_send);
   // lines have to be set to invisible before being deleted
   for (size_t j = 0; j < active_lines_[current_polygon_].size(); ++j) {
     active_lines_[current_polygon_][j]->setVisible(false);
@@ -302,7 +365,7 @@ void PolygonTool::setColor(const Ogre::ColourValue &line_color,
   }
 
   // repaint nodes in green
-  for (int i = 0; i < active_spheres_[current_polygon_].size(); ++i) {
+  for (size_t i = 0; i < active_spheres_[current_polygon_].size(); ++i) {
     active_spheres_[current_polygon_][i]->setColor(sphere_color);
   }
 }
@@ -320,8 +383,6 @@ void PolygonTool::leftClicked(rviz::ViewportMouseEvent &event) {
 // called when the right mouse boutton is clicked
 // used to delete nodes within the range of the cursor node
 void PolygonTool::rightClicked(rviz::ViewportMouseEvent &event) {
-  std::string ns = ros::this_node::getNamespace();
-  std::cout<<"this is ns "<<ns<<" in right clicked "<<std::endl;
   // get the x y z coodinates of the click
   Ogre::Vector3 intersection;
   Ogre::Plane polygon_plane(Ogre::Vector3::UNIT_Z, 0.0f);
@@ -340,12 +401,12 @@ void PolygonTool::rightClicked(rviz::ViewportMouseEvent &event) {
         std::vector<rviz::Shape *> new_locl_active_sphr;
         std::vector<Ogre::SceneNode *> new_locl_vrtx_nds;
         Polygon_2 new_locl_polygn;
-        for (int j = i + 1; j < vertex_nodes_[current_polygon_].size(); ++j) {
+        for (size_t j = i + 1; j < vertex_nodes_[current_polygon_].size(); ++j) {
           new_locl_active_sphr.push_back(active_spheres_[current_polygon_][j]);
           new_locl_vrtx_nds.push_back(vertex_nodes_[current_polygon_][j]);
           new_locl_polygn.push_back(polygon_[current_polygon_][j]);
         }
-        for (int j = 0; j < i; ++j) {
+        for (size_t j = 0; j < i; ++j) {
           new_locl_active_sphr.push_back(active_spheres_[current_polygon_][j]);
           new_locl_vrtx_nds.push_back(vertex_nodes_[current_polygon_][j]);
           new_locl_polygn.push_back(polygon_[current_polygon_][j]);
@@ -404,13 +465,13 @@ void PolygonTool::load(const rviz::Config &config) {
   }
 }
 
-std::vector<Polygon_2> PolygonTool::getPolygon() { return polygon_; }
-
-bool PolygonTool::constructPolyWithHoles(std_srvs::SetBool::Request& request,
-                                      std_srvs::SetBool::Response& response){
-  response.success = true;
-  std::cout<<"called constructPolyWithHoles in tool"<<std::endl;
-  return true;
+void PolygonTool::checkStatusCallback(const std_msgs::Bool &incomming){
+  std::cout<<"called PolygonTool::checkStatusCallback "<<std::endl;
+  bool to_return = checkCGalPolygon();
+  std::cout<<"this is status of polygon :"<<to_return<<std::endl;
+  std_msgs::Bool to_send;
+  to_send.data = to_return;
+  status_update_publisher_.publish(to_send);
 }
 
 void PolygonTool::toolSelectCallback(const std_msgs::Int8 &tool_num) {
