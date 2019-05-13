@@ -1,12 +1,12 @@
-#ifndef MAV_2D_COVERAGE_PLANNING_SENSOR_MODELS_FRUSTUM_H_
-#define MAV_2D_COVERAGE_PLANNING_SENSOR_MODELS_FRUSTUM_H_
+#ifndef POLYGON_COVERAGE_PLANNERS_SENSOR_MODELS_FRUSTUM_H_
+#define POLYGON_COVERAGE_PLANNERS_SENSOR_MODELS_FRUSTUM_H_
 
-#include <glog/logging.h>
 #include <cmath>
+#include <ros/assert.h>
 
 #include "mav_2d_coverage_planning/sensor_models/sensor_model_base.h"
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 
 class Frustum : public SensorModelBase {
  public:
@@ -20,15 +20,16 @@ class Frustum : public SensorModelBase {
   }
 
   inline double computeFootprint(double altitude, double fov) const {
+    ROS_ASSERT(fov > 0.0);
+    ROS_ASSERT(fov < M_PI);
+
     double half_fov = 0.5 * fov;
-    CHECK_GE(half_fov, 0.0);
-    CHECK_LT(half_fov, 0.5 * M_PI);
     return 2.0 * altitude * std::tan(half_fov);
   }
 
   double lateral_footprint_;
 };
 
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning
 
-#endif  // MAV_2D_COVERAGE_PLANNING_SENSOR_MODELS_FRUSTUM_H_
+#endif  // POLYGON_COVERAGE_PLANNERS_SENSOR_MODELS_FRUSTUM_H_

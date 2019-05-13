@@ -42,12 +42,6 @@ class PolygonStripmapPlanner {
     return decomposition_;
   }
 
-  // Check which decomposition cells are adjacent. Return whether each cell has
-  // at least one neighbor.
-  bool updateDecompositionAdjacency();
-
-  bool offsetDecomposition();
-
   inline size_t getDecompositionSize() const { return decomposition_.size(); }
   inline size_t getNumberOfNodes() const { return sweep_plan_graph_.size(); }
   inline size_t getNumberOfEdges() const {
@@ -62,8 +56,6 @@ class PolygonStripmapPlanner {
 
   virtual bool sweepAroundObstacles(std::vector<Point_2>* solution) const;
 
-  std::vector<Polygon> decomposition_;
-  std::map<size_t, std::set<size_t>> decomposition_adjacency_;
   // The sweep plan graph with all possible waypoints its node connections.
   sweep_plan_graph::SweepPlanGraph sweep_plan_graph_;
 

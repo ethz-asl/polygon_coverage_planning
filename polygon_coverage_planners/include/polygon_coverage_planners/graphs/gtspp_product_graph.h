@@ -1,15 +1,15 @@
-#ifndef MAV_2D_COVERAGE_PLANNING_GRAPHS_GTSPP_PRODUCT_GRAPH_H_
-#define MAV_2D_COVERAGE_PLANNING_GRAPHS_GTSPP_PRODUCT_GRAPH_H_
+#ifndef POLYGON_COVERAGE_PLANNERS_GRAPHS_GTSPP_PRODUCT_GRAPH_H_
+#define POLYGON_COVERAGE_PLANNERS_GRAPHS_GTSPP_PRODUCT_GRAPH_H_
 
 #include <limits>
 #include <vector>
 
-#include <mav_coverage_planning_comm/cgal_definitions.h>
+#include <polygon_coverage_geometry/cgal_definitions.h>
 #include "mav_2d_coverage_planning/graphs/sweep_plan_graph.h"
 #include "mav_coverage_graph_solvers/boolean_lattice.h"
 #include "mav_coverage_graph_solvers/graph_base.h"
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 namespace gtspp_product_graph {
 // Internal node property. Stores the product graph information, i.e., the
 // corresponding sweep plan graph ID and boolean lattice ID.
@@ -124,6 +124,6 @@ class GtsppProductGraph : public GraphBase<NodeProperty, EdgeProperty> {
   const boolean_lattice::BooleanLattice* boolean_lattice_;
 };
 }  // namespace gtspp_product_graph
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning
 
-#endif  // MAV_2D_COVERAGE_PLANNING_GRAPHS_GTSPP_PRODUCT_GRAPH_H_
+#endif  // POLYGON_COVERAGE_PLANNERS_GRAPHS_GTSPP_PRODUCT_GRAPH_H_

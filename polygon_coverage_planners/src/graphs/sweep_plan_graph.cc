@@ -7,7 +7,7 @@
 #include <mav_coverage_graph_solvers/gk_ma.h>
 #include "mav_2d_coverage_planning/geometry/sweep.h"
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 namespace sweep_plan_graph {
 
 bool NodeProperty::isNonOptimal(
@@ -48,6 +48,11 @@ bool NodeProperty::isNonOptimal(
 
 bool SweepPlanGraph::create() {
   clear();
+  // Compute decomposition.
+  computeDecomposition();
+  // Offset neighboring cells.
+  // Create
+
   size_t num_sweep_plans = 0;
   // Create sweep plans for each cluster.
   for (size_t cluster = 0; cluster < polygon_clusters_.size(); ++cluster) {
@@ -115,6 +120,158 @@ bool SweepPlanGraph::create() {
             << " nodes and " << edge_properties_.size() << " edges.";
   LOG(INFO) << "Pruned " << num_sweep_plans - graph_.size() << " nodes.";
   is_created_ = true;
+  return true;
+}
+
+bool SweepPlanGraph::computeDecomposition() {
+  // Create decomposition.
+  timing::Timer timer_decom("decomposition");
+  switch (settings_.decomposition_type) {
+    case DecompositionType::kBoustrophedeon: {
+      if (!computeBestBCDFromPolygonWithHoles(settings_.polygon,
+                                              &polygon_clusters_)) {
+        ROS_ERROR_STREAM("Cannot compute boustrophedeon decomposition.");
+        return false;
+      } else {
+        ROS_INFO_STREAM(
+            "Successfully created boustrophedeon decomposition with "
+            << polygon_clusters_.size() << " polygon(s).");
+      }
+      break;
+    }
+    case DecompositionType::kTrapezoidal: {
+      if (!computeBestTrapezoidalDecompositionFromPolygonWithHoles(
+              settings_.polygon, &polygon_clusters_)) {
+        ROS_ERROR_STREAM("Cannot compute trapezoidal decomposition.");
+        return false;
+      } else {
+        ROS_INFO_STREAM("Successfully created trapezoidal decomposition with "
+                        << polygon_clusters_.size() << " polygon(s).");
+      }
+      break;
+    }
+    default: {
+      ROS_ERROR_STREAM("No valid decomposition type set.");
+      return false;
+      break;
+    }
+  }
+  timer_decom.Stop();
+
+  // Compute adjacency.
+  timing::Timer timer_poly_adj("polygon_adjacency");
+  if (settings_.offset_polygons && !updateDecompositionAdjacency()) {
+    ROS_ERROR_STREAM("Decomposition not fully connected.");
+    return false;
+  }
+  timer_poly_adj.Stop();
+
+  timing::Timer timer_poly_offset("poly_offset");
+  if (!offsetDecomposition()) {
+    LOG(ERROR) << "Failed to offset rectangular decomposition.";
+    is_initialized_ = false;
+  }
+  timer_poly_offset.Stop();
+
+
+}
+
+bool SweepPlanGraph::updateDecompositionAdjacency() {
+  for (size_t i = 0; i < polygon_clusters_.size() - 1; ++i) {
+    for (size_t j = i + 1; j < polygon_clusters_.size(); ++j) {
+      PolygonWithHoles joined;
+      if (CGAL::join(polygon_clusters_[i].getPolygon(),
+                     polygon_clusters_[j].getPolygon(), joined)) {
+        decomposition_adjacency_[i].emplace(j);
+        decomposition_adjacency_[j].emplace(i);
+      }
+    }
+  }
+
+  // Check connectivity.
+  if (polygon_clusters_.size() == 1) return decomposition_adjacency_.count(0) == 0;
+  for (size_t i = 0; i < polygon_clusters_.size(); ++i) {
+    if (decomposition_adjacency_.find(i) == decomposition_adjacency_.end()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+
+bool SweepPlanGraph::offsetDecomposition() {
+  // Find overlapping edges.
+  std::vector<Polygon_2> offsetted_decomposition = polygon_clusters_;
+  std::vector<Segment_2> offsetted_segments;
+  for (size_t i = 0; i < polygon_clusters_.size(); ++i) {
+    for (std::set<size_t>::iterator it = decomposition_adjacency_[i].begin();
+         it != decomposition_adjacency_[i].end(); it++) {
+      const Polygon_2& cell = polygon_clusters_[i].getPolygon().outer_boundary();
+      const size_t num_edges_cell = cell.size();
+      // If they do not touch anymore, skip.
+      PolygonWithHoles joined;
+      if (!CGAL::join(polygon_clusters_[i].getPolygon(),
+                      polygon_clusters_[*it].getPolygon(), joined))
+        continue;
+
+      const Polygon_2& neighbor =
+          polygon_clusters_[*it].getPolygon().outer_boundary();
+      const size_t num_edges_neighbor = neighbor.size();
+      for (size_t cell_e = 0; cell_e < num_edges_cell; ++cell_e) {
+        if (std::find(offsetted_segments.begin(), offsetted_segments.end(),
+                      cell.edge(cell_e)) != offsetted_segments.end())
+          continue;  // Already offsetted this segment.
+        for (size_t neighbor_e = 0; neighbor_e < num_edges_neighbor;
+             ++neighbor_e) {
+          if (std::find(offsetted_segments.begin(), offsetted_segments.end(),
+                        neighbor.edge(neighbor_e)) != offsetted_segments.end())
+            continue;  // Already offsetted this segment.
+          // If segments intersect, offset polygon.
+          CGAL::cpp11::result_of<Intersect_2(Segment_2, Segment_2)>::type
+              result = CGAL::intersection(cell.edge(cell_e),
+                                          neighbor.edge(neighbor_e));
+          if (result) {
+            if (const Segment_2* s = boost::get<Segment_2>(&*result)) {
+              if (*s == cell.edge(cell_e) ||
+                  s->opposite() == cell.edge(cell_e)) {
+                Polygon offset_cell;
+                polygon_clusters_[i].offsetEdgeWithRadialOffset(
+                    cell_e, settings_.sensor_model->getSweepDistance(),
+                    &offset_cell);
+                Polygon intersected_offset;
+                if (!offsetted_decomposition[i].intersect(offset_cell,
+                                                          &intersected_offset))
+                  return false;
+                offsetted_decomposition[i] = intersected_offset;
+                offsetted_segments.push_back(*s);
+                offsetted_segments.push_back(s->opposite());
+              } else if (*s == neighbor.edge(neighbor_e) ||
+                         s->opposite() == neighbor.edge(neighbor_e)) {
+                Polygon offset_neighbor;
+                polygon_clusters_[*it].offsetEdgeWithRadialOffset(
+                    neighbor_e, settings_.sensor_model->getSweepDistance(),
+                    &offset_neighbor);
+                Polygon intersected_offset;
+                if (!offsetted_decomposition[*it].intersect(
+                        offset_neighbor, &intersected_offset))
+                  return false;
+                offsetted_decomposition[*it] = intersected_offset;
+                offsetted_segments.push_back(*s);
+                offsetted_segments.push_back(s->opposite());
+              } else {
+                DLOG(INFO) << "Segment intersection but not identical.";
+              }
+            } else {
+              DLOG(INFO) << "Only point intersection... "
+                         << *boost::get<Point_2>(&*result);
+            }
+          }
+        }
+      }
+    }
+  }
+  polygon_clusters_ = offsetted_decomposition;
+
   return true;
 }
 
@@ -410,4 +567,4 @@ bool SweepPlanGraph::computeVisibility(const Polygon& polygon, Point_2* vertex,
 }
 
 }  // namespace sweep_plan_graph
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning

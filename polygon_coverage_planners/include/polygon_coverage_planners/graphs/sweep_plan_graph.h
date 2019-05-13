@@ -1,35 +1,35 @@
-#ifndef MAV_2D_COVERAGE_PLANNING_GRAPHS_SWEEP_PLAN_GRAPH_H_
-#define MAV_2D_COVERAGE_PLANNING_GRAPHS_SWEEP_PLAN_GRAPH_H_
+#ifndef POLYGON_COVERAGE_PLANNING_GRAPHS_SWEEP_PLAN_GRAPH_H_
+#define POLYGON_COVERAGE_PLANNING_GRAPHS_SWEEP_PLAN_GRAPH_H_
 
-#include <mav_coverage_graph_solvers/graph_base.h>
-#include <mav_coverage_planning_comm/cgal_definitions.h>
+#include <polygon_coverage_geometry/cgal_definitions.h>
+#include <polygon_coverage_geometry/visibility_graph.h>
+#include <polygon_coverage_solvers/graph_base.h>
 
-#include "mav_2d_coverage_planning/cost_functions/path_cost_functions.h"
-#include "mav_2d_coverage_planning/geometry/polygon.h"
-#include "mav_2d_coverage_planning/graphs/visibility_graph.h"
+#include "polygon_coverage_planners/cost_functions/path_cost_functions.h"
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 namespace sweep_plan_graph {
 // Internal node property. Stores the sweep plan / waypoint information.
 struct NodeProperty {
   NodeProperty() : cost(-1.0), cluster(0) {}
   NodeProperty(const std::vector<Point_2>& waypoints,
                const PathCostFunctionType& cost_function, size_t cluster,
-               const std::vector<Polygon>& visibility_polygons)
+               const std::vector<Polygon_2>& visibility_polygons)
       : waypoints(waypoints),
         cost(cost_function(waypoints)),
         cluster(cluster),
         visibility_polygons(visibility_polygons) {}
   NodeProperty(const Point_2& waypoint,
                const PathCostFunctionType& cost_function, size_t cluster,
-               const Polygon& visibility_polygon)
+               const Polygon_2& visibility_polygon)
       : NodeProperty(std::vector<Point_2>({waypoint}), cost_function, cluster,
-                     std::vector<Polygon>({visibility_polygon})) {}
+                     std::vector<Polygon_2>({visibility_polygon})) {}
   std::vector<Point_2> waypoints;  // The sweep path or start / goal waypoint.
   double cost;                     // The length of the path.
   size_t cluster;                  // The cluster these waypoints are covering.
-  std::vector<Polygon> visibility_polygons;  // The visibility polygons at start
-                                             // and goal of sweep.
+  std::vector<Polygon_2>
+      visibility_polygons;  // The visibility polygons at start
+                            // and goal of sweep.
 
   // Checks whether this node property is non-optimal compared to any node
   // in node_properties.
@@ -52,16 +52,17 @@ struct EdgeProperty {
 // interconnections (edges). It is a dense, asymmetric, bidirectional graph.
 class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
  public:
-  SweepPlanGraph(const Polygon& polygon,
-                 const PathCostFunctionType& cost_function,
-                 const std::vector<Polygon>& polygon_clusters,
-                 double sweep_distance, bool sweep_single_direction)
-      : GraphBase(),
-        visibility_graph_(polygon),
-        cost_function_(cost_function),
-        polygon_clusters_(polygon_clusters),
-        sweep_distance_(sweep_distance),
-        sweep_single_direction_(sweep_single_direction) {
+  struct Settings {
+    PolygonWithHoles polygon;            // The input polygon to cover.
+    PathCostFunctionType cost_function;  // The user defined cost function.
+    std::shared_ptr<SensorModelBase> sensor_model;  // The sensor model.
+    DecompositionType decomposition_type;           // The decomposition type.
+    bool offset_polygons;         // Flag to offset neighboring cells.
+    bool sweep_single_direction;  // Flag to sweep only in best direction.
+  };
+
+  SweepPlanGraph(const Settings& settings)
+      : GraphBase(), settings_(settings), visibility_graph_(settings_.polygon) {
     is_created_ = create();  // Auto-create.
   }
   SweepPlanGraph() : GraphBase() {}
@@ -114,15 +115,25 @@ class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
   bool computeVisibility(const Polygon& polygon, Point_2* vertex,
                          Polygon* visibility_polygon) const;
 
+  // Compute the desired decomposition and calculate cell adjacency (for
+  // offsetting).
+  void computeDecomposition();
+
+  // Check which decomposition cells are adjacent. Return whether each cell has
+  // at least one neighbor.
+  bool updateDecompositionAdjacency();
+
+  // Offset neighboring cells.
+  bool offsetDecomposition();
+
   visibility_graph::VisibilityGraph
       visibility_graph_;                   // The visibility to compute edges.
-  PathCostFunctionType cost_function_;     // The user defined cost function.
-  std::vector<Polygon> polygon_clusters_;  // The polygon clusters.
-  double sweep_distance_;                  // The max. sweep distance.
-  bool sweep_single_direction_;
+  std::vector<Polygon_2> polygon_clusters_;  // The polygon clusters.
+  std::map<size_t, std::set<size_t>> decomposition_adjacency_;
+  Settings settings_;                      // User input settings.
 };
 
 }  // namespace sweep_plan_graph
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning
 
-#endif  // MAV_2D_COVERAGE_PLANNING_GRAPHS_SWEEP_PLAN_GRAPH_H_
+#endif  // POLYGON_COVERAGE_PLANNING_GRAPHS_SWEEP_PLAN_GRAPH_H_
