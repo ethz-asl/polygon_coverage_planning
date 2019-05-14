@@ -12,8 +12,9 @@
 #include <std_srvs/SetBool.h>
 #include <std_srvs/Empty.h>
 
-#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Boolean_set_operations_2.h>
+#include <CGAL/connect_holes.h>
+#include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_2.h>
 #include <CGAL/Polygon_with_holes_2.h>
 
@@ -32,9 +33,12 @@ namespace mav_polygon_tool {
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef K::Point_2 Point;
+typedef std::list<Point> Point_list;
 typedef CGAL::Polygon_2<K> Polygon_2;
 typedef CGAL::Polygon_with_holes_2<K> Polygon_2_WH;
+typedef std::list<Polygon_2_WH> Poly_wh_list;
 typedef Polygon_2::Vertex_iterator VertexIterator;
+
 
 // Declare polygon tool as subclass of rviz::Tool.
 class PolygonTool : public rviz::Tool {
@@ -63,7 +67,7 @@ private:
   void leftClicked(rviz::ViewportMouseEvent &event);
   void rightClicked(rviz::ViewportMouseEvent &event);
   bool checkCGalPolygon();
-
+  void drawPolyWithHoles(const Polygon_2_WH &to_be_painted);
   std::vector<std::vector<rviz::Shape *>> active_spheres_;
   std::vector<std::vector<Ogre::SceneNode *>> vertex_nodes_;
   Ogre::SceneNode *moving_vertex_node_;

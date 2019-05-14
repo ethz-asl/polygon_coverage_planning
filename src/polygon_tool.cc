@@ -210,9 +210,8 @@ void PolygonTool::makeVertex(const Ogre::Vector3 &position) {
 // check geometric propetries of the CGal polygon
 bool PolygonTool::checkCGalPolygon() {
   bool to_be_ret = false;
-
+  //all polygons and holes should be simple and have at least 3 pts!
   for(size_t i = 0; i<polygon_.size(); ++i){
-    //polygons should be simple and have at least 3 pts!
     if(polygon_[i].size()<3 || !polygon_[i].is_simple()){
       break;
     }
@@ -222,57 +221,113 @@ bool PolygonTool::checkCGalPolygon() {
   }
 
   //construct polygon with holes
-  //Polygon_2 local_combo=polygon_[0];
-  std::cout<<"debug 1"<<std::endl;
+  /*
+  check if all polygons (without holes) overlap
+  ->as soon as a polygon cannot be joined with any other one
+    -> break
+  */
+  std::cout<<"debug 1 status: "<<to_be_ret<<std::endl;
   if(to_be_ret){
+    std::vector<Polygon_2_WH> polygons_no_holes;
+    std::vector<Polygon_2> only_the_holes;
+    for(size_t i=0;i<polygon_.size();++i){
+      //MAKE SURE THE ORIENTATION IS THE SAME FOR ALL POLYGONS
+      if(polygon_[i].orientation()==-1){
+        polygon_[i].reverse_orientation();
+      }
+      if(type_of_polygons_[i] == 0){
+          Polygon_2_WH local_poly(polygon_[i]);
+          polygons_no_holes.push_back(local_poly);
+        }
+      else if(type_of_polygons_[i] == 1){
+          only_the_holes.push_back(polygon_[i]);
+        }
+      }
     std::cout<<"debug 2"<<std::endl;
 
+    bool has_joined = false;
+    int start_index = 0;
     main_polygon_.clear();
-    CGAL::join(polygon_[0],polygon_[0],main_polygon_);
-    for(size_t i = 1; i<polygon_.size(); ++i){
-      // only interested in the polygons
-      if(type_of_polygons_[i] == 0){
+    for(size_t i=1;i<polygons_no_holes.size();++i){
+      //initialise for safety
+      Polygon_2_WH local_copy_result;
+      /*
+      std::cout<<"debug 2.5 loop index "<<i<<std::endl;
+      std::cout<<"pointers "<<&polygons_no_holes[0]<<" "<<&polygons_no_holes[i]<<" "<<&local_copy_result<<std::endl;
+      std::cout<<"this is size "<<polygons_no_holes.size()<<std::endl;
+      std::cout<<"this is size of object 0 "<<polygons_no_holes[0].outer_boundary().size()<<std::endl;
+      std::cout<<"this is size of object "<<i<<" "<<polygons_no_holes[i].outer_boundary().size()<<std::endl;
+      std::cout<<"this is simplicity object 0 "<<polygons_no_holes[0].outer_boundary().is_simple()<<std::endl;
+      std::cout<<"this is simplicity of object "<<i<<" "<<polygons_no_holes[i].outer_boundary().is_simple()<<std::endl;
+      */
+      if(CGAL::join(polygons_no_holes[i],polygons_no_holes[0],local_copy_result)){
+        if(local_copy_result.outer_boundary().is_simple()){
+        std::cout<<"removed from polygons_no_holes "<<i<<" "<<std::endl;
+        polygons_no_holes.erase(polygons_no_holes.begin()+i);
+        Polygon_2_WH dummy_poly(local_copy_result.outer_boundary());
+        polygons_no_holes[0]=dummy_poly;
+        i=0;
+        }
+      }
+    }
 
-        std::cout<<"debug 3"<<std::endl;
-        Polygon_2_WH local_copy(main_polygon_);
-        Polygon_2_WH local_copy_result(main_polygon_);
-
-        std::cout<<"debug 3.1"<<std::endl;
-
-        for(size_t j=i;j<polygon_.size();++j){
-          std::cout<<"debug 3.15"<<std::endl;
-          if(CGAL::join(local_copy,polygon_[j],local_copy_result)){
-            main_polygon_=local_copy_result;
-            std::cout<<"debug 3.2"<<std::endl;
-            j=polygon_.size()+1;
-          }
-          else if(j==(polygon_.size()-1)) {
-            std::cout<<"debug 3.3"<<std::endl;
-            if(CGAL::join(local_copy,polygon_[j],main_polygon_)) {
-              std::cout<<"debug 3.4"<<std::endl;
+    std::cout<<"debug 4.1 size of no holes "<<polygons_no_holes.size()<<std::endl;
+    if(polygons_no_holes.size()==1){
+      main_polygon_=polygons_no_holes[0];
+      std::cout<<"debug 5"<<std::endl;
+        for(size_t h = 0; h<only_the_holes.size(); ++h){
+          if(CGAL::do_intersect(main_polygon_,only_the_holes[h])){
+            Poly_wh_list poly_list;
+            Polygon_2_WH local_hole(only_the_holes[h]);
+            //symmetric_
+            CGAL::difference(main_polygon_,local_hole,std::back_inserter(poly_list));
+            std::cout<<"size of list "<<poly_list.size()<<std::endl;
+            //making sure the hole doesn't split the area into 2 or more parts
+            if(poly_list.size()==1){
+              if(poly_list.front().outer_boundary().size()>main_polygon_.outer_boundary().size()){
+                main_polygon_=poly_list.front();
               }
+              else{
+                main_polygon_.add_hole(only_the_holes[h]);
+              }
+            }
             else{
               to_be_ret=false;
-              i=polygon_.size()+1;
               break;
             }
           }
+          if(to_be_ret)
+            drawPolyWithHoles(main_polygon_);
         }
-
-      }
-    }
-    if(main_polygon_.is_unbounded()){
-      std::cout<<"debug 4"<<std::endl;
+      // Polygon_2_WH local_connection_result;
+      //
+      // connect_holes(main_polygon_, back_inserter(point_list));
+      // Polygon_2 test_p = Polygon_2(point_list.begin(), point_list.end());
+      // main_polygon_ = Polygon_2_WH(test_p);
     }
     else{
-      std::cout<<"debug 5"<<std::endl;
-      //to_be_ret = false;
-      //std::cout<<"test not passed "<<std::endl;
+      to_be_ret=false;
     }
   }
   return to_be_ret;
 }
 
+void PolygonTool::drawPolyWithHoles(const Polygon_2_WH &to_be_painted){
+  //setColor(transparent_,transparent_);
+  std::cout<<"called drawPolyWithHoles"<<std::endl;
+  Polygon_2 outer_bound=to_be_painted.outer_boundary();
+  for(size_t i=0;i<to_be_painted.outer_boundary().size();++i){
+    Point local_pt=to_be_painted.outer_boundary()[i];
+    rviz::Shape *local_sphere =
+        new rviz::Shape(rviz::Shape::Sphere, scene_manager_);
+    local_sphere->setColor(blue_);
+    Ogre::Vector3 scale(kPtScale, kPtScale, kPtScale);
+    local_sphere->setScale(scale);
+    Ogre::Vector3 position(local_pt[0], local_pt[1], 0.0);
+    local_sphere->setPosition(position);
+  }
+  size_t nbr_holes=to_be_painted.();
+}
 
 void PolygonTool::drawLines(const Ogre::ColourValue &line_color) {
   // something has changed, set verification to false
