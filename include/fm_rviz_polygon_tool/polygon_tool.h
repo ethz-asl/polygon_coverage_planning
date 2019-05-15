@@ -12,6 +12,9 @@
 #include <std_srvs/SetBool.h>
 #include <std_srvs/Empty.h>
 
+
+#include <deque>
+
 #include <CGAL/Boolean_set_operations_2.h>
 #include <CGAL/connect_holes.h>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
@@ -52,48 +55,57 @@ public:
 
   void activate() override;
   void deactivate() override;
-  int processKeyEvent(QKeyEvent *event, rviz::RenderPanel *pane) override;
+  //int processKeyEvent(QKeyEvent *event, rviz::RenderPanel *pane) override;
   int processMouseEvent(rviz::ViewportMouseEvent &event) override;
-
   void load(const rviz::Config &config) override;
   void save(rviz::Config config) const override;
 
 private:
-  void setColorsLeaving();
-  void setColorsArriving();
-  void deletePolygn(size_t index);
-  void makeVertex(const Ogre::Vector3 &position);
-  void makeHoleVertex(const Ogre::Vector3 &position);
+  // GUI related
   void leftClicked(rviz::ViewportMouseEvent &event);
   void rightClicked(rviz::ViewportMouseEvent &event);
+  void makeVertex(const Ogre::Vector3 &position);
+  void deletePolygn(size_t index);
   bool checkCGalPolygon();
-  void drawPolyWithHoles(const Polygon_2_WH &to_be_painted);
+
+  bool is_activated_ = false;
+  bool check_performed_ = false;
+  bool global_planning_ = false;
+  size_t current_polygon_ = 0;
+  int current_type_;
+  std::vector<int> type_of_polygons_;
+  std::vector<Polygon_2> polygon_;
+  Polygon_2_WH main_polygon_;
+  std::vector<std::list<Point>> points_for_poly_;
+
+  // color related
+  void makeHoleVertex(const Ogre::Vector3 &position);
+  void pushBackElements(int new_type);
+  void setColor(const Ogre::ColourValue &line_color,
+                const Ogre::ColourValue &sphere_color);
+  void drawLines(const Ogre::ColourValue &line_color);
+  void drawPolyWithHoles(const Polygon_2_WH &to_be_painted,
+    const Ogre::ColourValue color);
+  void clearGlobalPlanning();
+  void hideIndividualPolygons();
+  void showIndividualPolygons();
+  void setColorsLeaving();
+  void setColorsArriving();
+  Ogre::ColourValue red_, blue_, pink_, green_, yellow_, transparent_;
   std::vector<std::vector<rviz::Shape *>> active_spheres_;
   std::vector<std::vector<Ogre::SceneNode *>> vertex_nodes_;
   Ogre::SceneNode *moving_vertex_node_;
   rviz::VectorProperty *current_vertex_property_;
   std::vector<std::vector<rviz::Line *>> active_lines_;
-  std::vector<std::list<Point>> points_for_poly_;
-
-  std::vector<Polygon_2> polygon_;
-  Polygon_2_WH main_polygon_;
-  // Point display.
+  std::vector<rviz::Shape *> outer_boundary_;
+  std::vector<rviz::Line *> outer_boundary_lines_;
+  std::vector<std::vector<rviz::Shape *>> inner_pts_;
+  std::vector<std::vector<rviz::Line *>> inner_lines_;
+  // Point displayed.
   rviz::Shape *vertex_;
   // point scale
   const float kPtScale = 0.5;
-  const float kDeleteTol = 0.2;
-
-  Ogre::ColourValue red_, blue_, pink_, green_, yellow_, transparent_;
-  void pushBackElements(int new_type);
-  void setColor(const Ogre::ColourValue &line_color,
-                const Ogre::ColourValue &sphere_color);
-  void drawLines(const Ogre::ColourValue &line_color);
-  size_t current_polygon_ = 0;
-  int current_type_;
-  std::vector<int> type_of_polygons_;
-
-  bool is_activated_ = false;
-  bool check_performed_ = false;
+  const float kDeleteTol = 0.5;
 
   // ROS messaging
   ros::NodeHandle nh_;

@@ -23,29 +23,24 @@ PolygonTool::~PolygonTool() {
 }
 
 void PolygonTool::onInitialize() {
-  std::string node_name = "polygon_tool";
-  //ros::init(0, 0, node_name);
-
   std::cout << "called PolygonTool onInitialize" << std::endl;
-  std::cout<<"status "<<ros::isStarted()<<std::endl;
+  std::cout << "status " << ros::isStarted() << std::endl;
   moving_vertex_node_ =
       scene_manager_->getRootSceneNode()->createChildSceneNode();
   vertex_ =
       new rviz::Shape(rviz::Shape::Sphere, scene_manager_, moving_vertex_node_);
   // or else the ball is visible in the middle of the scene
   moving_vertex_node_->setVisible(false);
-  //nh_=ros::NodeHandle("/");
   selector_subs_ =
       nh_.subscribe("select_poly", 1, &PolygonTool::toolSelectCallback, this);
   new_tool_subs_ =
       nh_.subscribe("new_poly", 1, &PolygonTool::newPolyCallback, this);
   delete_poly_subs_ =
       nh_.subscribe("delete_poly", 1, &PolygonTool::deletePolyCallback, this);
-  check_poly_subs_=
-      nh_.subscribe("check_polygon_request", 1, &PolygonTool::checkStatusCallback, this);
+  check_poly_subs_ = nh_.subscribe("check_polygon_request", 1,
+                                   &PolygonTool::checkStatusCallback, this);
   status_update_publisher_ =
       nh_.advertise<std_msgs::Bool>("polygon_status_update", 1, true);
-
 }
 
 void PolygonTool::activate() {
@@ -88,7 +83,7 @@ void PolygonTool::pushBackElements(int new_type) {
   current_type_ = new_type;
   type_of_polygons_.push_back(current_type_);
 }
-//*
+/*
 int PolygonTool::processKeyEvent(QKeyEvent *e, rviz::RenderPanel *pane) {
   std::cout << "processKeyEvent called " << e->key() << std::endl;
   // click on n
@@ -138,9 +133,9 @@ int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
     moving_vertex_node_->setVisible(true);
     moving_vertex_node_->setPosition(intersection);
 
-    if (event.leftUp()) {
+    if (event.leftUp() && !global_planning_) {
       leftClicked(event);
-    } else if (event.rightUp()) {
+    } else if (event.rightUp() && !global_planning_) {
       rightClicked(event);
     }
   } else {
@@ -153,6 +148,7 @@ int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
 
 // remove all the elements at index
 void PolygonTool::deletePolygn(size_t index) {
+  clearGlobalPlanning();
   if (index < active_spheres_.size() && is_activated_) {
     current_polygon_ = index;
     setColor(transparent_, transparent_);
@@ -204,129 +200,208 @@ void PolygonTool::makeVertex(const Ogre::Vector3 &position) {
   } else {
     drawLines(yellow_);
   }
-
 }
 
 // check geometric propetries of the CGal polygon
 bool PolygonTool::checkCGalPolygon() {
   bool to_be_ret = false;
-  //all polygons and holes should be simple and have at least 3 pts!
-  for(size_t i = 0; i<polygon_.size(); ++i){
-    if(polygon_[i].size()<3 || !polygon_[i].is_simple()){
+  main_polygon_.clear();
+  // all polygons and holes should be simple and have at least 3 pts!
+  for (size_t i = 0; i < polygon_.size(); ++i) {
+    if (polygon_[i].size() < 3 || !polygon_[i].is_simple()) {
       break;
-    }
-    else if(polygon_[i].is_simple() && i==(polygon_.size()-1)){
+    } else if (polygon_[i].is_simple() && i == (polygon_.size() - 1)) {
       to_be_ret = true;
     }
   }
-
-  //construct polygon with holes
   /*
   check if all polygons (without holes) overlap
   ->as soon as a polygon cannot be joined with any other one
-    -> break
+  -> break
   */
-  std::cout<<"debug 1 status: "<<to_be_ret<<std::endl;
-  if(to_be_ret){
+  if (to_be_ret) {
     std::vector<Polygon_2_WH> polygons_no_holes;
     std::vector<Polygon_2> only_the_holes;
-    for(size_t i=0;i<polygon_.size();++i){
-      //MAKE SURE THE ORIENTATION IS THE SAME FOR ALL POLYGONS
-      if(polygon_[i].orientation()==-1){
+    for (size_t i = 0; i < polygon_.size(); ++i) {
+      // MAKE SURE THE ORIENTATION IS THE SAME FOR ALL POLYGONS
+      if (polygon_[i].orientation() == -1) {
         polygon_[i].reverse_orientation();
       }
-      if(type_of_polygons_[i] == 0){
-          Polygon_2_WH local_poly(polygon_[i]);
-          polygons_no_holes.push_back(local_poly);
-        }
-      else if(type_of_polygons_[i] == 1){
-          only_the_holes.push_back(polygon_[i]);
-        }
+      if (type_of_polygons_[i] == 0) {
+        Polygon_2_WH local_poly(polygon_[i]);
+        polygons_no_holes.push_back(local_poly);
+      } else if (type_of_polygons_[i] == 1) {
+        only_the_holes.push_back(polygon_[i]);
       }
-    std::cout<<"debug 2"<<std::endl;
-
-    bool has_joined = false;
-    int start_index = 0;
-    main_polygon_.clear();
-    for(size_t i=1;i<polygons_no_holes.size();++i){
-      //initialise for safety
+    }
+    for (size_t i = 1; i < polygons_no_holes.size(); ++i) {
       Polygon_2_WH local_copy_result;
-      /*
-      std::cout<<"debug 2.5 loop index "<<i<<std::endl;
-      std::cout<<"pointers "<<&polygons_no_holes[0]<<" "<<&polygons_no_holes[i]<<" "<<&local_copy_result<<std::endl;
-      std::cout<<"this is size "<<polygons_no_holes.size()<<std::endl;
-      std::cout<<"this is size of object 0 "<<polygons_no_holes[0].outer_boundary().size()<<std::endl;
-      std::cout<<"this is size of object "<<i<<" "<<polygons_no_holes[i].outer_boundary().size()<<std::endl;
-      std::cout<<"this is simplicity object 0 "<<polygons_no_holes[0].outer_boundary().is_simple()<<std::endl;
-      std::cout<<"this is simplicity of object "<<i<<" "<<polygons_no_holes[i].outer_boundary().is_simple()<<std::endl;
-      */
-      if(CGAL::join(polygons_no_holes[i],polygons_no_holes[0],local_copy_result)){
-        if(local_copy_result.outer_boundary().is_simple()){
-        std::cout<<"removed from polygons_no_holes "<<i<<" "<<std::endl;
-        polygons_no_holes.erase(polygons_no_holes.begin()+i);
-        Polygon_2_WH dummy_poly(local_copy_result.outer_boundary());
-        polygons_no_holes[0]=dummy_poly;
-        i=0;
+      if (CGAL::join(polygons_no_holes[i], polygons_no_holes[0],
+                     local_copy_result)) {
+        if (local_copy_result.outer_boundary().is_simple()) {
+          polygons_no_holes.erase(polygons_no_holes.begin() + i);
+          Polygon_2_WH dummy_poly(local_copy_result.outer_boundary());
+          polygons_no_holes[0] = dummy_poly;
+          i = 0;
         }
       }
     }
-
-    std::cout<<"debug 4.1 size of no holes "<<polygons_no_holes.size()<<std::endl;
-    if(polygons_no_holes.size()==1){
-      main_polygon_=polygons_no_holes[0];
-      std::cout<<"debug 5"<<std::endl;
-        for(size_t h = 0; h<only_the_holes.size(); ++h){
-          if(CGAL::do_intersect(main_polygon_,only_the_holes[h])){
-            Poly_wh_list poly_list;
-            Polygon_2_WH local_hole(only_the_holes[h]);
-            //symmetric_
-            CGAL::difference(main_polygon_,local_hole,std::back_inserter(poly_list));
-            std::cout<<"size of list "<<poly_list.size()<<std::endl;
-            //making sure the hole doesn't split the area into 2 or more parts
-            if(poly_list.size()==1){
-              if(poly_list.front().outer_boundary().size()>main_polygon_.outer_boundary().size()){
-                main_polygon_=poly_list.front();
-              }
-              else{
-                main_polygon_.add_hole(only_the_holes[h]);
-              }
-            }
-            else{
-              to_be_ret=false;
-              break;
-            }
+    //making sure the holes don't overlap
+    if(to_be_ret){
+      for(size_t h1 = 0; h1<only_the_holes.size(); h1++){
+        for(size_t h2 = (h1+1); h2<only_the_holes.size(); h2++){
+          if(CGAL::do_intersect(only_the_holes[h1], only_the_holes[h2])){
+            to_be_ret = false;
+            h1 = h2 = (only_the_holes.size()+1);
           }
-          if(to_be_ret)
-            drawPolyWithHoles(main_polygon_);
         }
-      // Polygon_2_WH local_connection_result;
-      //
-      // connect_holes(main_polygon_, back_inserter(point_list));
-      // Polygon_2 test_p = Polygon_2(point_list.begin(), point_list.end());
-      // main_polygon_ = Polygon_2_WH(test_p);
+      }
     }
-    else{
-      to_be_ret=false;
+    if (polygons_no_holes.size() == 1 && to_be_ret) {
+      main_polygon_ = polygons_no_holes[0];
+      for (size_t h = 0; h < only_the_holes.size(); ++h) {
+        if (CGAL::do_intersect(main_polygon_, only_the_holes[h])) {
+          Poly_wh_list poly_list;
+          Polygon_2_WH local_hole(only_the_holes[h]);
+          CGAL::difference(main_polygon_, local_hole,
+                           std::back_inserter(poly_list));
+          std::cout << "size of list " << poly_list.size() << std::endl;
+          // making sure the hole doesn't split the area into 2 or more parts
+          if (poly_list.size() == 1) {
+            // checking if the hole is overlapping or completely inside
+            if (poly_list.front().outer_boundary().size() >
+                main_polygon_.outer_boundary().size()) {
+              main_polygon_ = poly_list.front();
+            } else {
+              main_polygon_.add_hole(only_the_holes[h]);
+            }
+          } else {
+            to_be_ret = false;
+            break;
+          }
+        }
+      }
+
+      if (to_be_ret)
+        drawPolyWithHoles(main_polygon_, blue_);
+    }
+    else {
+      to_be_ret = false;
     }
   }
   return to_be_ret;
 }
 
-void PolygonTool::drawPolyWithHoles(const Polygon_2_WH &to_be_painted){
-  //setColor(transparent_,transparent_);
-  std::cout<<"called drawPolyWithHoles"<<std::endl;
-  Polygon_2 outer_bound=to_be_painted.outer_boundary();
-  for(size_t i=0;i<to_be_painted.outer_boundary().size();++i){
-    Point local_pt=to_be_painted.outer_boundary()[i];
+void PolygonTool::drawPolyWithHoles(const Polygon_2_WH &to_be_painted,
+                                    const Ogre::ColourValue color) {
+  clearGlobalPlanning();
+  hideIndividualPolygons();
+  global_planning_ = true;
+  //std::cout << "called drawPolyWithHoles" << std::endl;
+  Polygon_2 outer_bound = to_be_painted.outer_boundary();
+  size_t bndry_size = to_be_painted.outer_boundary().size();
+  for (size_t i = 0; i < bndry_size; ++i) {
+    Point local_pt = to_be_painted.outer_boundary()[i];
     rviz::Shape *local_sphere =
         new rviz::Shape(rviz::Shape::Sphere, scene_manager_);
-    local_sphere->setColor(blue_);
+    local_sphere->setColor(color);
+    outer_boundary_.push_back(local_sphere);
     Ogre::Vector3 scale(kPtScale, kPtScale, kPtScale);
     local_sphere->setScale(scale);
     Ogre::Vector3 position(local_pt[0], local_pt[1], 0.0);
     local_sphere->setPosition(position);
   }
-  size_t nbr_holes=to_be_painted.();
+
+  for (size_t i = 0; i < bndry_size; ++i) {
+    rviz::Line *local_line =
+        new rviz::Line(scene_manager_, scene_manager_->getRootSceneNode());
+    local_line->setPoints(outer_boundary_[i]->getPosition(),
+                          outer_boundary_[(i + 1) % bndry_size]->getPosition());
+    local_line->setColor(color);
+    outer_boundary_lines_.push_back(local_line);
+  }
+  // show the real holes
+  for (Polygon_2_WH::Hole_const_iterator hi = to_be_painted.holes_begin();
+       hi != to_be_painted.holes_end(); ++hi) {
+    std::vector<rviz::Shape *> local_shapes;
+    std::vector<rviz::Line *> local_lines;
+    size_t pts_size = hi->size();
+    // draw the points
+    // Polygon_2_WH local;
+    // local->hi;
+    for (size_t i = 0; i < pts_size; ++i) {
+      rviz::Shape *local_sphere =
+          new rviz::Shape(rviz::Shape::Sphere, scene_manager_);
+      local_sphere->setColor(color);
+      Ogre::Vector3 scale(kPtScale, kPtScale, kPtScale);
+      local_sphere->setScale(scale);
+      Point local_pt = (*hi)[i];
+      Ogre::Vector3 position(local_pt[0], local_pt[1], 0.0);
+      local_sphere->setPosition(position);
+      local_shapes.push_back(local_sphere);
+    }
+    // draw the lines
+    for (size_t i = 0; i < pts_size; ++i) {
+      rviz::Line *local_line =
+          new rviz::Line(scene_manager_, scene_manager_->getRootSceneNode());
+      local_line->setColor(color);
+      local_line->setPoints(local_shapes[i]->getPosition(),
+                            local_shapes[(i + 1) % pts_size]->getPosition());
+      local_lines.push_back(local_line);
+    }
+    inner_pts_.push_back(local_shapes);
+    inner_lines_.push_back(local_lines);
+  }
+  size_t num_holes = to_be_painted.number_of_holes();
+  //std::cout << "num holes after " << num_holes << std::endl;
+
+}
+
+void PolygonTool::clearGlobalPlanning() {
+  //std::cout << "called clearGlobalPlanning " << std::endl;
+  for (size_t i = 0; i < outer_boundary_.size(); ++i) {
+    outer_boundary_[i]->setColor(transparent_);
+    outer_boundary_lines_[i]->setColor(transparent_);
+  }
+  outer_boundary_.clear();
+  outer_boundary_lines_.clear();
+
+  for(size_t i=0;i<inner_pts_.size();++i){
+    for(size_t j=0;j<inner_pts_[i].size();++j){
+      inner_pts_[i][j]->setColor(transparent_);
+      inner_lines_[i][j]->setColor(transparent_);
+    }
+  }
+  inner_pts_.clear();
+  inner_lines_.clear();
+}
+
+void PolygonTool::hideIndividualPolygons() {
+  size_t current_status = current_polygon_;
+  size_t loop_stop = type_of_polygons_.size();
+
+  for (size_t i = 0; i < loop_stop; ++i) {
+    current_polygon_ = i;
+    setColor(transparent_, transparent_);
+  }
+  current_polygon_ = current_status;
+}
+
+void PolygonTool::showIndividualPolygons() {
+  std::cout << "showIndividualPolygons" << std::endl;
+  size_t current_status = current_polygon_;
+  size_t local_current_type = current_type_;
+  size_t loop_stop = type_of_polygons_.size();
+  for (size_t i = 0; i < loop_stop; ++i) {
+    if (i != current_status) {
+      current_polygon_ = i;
+      current_type_ = type_of_polygons_[i];
+      setColorsLeaving();
+    }
+  }
+  current_polygon_ = current_status;
+  current_type_ = local_current_type;
+  setColorsArriving();
 }
 
 void PolygonTool::drawLines(const Ogre::ColourValue &line_color) {
@@ -377,6 +452,7 @@ void PolygonTool::setColorsLeaving() {
 }
 
 void PolygonTool::setColorsArriving() {
+  clearGlobalPlanning();
   if (current_type_ == 0) {
     setColor(green_, red_);
   } else {
@@ -427,6 +503,7 @@ void PolygonTool::setColor(const Ogre::ColourValue &line_color,
 
 // called by the callback when the user clicks the left mouse button
 void PolygonTool::leftClicked(rviz::ViewportMouseEvent &event) {
+  clearGlobalPlanning();
   Ogre::Vector3 intersection;
   Ogre::Plane polygon_plane(Ogre::Vector3::UNIT_Z, 0.0f);
   if (rviz::getPointOnPlaneFromWindowXY(event.viewport, polygon_plane, event.x,
@@ -439,9 +516,10 @@ void PolygonTool::leftClicked(rviz::ViewportMouseEvent &event) {
 // used to delete nodes within the range of the cursor node
 void PolygonTool::rightClicked(rviz::ViewportMouseEvent &event) {
   // get the x y z coodinates of the click
+  clearGlobalPlanning();
   Ogre::Vector3 intersection;
   Ogre::Plane polygon_plane(Ogre::Vector3::UNIT_Z, 0.0f);
-  VertexIterator vi = polygon_[current_polygon_].vertices_begin();
+  // VertexIterator vi = polygon_[current_polygon_].vertices_begin();
   if (rviz::getPointOnPlaneFromWindowXY(event.viewport, polygon_plane, event.x,
                                         event.y, intersection)) {
     for (size_t i = 0; i < vertex_nodes_[current_polygon_].size(); ++i) {
@@ -456,7 +534,8 @@ void PolygonTool::rightClicked(rviz::ViewportMouseEvent &event) {
         std::vector<rviz::Shape *> new_locl_active_sphr;
         std::vector<Ogre::SceneNode *> new_locl_vrtx_nds;
         Polygon_2 new_locl_polygn;
-        for (size_t j = i + 1; j < vertex_nodes_[current_polygon_].size(); ++j) {
+        for (size_t j = i + 1; j < vertex_nodes_[current_polygon_].size();
+             ++j) {
           new_locl_active_sphr.push_back(active_spheres_[current_polygon_][j]);
           new_locl_vrtx_nds.push_back(vertex_nodes_[current_polygon_][j]);
           new_locl_polygn.push_back(polygon_[current_polygon_][j]);
@@ -520,10 +599,10 @@ void PolygonTool::load(const rviz::Config &config) {
   }
 }
 
-void PolygonTool::checkStatusCallback(const std_msgs::Bool &incomming){
-  std::cout<<"called PolygonTool::checkStatusCallback "<<std::endl;
+void PolygonTool::checkStatusCallback(const std_msgs::Bool &incomming) {
+  std::cout << "called PolygonTool::checkStatusCallback " << std::endl;
   bool to_return = checkCGalPolygon();
-  std::cout<<"this is status of polygon :"<<to_return<<std::endl;
+  std::cout << "this is status of polygon :" << to_return << std::endl;
   std_msgs::Bool to_send;
   to_send.data = to_return;
   status_update_publisher_.publish(to_send);
@@ -531,7 +610,11 @@ void PolygonTool::checkStatusCallback(const std_msgs::Bool &incomming){
 
 void PolygonTool::toolSelectCallback(const std_msgs::Int8 &tool_num) {
   if (is_activated_) {
-    int incomming_num = tool_num.data;
+    if (global_planning_) {
+      showIndividualPolygons();
+      global_planning_ = false;
+    }
+    size_t incomming_num = tool_num.data;
     if (incomming_num < vertex_nodes_.size()) {
       setColorsLeaving();
       current_polygon_ = incomming_num;
@@ -544,6 +627,11 @@ void PolygonTool::toolSelectCallback(const std_msgs::Int8 &tool_num) {
 
 void PolygonTool::newPolyCallback(const std_msgs::Int8 &new_poly_type) {
   if (is_activated_) {
+    if(global_planning_){
+      clearGlobalPlanning();
+      showIndividualPolygons();
+      global_planning_=false;
+    }
     int incomming_type = new_poly_type.data;
     int new_current_poly = vertex_nodes_.size();
     setColorsLeaving();
@@ -555,6 +643,11 @@ void PolygonTool::newPolyCallback(const std_msgs::Int8 &new_poly_type) {
 
 void PolygonTool::deletePolyCallback(const std_msgs::Int8 &delete_ind) {
   if (is_activated_) {
+    if(global_planning_){
+      clearGlobalPlanning();
+      showIndividualPolygons();
+      global_planning_=false;
+    }
     int delete_location = delete_ind.data;
     deletePolygn(delete_location);
   }
