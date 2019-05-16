@@ -1,5 +1,7 @@
 #include "fm_rviz_polygon_tool/polygon_tool.h"
-
+#include <mav_planning_msgs/PolygonWithHoles.h>
+#include <mav_planning_msgs/Polygon2D.h>
+#include <mav_planning_msgs/Point2D.h>
 namespace mav_polygon_tool {
 
 PolygonTool::PolygonTool()
@@ -22,7 +24,6 @@ PolygonTool::~PolygonTool() {
 
 void PolygonTool::onInitialize() {
   std::cout << "called PolygonTool onInitialize" << std::endl;
-  std::cout << "status " << ros::isStarted() << std::endl;
   moving_vertex_node_ =
       scene_manager_->getRootSceneNode()->createChildSceneNode();
   vertex_ =
@@ -37,9 +38,17 @@ void PolygonTool::onInitialize() {
       nh_.subscribe("delete_poly", 1, &PolygonTool::deletePolyCallback, this);
   check_poly_subs_ = nh_.subscribe("check_polygon_request", 1,
                                    &PolygonTool::checkStatusCallback, this);
+  trigger_polygon_subs_ = nh_.subscribe("trigger_polygon_request", 1,
+       &PolygonTool::polygonPublisherCallback,this);
+  polygon_wh_publisher_ =
+      nh_.advertise<mav_planning_msgs::PolygonWithHoles>("polygon_with_holes",1, true);
   status_update_publisher_ =
       nh_.advertise<std_msgs::Bool>("polygon_status_update", 1, true);
-  polygon_client_ = nh_.serviceClient<std_srvs::SetBool>("trigger_test");
+  user_warn_publisher_ =
+      nh_.advertise<std_msgs::Bool>("warn_poly_status_user", 1, true);
+  polygon_wh_publisher_ = nh_.advertise<mav_planning_msgs::PolygonWithHoles>(
+      "polygon_with_holes", 1, true);
+
 }
 
 void PolygonTool::activate() {
@@ -82,43 +91,7 @@ void PolygonTool::pushBackElements(int new_type) {
   current_type_ = new_type;
   type_of_polygons_.push_back(current_type_);
 }
-/*
-int PolygonTool::processKeyEvent(QKeyEvent *e, rviz::RenderPanel *pane) {
-  std::cout << "processKeyEvent called " << e->key() << std::endl;
-  // click on n
-  if (e->key() == 78) {
-    setColorsLeaving();
-    current_polygon_++;
-    if (current_polygon_ == polygon_.size()) {
-      pushBackElements(0);
-    }
-    // just select the next one
-    else {
-      current_type_ = type_of_polygons_[current_polygon_];
-      setColorsArriving();
-    }
-  }
-  // click on b
-  else if (e->key() == 66) {
-    if (current_polygon_ > 0) {
-      setColorsLeaving();
-      current_polygon_--;
-      current_type_ = type_of_polygons_[current_polygon_];
-      setColorsArriving();
-    }
-  }
-  // click on h
-  // for hole
-  else if (e->key() == 72) {
-    if (current_polygon_ + 1 == polygon_.size()) {
-      setColorsLeaving();
-      current_polygon_++;
-      pushBackElements(1);
-    }
-  }
-  return 1;
-}
-//*/
+
 int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
 
   if (!moving_vertex_node_) {
@@ -245,13 +218,13 @@ bool PolygonTool::checkCGalPolygon() {
         }
       }
     }
-    //making sure the holes don't overlap
-    if(to_be_ret){
-      for(size_t h1 = 0; h1<only_the_holes.size(); h1++){
-        for(size_t h2 = (h1+1); h2<only_the_holes.size(); h2++){
-          if(CGAL::do_intersect(only_the_holes[h1], only_the_holes[h2])){
+    // making sure the holes don't overlap
+    if (to_be_ret) {
+      for (size_t h1 = 0; h1 < only_the_holes.size(); h1++) {
+        for (size_t h2 = (h1 + 1); h2 < only_the_holes.size(); h2++) {
+          if (CGAL::do_intersect(only_the_holes[h1], only_the_holes[h2])) {
             to_be_ret = false;
-            h1 = h2 = (only_the_holes.size()+1);
+            h1 = h2 = (only_the_holes.size() + 1);
           }
         }
       }
@@ -264,7 +237,6 @@ bool PolygonTool::checkCGalPolygon() {
           Polygon_2_WH local_hole(only_the_holes[h]);
           CGAL::difference(main_polygon_, local_hole,
                            std::back_inserter(poly_list));
-          std::cout << "size of list " << poly_list.size() << std::endl;
           // making sure the hole doesn't split the area into 2 or more parts
           if (poly_list.size() == 1) {
             // checking if the hole is overlapping or completely inside
@@ -283,8 +255,7 @@ bool PolygonTool::checkCGalPolygon() {
 
       if (to_be_ret)
         drawPolyWithHoles(main_polygon_, blue_);
-    }
-    else {
+    } else {
       to_be_ret = false;
     }
   }
@@ -296,7 +267,6 @@ void PolygonTool::drawPolyWithHoles(const Polygon_2_WH &to_be_painted,
   clearGlobalPlanning();
   hideIndividualPolygons();
   global_planning_ = true;
-  //std::cout << "called drawPolyWithHoles" << std::endl;
   Polygon_2 outer_bound = to_be_painted.outer_boundary();
   size_t bndry_size = to_be_painted.outer_boundary().size();
   for (size_t i = 0; i < bndry_size; ++i) {
@@ -326,8 +296,6 @@ void PolygonTool::drawPolyWithHoles(const Polygon_2_WH &to_be_painted,
     std::vector<rviz::Line *> local_lines;
     size_t pts_size = hi->size();
     // draw the points
-    // Polygon_2_WH local;
-    // local->hi;
     for (size_t i = 0; i < pts_size; ++i) {
       rviz::Shape *local_sphere =
           new rviz::Shape(rviz::Shape::Sphere, scene_manager_);
@@ -351,13 +319,9 @@ void PolygonTool::drawPolyWithHoles(const Polygon_2_WH &to_be_painted,
     inner_pts_.push_back(local_shapes);
     inner_lines_.push_back(local_lines);
   }
-  size_t num_holes = to_be_painted.number_of_holes();
-  //std::cout << "num holes after " << num_holes << std::endl;
-
 }
 
 void PolygonTool::clearGlobalPlanning() {
-  //std::cout << "called clearGlobalPlanning " << std::endl;
   for (size_t i = 0; i < outer_boundary_.size(); ++i) {
     outer_boundary_[i]->setColor(transparent_);
     outer_boundary_lines_[i]->setColor(transparent_);
@@ -365,8 +329,8 @@ void PolygonTool::clearGlobalPlanning() {
   outer_boundary_.clear();
   outer_boundary_lines_.clear();
 
-  for(size_t i=0;i<inner_pts_.size();++i){
-    for(size_t j=0;j<inner_pts_[i].size();++j){
+  for (size_t i = 0; i < inner_pts_.size(); ++i) {
+    for (size_t j = 0; j < inner_pts_[i].size(); ++j) {
       inner_pts_[i][j]->setColor(transparent_);
       inner_lines_[i][j]->setColor(transparent_);
     }
@@ -387,7 +351,6 @@ void PolygonTool::hideIndividualPolygons() {
 }
 
 void PolygonTool::showIndividualPolygons() {
-  std::cout << "showIndividualPolygons" << std::endl;
   size_t current_status = current_polygon_;
   size_t local_current_type = current_type_;
   size_t loop_stop = type_of_polygons_.size();
@@ -599,17 +562,14 @@ void PolygonTool::load(const rviz::Config &config) {
 }
 
 void PolygonTool::checkStatusCallback(const std_msgs::Bool &incomming) {
-  std::cout << "called PolygonTool::checkStatusCallback " << std::endl;
+  //std::cout << "called PolygonTool::checkStatusCallback " << std::endl;
   bool to_return = checkCGalPolygon();
-  std::cout << "this is status of polygon :" << to_return << std::endl;
+  //std::cout << "this is status of polygon :" << to_return << std::endl;
   std_msgs::Bool to_send;
   to_send.data = to_return;
   status_update_publisher_.publish(to_send);
-  std_srvs::SetBool service_bool;
-  service_bool.request.data = true;
-  std::cout<<"called service in checkStatusCallback"<<std::endl;
-  polygon_client_.call(service_bool);
-  std::cout<<"finished checkStatusCallback"<<std::endl;
+  user_warn_publisher_.publish(to_send);
+  //std::cout << "finished checkStatusCallback" << std::endl;
 }
 
 void PolygonTool::toolSelectCallback(const std_msgs::Int8 &tool_num) {
@@ -631,10 +591,10 @@ void PolygonTool::toolSelectCallback(const std_msgs::Int8 &tool_num) {
 
 void PolygonTool::newPolyCallback(const std_msgs::Int8 &new_poly_type) {
   if (is_activated_) {
-    if(global_planning_){
+    if (global_planning_) {
       clearGlobalPlanning();
       showIndividualPolygons();
-      global_planning_=false;
+      global_planning_ = false;
     }
     int incomming_type = new_poly_type.data;
     int new_current_poly = vertex_nodes_.size();
@@ -647,14 +607,40 @@ void PolygonTool::newPolyCallback(const std_msgs::Int8 &new_poly_type) {
 
 void PolygonTool::deletePolyCallback(const std_msgs::Int8 &delete_ind) {
   if (is_activated_) {
-    if(global_planning_){
+    if (global_planning_) {
       clearGlobalPlanning();
       showIndividualPolygons();
-      global_planning_=false;
+      global_planning_ = false;
     }
     int delete_location = delete_ind.data;
     deletePolygn(delete_location);
   }
+}
+
+void PolygonTool::polygonPublisherCallback(const std_msgs::Bool &incomming){
+  //std::cout<<"will prepare polygon with holes message"<<std::endl;
+  mav_planning_msgs::PolygonWithHoles pwh_to_be_sent;
+
+  for(size_t i=0;i<main_polygon_.outer_boundary().size();++i){
+    mav_planning_msgs::Point2D local_pt;
+    local_pt.x = main_polygon_.outer_boundary()[i][0];
+    local_pt.y = main_polygon_.outer_boundary()[i][1];
+    pwh_to_be_sent.hull.points.push_back(local_pt);
+  }
+
+  for (Polygon_2_WH::Hole_const_iterator hi = main_polygon_.holes_begin();
+       hi != main_polygon_.holes_end(); ++hi) {
+    size_t pts_size = hi->size();
+    mav_planning_msgs::Polygon2D local_poly;
+    for (size_t i = 0; i < pts_size; ++i) {
+      mav_planning_msgs::Point2D local_pt;
+      local_pt.x = (*hi)[i][0];
+      local_pt.y = (*hi)[i][1];
+      local_poly.points.push_back(local_pt);
+    }
+    pwh_to_be_sent.holes.push_back(local_poly);
+  }
+  polygon_wh_publisher_.publish(pwh_to_be_sent);
 }
 
 } // namespace mav_polygon_tool

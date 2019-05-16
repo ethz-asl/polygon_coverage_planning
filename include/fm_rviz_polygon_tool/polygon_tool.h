@@ -11,13 +11,11 @@
 #include <std_msgs/Bool.h>
 #include <std_srvs/SetBool.h>
 #include <std_srvs/Empty.h>
-
 #include <CGAL/Boolean_set_operations_2.h>
 #include <CGAL/connect_holes.h>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_2.h>
 #include <CGAL/Polygon_with_holes_2.h>
-
 #include <OgreColourValue.h>
 #include <OgreVector3.h>
 #include <rviz/geometry.h>
@@ -52,7 +50,6 @@ public:
 
   void activate() override;
   void deactivate() override;
-  //int processKeyEvent(QKeyEvent *event, rviz::RenderPanel *pane) override;
   int processMouseEvent(rviz::ViewportMouseEvent &event) override;
   void load(const rviz::Config &config) override;
   void save(rviz::Config config) const override;
@@ -110,12 +107,17 @@ private:
   ros::Subscriber delete_poly_subs_;
   ros::Subscriber selector_subs_;
   ros::Subscriber check_poly_subs_;
+  ros::Subscriber trigger_polygon_subs_;
+
   ros::Publisher status_update_publisher_;
-  ros::ServiceClient polygon_client_;
+  ros::Publisher user_warn_publisher_;
+  ros::Publisher polygon_wh_publisher_;
+
   void checkStatusCallback(const std_msgs::Bool &incomming);
   void toolSelectCallback(const std_msgs::Int8 &tool_num);
   void newPolyCallback(const std_msgs::Int8 &new_poly_num);
   void deletePolyCallback(const std_msgs::Int8 &delete_ind);
+  void polygonPublisherCallback(const std_msgs::Bool &incomming);
 };
 
 } // namespace mav_polygon_tool
