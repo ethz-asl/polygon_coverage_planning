@@ -12,9 +12,6 @@
 #include <std_srvs/SetBool.h>
 #include <std_srvs/Empty.h>
 
-
-#include <deque>
-
 #include <CGAL/Boolean_set_operations_2.h>
 #include <CGAL/connect_holes.h>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
@@ -114,6 +111,7 @@ private:
   ros::Subscriber selector_subs_;
   ros::Subscriber check_poly_subs_;
   ros::Publisher status_update_publisher_;
+  ros::ServiceClient polygon_client_;
   void checkStatusCallback(const std_msgs::Bool &incomming);
   void toolSelectCallback(const std_msgs::Int8 &tool_num);
   void newPolyCallback(const std_msgs::Int8 &new_poly_num);

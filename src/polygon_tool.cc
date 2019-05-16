@@ -1,7 +1,5 @@
 #include "fm_rviz_polygon_tool/polygon_tool.h"
 
-// use this line to launch it programatically
-// vis_manager_->getToolManager()->addTool("fm_rviz_polygon_tool/PolygonSelection");
 namespace mav_polygon_tool {
 
 PolygonTool::PolygonTool()
@@ -41,6 +39,7 @@ void PolygonTool::onInitialize() {
                                    &PolygonTool::checkStatusCallback, this);
   status_update_publisher_ =
       nh_.advertise<std_msgs::Bool>("polygon_status_update", 1, true);
+  polygon_client_ = nh_.serviceClient<std_srvs::SetBool>("trigger_test");
 }
 
 void PolygonTool::activate() {
@@ -606,6 +605,11 @@ void PolygonTool::checkStatusCallback(const std_msgs::Bool &incomming) {
   std_msgs::Bool to_send;
   to_send.data = to_return;
   status_update_publisher_.publish(to_send);
+  std_srvs::SetBool service_bool;
+  service_bool.request.data = true;
+  std::cout<<"called service in checkStatusCallback"<<std::endl;
+  polygon_client_.call(service_bool);
+  std::cout<<"finished checkStatusCallback"<<std::endl;
 }
 
 void PolygonTool::toolSelectCallback(const std_msgs::Int8 &tool_num) {
