@@ -17,9 +17,12 @@ PolygonTool::PolygonTool()
 
 PolygonTool::~PolygonTool() {
   std::cout << "called PolygonTool destructor" << std::endl;
-  delete vertex_;
+  clearGlobalPlanning();
+  hideIndividualPolygons();
+
+/*  delete vertex_;
   for (Ogre::SceneNode *vertex_node : vertex_nodes_[current_polygon_])
-    scene_manager_->destroySceneNode(vertex_node);
+    scene_manager_->destroySceneNode(vertex_node);*/
 }
 
 void PolygonTool::onInitialize() {
