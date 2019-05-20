@@ -5,19 +5,15 @@
 #include <OGRE/OgreSceneManager.h>
 #include <OGRE/OgreSceneNode.h>
 
-#include <ros/console.h>
-#include <ros/ros.h>
-#include <std_msgs/Int8.h>
-#include <std_msgs/Bool.h>
-#include <std_srvs/SetBool.h>
-#include <std_srvs/Empty.h>
 #include <CGAL/Boolean_set_operations_2.h>
-#include <CGAL/connect_holes.h>
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_2.h>
 #include <CGAL/Polygon_with_holes_2.h>
+#include <CGAL/connect_holes.h>
 #include <OgreColourValue.h>
 #include <OgreVector3.h>
+#include <ros/console.h>
+#include <ros/ros.h>
 #include <rviz/geometry.h>
 #include <rviz/ogre_helpers/line.h>
 #include <rviz/ogre_helpers/shape.h>
@@ -26,6 +22,8 @@
 #include <rviz/tool.h>
 #include <rviz/viewport_mouse_event.h>
 #include <rviz/visualization_manager.h>
+#include <std_msgs/Bool.h>
+#include <std_msgs/Int8.h>
 
 namespace mav_polygon_tool {
 
@@ -37,7 +35,6 @@ typedef CGAL::Polygon_with_holes_2<K> Polygon_2_WH;
 typedef std::list<Polygon_2_WH> Poly_wh_list;
 typedef Polygon_2::Vertex_iterator VertexIterator;
 
-
 // Declare polygon tool as subclass of rviz::Tool.
 class PolygonTool : public rviz::Tool {
   Q_OBJECT
@@ -45,9 +42,7 @@ class PolygonTool : public rviz::Tool {
 public:
   PolygonTool();
   virtual ~PolygonTool();
-
   void onInitialize() override;
-
   void activate() override;
   void deactivate() override;
   int processMouseEvent(rviz::ViewportMouseEvent &event) override;
@@ -79,7 +74,7 @@ private:
                 const Ogre::ColourValue &sphere_color);
   void drawLines(const Ogre::ColourValue &line_color);
   void drawPolyWithHoles(const Polygon_2_WH &to_be_painted,
-    const Ogre::ColourValue color);
+                         const Ogre::ColourValue color);
   void clearGlobalPlanning();
   void hideIndividualPolygons();
   void showIndividualPolygons();
