@@ -7,6 +7,7 @@
   </description>
 
   <maintainer email="brik@ethz.ch">Rik Bähnemann</maintainer>
+  <maintainer email="tmarvel@student.ethz.ch">Timothy Marvel</maintainer>
 
   <license>TBD</license>
 
@@ -14,7 +15,6 @@
   <buildtool_depend>catkin_simple</buildtool_depend>
 
   <depend>roscpp</depend>
-  <depend>std_srvs</depend>
   <depend>rviz</depend>
   <depend>cgal_catkin</depend>
 
