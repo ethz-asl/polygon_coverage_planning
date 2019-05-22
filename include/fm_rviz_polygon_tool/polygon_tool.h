@@ -48,13 +48,12 @@ To create a new polygon or hole the newPolyCallback() is used.
 To delete an existing polygon the deletePolyCallback() is used.
 Please note that the original polygon can't be delted.
               The first object will always be a polygon.
-Multiple polygons with possible holes can be fused into one global
+Multiple polygons along with holes can be fused into one global
 polygon wiht holes called main_polygon_.
 When fusing the following rules apply:
 1) All polygons must at some point overlap with an other one such that the
     hull of the combined polygon is simple.
-2) Holes can't overlap with each other
-3) When holes overlap with the outer hull, they are integrated into the outer
+2) When holes overlap with the outer hull, they are integrated into the outer
    hull and deleted
 Fusing the polygons is done by calling checkStatusCallback()
 Once the fusing has been performed the polygon with holes is published using a
