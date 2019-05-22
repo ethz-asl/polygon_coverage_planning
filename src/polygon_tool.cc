@@ -4,25 +4,24 @@
 #include <mav_planning_msgs/PolygonWithHoles.h>
 namespace mav_polygon_tool {
 
+const Ogre::ColourValue kRed = Ogre::ColourValue(1.f, 0.f, 0.f, 1.0);
+const Ogre::ColourValue kGreen = Ogre::ColourValue(0.f, 1.f, 0.f, 1.0);
+const Ogre::ColourValue kBlue = Ogre::ColourValue(0.f, 0.f, 1.f, 1.0);
+const Ogre::ColourValue kPink = Ogre::ColourValue(1.f, 0.f, 1.f, 1.0);
+const Ogre::ColourValue kYellow = Ogre::ColourValue(1.f, 1.f, 0.f, 1.0);
+const Ogre::ColourValue kTransparent = Ogre::ColourValue(0.f, 0.f, 0.f, 0.0);
+
 PolygonTool::PolygonTool()
     : Tool(), moving_vertex_node_(nullptr), current_vertex_property_(nullptr) {
   shortcut_key_ = 'p';
-  red_ = Ogre::ColourValue(1.f, 0.f, 0.f, 1.0);
-  green_ = Ogre::ColourValue(0.f, 1.f, 0.f, 1.0);
-  blue_ = Ogre::ColourValue(0.f, 0.f, 1.f, 1.0);
-  pink_ = Ogre::ColourValue(1.f, 0.f, 1.f, 1.0);
-  yellow_ = Ogre::ColourValue(1.f, 1.f, 0.f, 1.0);
-  transparent_ = Ogre::ColourValue(0.f, 0.f, 0.f, 0.0);
 }
 
 PolygonTool::~PolygonTool() {
-  std::cout << "called PolygonTool destructor" << std::endl;
   clearGlobalPlanning();
   hideIndividualPolygons();
 }
 
 void PolygonTool::onInitialize() {
-  std::cout << "called PolygonTool onInitialize" << std::endl;
   moving_vertex_node_ =
       scene_manager_->getRootSceneNode()->createChildSceneNode();
   vertex_ =
@@ -51,7 +50,6 @@ void PolygonTool::onInitialize() {
 }
 
 void PolygonTool::activate() {
-  std::cout << "called PolygonTool activate" << std::endl;
   // Make vertex node visible and add property to property container.
   if (moving_vertex_node_) {
     moving_vertex_node_->setVisible(true);
@@ -67,7 +65,6 @@ void PolygonTool::activate() {
 }
 
 void PolygonTool::deactivate() {
-  std::cout << "called PolygonTool deactivate" << std::endl;
   // Make moving vertex invisible and delete current flag property.
   if (moving_vertex_node_) {
     moving_vertex_node_->setVisible(false);
@@ -77,11 +74,11 @@ void PolygonTool::deactivate() {
 }
 
 void PolygonTool::pushBackElements(int new_type) {
-  std::vector<rviz::Shape *> dummy_vec_shapes;
+  std::vector<rviz::Shape*> dummy_vec_shapes;
   active_spheres_.push_back(dummy_vec_shapes);
-  std::vector<Ogre::SceneNode *> dummy_nodes;
+  std::vector<Ogre::SceneNode*> dummy_nodes;
   vertex_nodes_.push_back(dummy_nodes);
-  std::vector<rviz::Line *> dummy_lines;
+  std::vector<rviz::Line*> dummy_lines;
   active_lines_.push_back(dummy_lines);
   std::list<Point> dummy_points;
   points_for_poly_.push_back(dummy_points);
@@ -91,7 +88,7 @@ void PolygonTool::pushBackElements(int new_type) {
   type_of_polygons_.push_back(current_type_);
 }
 
-int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
+int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent& event) {
   if (!moving_vertex_node_) {
     return Render;
   }
@@ -109,7 +106,6 @@ int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
       rightClicked(event);
     }
   } else {
-    std::cout << "called PolygonTool processMouseEvent else" << std::endl;
     // Don't show point if not on plane.
     moving_vertex_node_->setVisible(false);
   }
@@ -117,11 +113,11 @@ int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent &event) {
 }
 
 // remove all the elements at index
-void PolygonTool::deletePolygn(size_t index) {
+void PolygonTool::deletePolygon(size_t index) {
   clearGlobalPlanning();
   if (index < active_spheres_.size() && is_activated_) {
     current_polygon_ = index;
-    setColor(transparent_, transparent_);
+    setColor(kTransparent, kTransparent);
     // delete the vectors
     if (index >= 0 && active_spheres_.size() > 1) {
       active_spheres_.erase(active_spheres_.begin() + index);
@@ -148,13 +144,13 @@ void PolygonTool::deletePolygn(size_t index) {
   setColorsArriving();
 }
 // adding red points to make a polygon
-void PolygonTool::makeVertex(const Ogre::Vector3 &position) {
+void PolygonTool::makeVertex(const Ogre::Vector3& position) {
   // Create a new vertex in the Ogre scene and save scene to list.
-  Ogre::SceneNode *node =
+  Ogre::SceneNode* node =
       scene_manager_->getRootSceneNode()->createChildSceneNode();
-  rviz::Shape *local_sphere =
+  rviz::Shape* local_sphere =
       new rviz::Shape(rviz::Shape::Sphere, scene_manager_);
-  local_sphere->setColor(red_);
+  local_sphere->setColor(kRed);
   Ogre::Vector3 scale(kPtScale, kPtScale, kPtScale);
   local_sphere->setScale(scale);
   local_sphere->setPosition(position);
@@ -164,23 +160,29 @@ void PolygonTool::makeVertex(const Ogre::Vector3 &position) {
   Point local_2d_pt = Point(position[0], position[1]);
   polygon_[current_polygon_].push_back(local_2d_pt);
 
-  if (current_type_ == 0) {
-    drawLines(green_);
+  if (current_type_ == kHull) {
+    drawLines(kGreen);
   } else {
-    drawLines(yellow_);
+    drawLines(kYellow);
   }
 }
 
 // check geometric propetries of the CGal polygon
+// this function tries to fuse all the polygons and holes into
+// the main_polygon_ object. Overlapping holes are not allowed.
+// Holes overlapping with the hull are included into the hull and removed
+// Holes inside the hull are added to the holes of the CGAL polygon with holes
+// object
+// returns false if check failed, true otherwise
 bool PolygonTool::checkCGalPolygon() {
-  bool to_be_ret = false;
+  bool ret = false;
   main_polygon_.clear();
   // all polygons and holes should be simple and have at least 3 pts!
   for (size_t i = 0; i < polygon_.size(); ++i) {
     if (polygon_[i].size() < 3 || !polygon_[i].is_simple()) {
       break;
     } else if (polygon_[i].is_simple() && i == (polygon_.size() - 1)) {
-      to_be_ret = true;
+      ret = true;
     }
   }
   /*
@@ -188,18 +190,18 @@ bool PolygonTool::checkCGalPolygon() {
   ->as soon as a polygon cannot be joined with any other one
   the polygons are invalid
   */
-  if (to_be_ret) {
+  if (ret) {
     std::vector<Polygon_2_WH> polygons_no_holes;
     std::vector<Polygon_2> only_the_holes;
     for (size_t i = 0; i < polygon_.size(); ++i) {
       // MAKE SURE THE ORIENTATION IS THE SAME FOR ALL POLYGONS
-      if (polygon_[i].orientation() == -1) {
+      if (polygon_[i].is_clockwise_oriented()) {
         polygon_[i].reverse_orientation();
       }
-      if (type_of_polygons_[i] == 0) {
+      if (type_of_polygons_[i] == kHull) {
         Polygon_2_WH local_poly(polygon_[i]);
         polygons_no_holes.push_back(local_poly);
-      } else if (type_of_polygons_[i] == 1) {
+      } else if (type_of_polygons_[i] == kHole) {
         only_the_holes.push_back(polygon_[i]);
       }
     }
@@ -217,18 +219,21 @@ bool PolygonTool::checkCGalPolygon() {
     }
     // making sure the holes don't overlap
     // if they do, the polygons are considered invalid
-    if (to_be_ret) {
+    if (ret) {
       for (size_t h1 = 0; h1 < only_the_holes.size(); h1++) {
         for (size_t h2 = (h1 + 1); h2 < only_the_holes.size(); h2++) {
           if (CGAL::do_intersect(only_the_holes[h1], only_the_holes[h2])) {
-            to_be_ret = false;
+            ret = false;
             h1 = h2 = (only_the_holes.size() + 1);
           }
         }
       }
     }
-    if (polygons_no_holes.size() == 1 && to_be_ret) {
+    if (polygons_no_holes.size() == 1 && ret) {
       main_polygon_ = polygons_no_holes[0];
+      // checking if the hole overlaps with the outer hull
+      // if yes, it becomes part of the outer hull else it
+      // will be included as a hole into main_polygon_
       for (size_t h = 0; h < only_the_holes.size(); ++h) {
         if (CGAL::do_intersect(main_polygon_, only_the_holes[h])) {
           Poly_wh_list poly_list;
@@ -245,22 +250,21 @@ bool PolygonTool::checkCGalPolygon() {
               main_polygon_.add_hole(only_the_holes[h]);
             }
           } else {
-            to_be_ret = false;
+            ret = false;
             break;
           }
         }
       }
 
-      if (to_be_ret)
-        drawPolyWithHoles(main_polygon_, blue_);
+      if (ret) drawPolyWithHoles(main_polygon_, kBlue);
     } else {
-      to_be_ret = false;
+      ret = false;
     }
   }
-  return to_be_ret;
+  return ret;
 }
 
-void PolygonTool::drawPolyWithHoles(const Polygon_2_WH &to_be_painted,
+void PolygonTool::drawPolyWithHoles(const Polygon_2_WH& to_be_painted,
                                     const Ogre::ColourValue color) {
   clearGlobalPlanning();
   hideIndividualPolygons();
@@ -269,7 +273,7 @@ void PolygonTool::drawPolyWithHoles(const Polygon_2_WH &to_be_painted,
   size_t bndry_size = to_be_painted.outer_boundary().size();
   for (size_t i = 0; i < bndry_size; ++i) {
     Point local_pt = to_be_painted.outer_boundary()[i];
-    rviz::Shape *local_sphere =
+    rviz::Shape* local_sphere =
         new rviz::Shape(rviz::Shape::Sphere, scene_manager_);
     local_sphere->setColor(color);
     outer_boundary_.push_back(local_sphere);
@@ -280,7 +284,7 @@ void PolygonTool::drawPolyWithHoles(const Polygon_2_WH &to_be_painted,
   }
 
   for (size_t i = 0; i < bndry_size; ++i) {
-    rviz::Line *local_line =
+    rviz::Line* local_line =
         new rviz::Line(scene_manager_, scene_manager_->getRootSceneNode());
     local_line->setPoints(outer_boundary_[i]->getPosition(),
                           outer_boundary_[(i + 1) % bndry_size]->getPosition());
@@ -290,12 +294,12 @@ void PolygonTool::drawPolyWithHoles(const Polygon_2_WH &to_be_painted,
   // show the real holes
   for (Polygon_2_WH::Hole_const_iterator hi = to_be_painted.holes_begin();
        hi != to_be_painted.holes_end(); ++hi) {
-    std::vector<rviz::Shape *> local_shapes;
-    std::vector<rviz::Line *> local_lines;
+    std::vector<rviz::Shape*> local_shapes;
+    std::vector<rviz::Line*> local_lines;
     size_t pts_size = hi->size();
     // draw the points
     for (size_t i = 0; i < pts_size; ++i) {
-      rviz::Shape *local_sphere =
+      rviz::Shape* local_sphere =
           new rviz::Shape(rviz::Shape::Sphere, scene_manager_);
       local_sphere->setColor(color);
       Ogre::Vector3 scale(kPtScale, kPtScale, kPtScale);
@@ -307,7 +311,7 @@ void PolygonTool::drawPolyWithHoles(const Polygon_2_WH &to_be_painted,
     }
     // draw the lines
     for (size_t i = 0; i < pts_size; ++i) {
-      rviz::Line *local_line =
+      rviz::Line* local_line =
           new rviz::Line(scene_manager_, scene_manager_->getRootSceneNode());
       local_line->setColor(color);
       local_line->setPoints(local_shapes[i]->getPosition(),
@@ -321,33 +325,37 @@ void PolygonTool::drawPolyWithHoles(const Polygon_2_WH &to_be_painted,
 
 void PolygonTool::clearGlobalPlanning() {
   for (size_t i = 0; i < outer_boundary_.size(); ++i) {
-    outer_boundary_[i]->setColor(transparent_);
-    outer_boundary_lines_[i]->setColor(transparent_);
+    outer_boundary_[i]->setColor(kTransparent);
+    outer_boundary_lines_[i]->setColor(kTransparent);
   }
   outer_boundary_.clear();
   outer_boundary_lines_.clear();
 
   for (size_t i = 0; i < inner_pts_.size(); ++i) {
     for (size_t j = 0; j < inner_pts_[i].size(); ++j) {
-      inner_pts_[i][j]->setColor(transparent_);
-      inner_lines_[i][j]->setColor(transparent_);
+      inner_pts_[i][j]->setColor(kTransparent);
+      inner_lines_[i][j]->setColor(kTransparent);
     }
   }
   inner_pts_.clear();
   inner_lines_.clear();
 }
 
+// hides the individual polygons
+// this needs to be called before showing the main_polygon_
+// or when cleaning up
 void PolygonTool::hideIndividualPolygons() {
   size_t current_status = current_polygon_;
   size_t loop_stop = type_of_polygons_.size();
 
   for (size_t i = 0; i < loop_stop; ++i) {
     current_polygon_ = i;
-    setColor(transparent_, transparent_);
+    setColor(kTransparent, kTransparent);
   }
   current_polygon_ = current_status;
 }
 
+// shows the individual polygons rather than the main_polygon_
 void PolygonTool::showIndividualPolygons() {
   size_t current_status = current_polygon_;
   size_t local_current_type = current_type_;
@@ -363,8 +371,9 @@ void PolygonTool::showIndividualPolygons() {
   current_type_ = local_current_type;
   setColorsArriving();
 }
-
-void PolygonTool::drawLines(const Ogre::ColourValue &line_color) {
+// draws the lines when a new point has been added
+// the last line is of a different color
+void PolygonTool::drawLines(const Ogre::ColourValue& line_color) {
   // something has changed, set verification to false
   std_msgs::Bool to_send;
   to_send.data = false;
@@ -380,19 +389,19 @@ void PolygonTool::drawLines(const Ogre::ColourValue &line_color) {
     // draw lines!
     // last one is done seperately since its color is different
     active_lines_[current_polygon_].clear();
-    rviz::Line *last_line =
+    rviz::Line* last_line =
         new rviz::Line(scene_manager_, scene_manager_->getRootSceneNode());
     last_line->setPoints(
         vertex_nodes_[current_polygon_][0]->getPosition(),
         vertex_nodes_[current_polygon_]
                      [vertex_nodes_[current_polygon_].size() - 1]
                          ->getPosition());
-    last_line->setColor(red_);
+    last_line->setColor(kRed);
     active_lines_[current_polygon_].push_back(last_line);
 
     // all the other lines
     for (size_t i = 1; i < vertex_nodes_[current_polygon_].size(); ++i) {
-      rviz::Line *local_line =
+      rviz::Line* local_line =
           new rviz::Line(scene_manager_, scene_manager_->getRootSceneNode());
       local_line->setColor(line_color);
       local_line->setPoints(
@@ -404,24 +413,26 @@ void PolygonTool::drawLines(const Ogre::ColourValue &line_color) {
 }
 
 void PolygonTool::setColorsLeaving() {
-  if (current_type_ == 0) {
-    setColor(green_, green_);
+  if (current_type_ == kHull) {
+    setColor(kGreen, kGreen);
   } else {
-    setColor(pink_, pink_);
+    setColor(kPink, kPink);
   }
 }
 
 void PolygonTool::setColorsArriving() {
   clearGlobalPlanning();
-  if (current_type_ == 0) {
-    setColor(green_, red_);
+  if (current_type_ == kHull) {
+    setColor(kGreen, kRed);
   } else {
-    setColor(yellow_, red_);
+    setColor(kYellow, kRed);
   }
 }
 
-void PolygonTool::setColor(const Ogre::ColourValue &line_color,
-                           const Ogre::ColourValue &sphere_color) {
+// sets the color for the current polygon
+// a color
+void PolygonTool::setColor(const Ogre::ColourValue& line_color,
+                           const Ogre::ColourValue& sphere_color) {
   // lines have to be set to invisible before being deleted
   for (size_t j = 0; j < active_lines_[current_polygon_].size(); ++j) {
     active_lines_[current_polygon_][j]->setVisible(false);
@@ -433,7 +444,7 @@ void PolygonTool::setColor(const Ogre::ColourValue &line_color,
     // draw lines!
     // last one is done seperately
     active_lines_[current_polygon_].clear();
-    rviz::Line *last_line =
+    rviz::Line* last_line =
         new rviz::Line(scene_manager_, scene_manager_->getRootSceneNode());
     last_line->setPoints(
         vertex_nodes_[current_polygon_][0]->getPosition(),
@@ -445,7 +456,7 @@ void PolygonTool::setColor(const Ogre::ColourValue &line_color,
 
     // all the other lines
     for (size_t i = 1; i < vertex_nodes_[current_polygon_].size(); ++i) {
-      rviz::Line *local_line =
+      rviz::Line* local_line =
           new rviz::Line(scene_manager_, scene_manager_->getRootSceneNode());
       local_line->setColor(line_color);
       local_line->setPoints(
@@ -462,7 +473,7 @@ void PolygonTool::setColor(const Ogre::ColourValue &line_color,
 }
 
 // called by the callback when the user clicks the left mouse button
-void PolygonTool::leftClicked(rviz::ViewportMouseEvent &event) {
+void PolygonTool::leftClicked(rviz::ViewportMouseEvent& event) {
   clearGlobalPlanning();
   Ogre::Vector3 intersection;
   Ogre::Plane polygon_plane(Ogre::Vector3::UNIT_Z, 0.0f);
@@ -474,7 +485,7 @@ void PolygonTool::leftClicked(rviz::ViewportMouseEvent &event) {
 
 // called when the right mouse boutton is clicked
 // used to delete nodes within the range of the cursor node
-void PolygonTool::rightClicked(rviz::ViewportMouseEvent &event) {
+void PolygonTool::rightClicked(rviz::ViewportMouseEvent& event) {
   // get the x y z coodinates of the click
   clearGlobalPlanning();
   Ogre::Vector3 intersection;
@@ -491,8 +502,8 @@ void PolygonTool::rightClicked(rviz::ViewportMouseEvent &event) {
         vertex_nodes_[current_polygon_][i]->setVisible(false);
         active_spheres_[current_polygon_][i]->setColor(0.0, 0, 0, 0.0);
         // re arrange nodes
-        std::vector<rviz::Shape *> new_locl_active_sphr;
-        std::vector<Ogre::SceneNode *> new_locl_vrtx_nds;
+        std::vector<rviz::Shape*> new_locl_active_sphr;
+        std::vector<Ogre::SceneNode*> new_locl_vrtx_nds;
         Polygon_2 new_locl_polygn;
         for (size_t j = i + 1; j < vertex_nodes_[current_polygon_].size();
              ++j) {
@@ -510,10 +521,10 @@ void PolygonTool::rightClicked(rviz::ViewportMouseEvent &event) {
         swap(vertex_nodes_[current_polygon_], new_locl_vrtx_nds);
         swap(polygon_[current_polygon_], new_locl_polygn);
 
-        if (current_type_ == 0) {
-          drawLines(green_);
+        if (current_type_ == kHull) {
+          drawLines(kGreen);
         } else {
-          drawLines(yellow_);
+          drawLines(kYellow);
         }
         break;
       }
@@ -521,43 +532,7 @@ void PolygonTool::rightClicked(rviz::ViewportMouseEvent &event) {
   }
 }
 
-void PolygonTool::save(rviz::Config config) const {
-  config.mapSetValue("Class", getClassId());
-  // Create child of map to store list of vertices.
-  rviz::Config vertices_config = config.mapMakeChild("Vertices");
-  // To read the positions and names of the vertices, we loop over the children
-  // of our Property container:
-  rviz::Property *container = getPropertyContainer();
-  for (int i = 0; i < container->numChildren(); i++) {
-    rviz::Property *position_prop = container->childAt(i);
-    // For each Property, we create a new Config object representing a
-    // single vertex and append it to the Config list.
-    rviz::Config vertex_config = vertices_config.listAppendNew();
-    // Into the flag's config we store its name:
-    vertex_config.mapSetValue("Name", position_prop->getName());
-    // ... and its position.
-    position_prop->save(vertex_config);
-  }
-  std::cout << "finished PolygonTool save " << std::endl;
-}
-
-void PolygonTool::load(const rviz::Config &config) {
-  std::cout << "called PolygonTool load" << std::endl;
-  // Get the vertices sub-config from the tool config and loop over entries.
-  rviz::Config vertices_config = config.mapGetChild("Vertices");
-  for (int i = 0; i < vertices_config.listLength(); i++) {
-    rviz::Config vertex_config = vertices_config.listChildAt(i);
-    // Provide a default name in case the name is not in the config file.
-    QString name = "Flag " + QString::number(i);
-    vertex_config.mapGetString("Name", &name); // Read name from flag config.
-    // Create an rviz::VectorProperty to display the position.
-    rviz::VectorProperty *prop = new rviz::VectorProperty(name);
-    getPropertyContainer()->addChild(prop);
-    makeVertex(prop->getVector()); // Make vertex visible.
-  }
-}
-
-void PolygonTool::checkStatusCallback(const std_msgs::Bool &incomming) {
+void PolygonTool::checkStatusCallback(const std_msgs::Bool& incomming) {
   bool to_return = checkCGalPolygon();
   std_msgs::Bool to_send;
   to_send.data = to_return;
@@ -565,7 +540,7 @@ void PolygonTool::checkStatusCallback(const std_msgs::Bool &incomming) {
   user_warn_publisher_.publish(to_send);
 }
 
-void PolygonTool::toolSelectCallback(const std_msgs::Int8 &tool_num) {
+void PolygonTool::toolSelectCallback(const std_msgs::Int8& tool_num) {
   if (is_activated_) {
     if (global_planning_) {
       showIndividualPolygons();
@@ -581,7 +556,7 @@ void PolygonTool::toolSelectCallback(const std_msgs::Int8 &tool_num) {
   }
 }
 
-void PolygonTool::newPolyCallback(const std_msgs::Int8 &new_poly_type) {
+void PolygonTool::newPolyCallback(const std_msgs::Int8& new_poly_type) {
   if (is_activated_) {
     if (global_planning_) {
       clearGlobalPlanning();
@@ -597,7 +572,7 @@ void PolygonTool::newPolyCallback(const std_msgs::Int8 &new_poly_type) {
   }
 }
 
-void PolygonTool::deletePolyCallback(const std_msgs::Int8 &delete_ind) {
+void PolygonTool::deletePolyCallback(const std_msgs::Int8& delete_ind) {
   if (is_activated_) {
     if (global_planning_) {
       clearGlobalPlanning();
@@ -605,18 +580,18 @@ void PolygonTool::deletePolyCallback(const std_msgs::Int8 &delete_ind) {
       global_planning_ = false;
     }
     int delete_location = delete_ind.data;
-    deletePolygn(delete_location);
+    deletePolygon(delete_location);
   }
 }
 
-void PolygonTool::polygonPublisherCallback(const std_msgs::Bool &incomming) {
-  mav_planning_msgs::PolygonWithHoles pwh_to_be_sent;
+void PolygonTool::polygonPublisherCallback(const std_msgs::Bool& incomming) {
+  mav_planning_msgs::PolygonWithHoles pwh_msg;
 
   for (size_t i = 0; i < main_polygon_.outer_boundary().size(); ++i) {
     mav_planning_msgs::Point2D local_pt;
     local_pt.x = main_polygon_.outer_boundary()[i][0];
     local_pt.y = main_polygon_.outer_boundary()[i][1];
-    pwh_to_be_sent.hull.points.push_back(local_pt);
+    pwh_msg.hull.points.push_back(local_pt);
   }
 
   for (Polygon_2_WH::Hole_const_iterator hi = main_polygon_.holes_begin();
@@ -629,12 +604,12 @@ void PolygonTool::polygonPublisherCallback(const std_msgs::Bool &incomming) {
       local_pt.y = (*hi)[i][1];
       local_poly.points.push_back(local_pt);
     }
-    pwh_to_be_sent.holes.push_back(local_poly);
+    pwh_msg.holes.push_back(local_poly);
   }
-  polygon_wh_publisher_.publish(pwh_to_be_sent);
+  polygon_wh_publisher_.publish(pwh_msg);
 }
 
-} // namespace mav_polygon_tool
+}  // namespace mav_polygon_tool
 
 #include <pluginlib/class_list_macros.h>
 PLUGINLIB_EXPORT_CLASS(mav_polygon_tool::PolygonTool, rviz::Tool)
