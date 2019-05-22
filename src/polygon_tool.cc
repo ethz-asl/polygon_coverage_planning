@@ -230,8 +230,6 @@ bool PolygonTool::checkCGalPolygon() {
             only_the_holes.erase(only_the_holes.begin() + h2);
             only_the_holes[h1] = local_replacement.outer_boundary();
             h1 = h2 = 0;
-            // ret = false;
-            // h1 = h2 = (only_the_holes.size() + 1);
           }
         }
       }
