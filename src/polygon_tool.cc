@@ -223,15 +223,15 @@ bool PolygonTool::checkCGalPolygon() {
       for (size_t h1 = 0; h1 < only_the_holes.size(); h1++) {
         for (size_t h2 = (h1 + 1); h2 < only_the_holes.size(); h2++) {
           if (CGAL::do_intersect(only_the_holes[h1], only_the_holes[h2])) {
-            //join h2 into h2, delete h2
+            // join h2 into h2, delete h2
             Polygon_2_WH local_replacement;
             CGAL::join(only_the_holes[h2], only_the_holes[h1],
-                           local_replacement);
-            only_the_holes.erase(only_the_holes.begin()+h2);
-            only_the_holes[h1]=local_replacement.outer_boundary();
+                       local_replacement);
+            only_the_holes.erase(only_the_holes.begin() + h2);
+            only_the_holes[h1] = local_replacement.outer_boundary();
             h1 = h2 = 0;
-            //ret = false;
-            //h1 = h2 = (only_the_holes.size() + 1);
+            // ret = false;
+            // h1 = h2 = (only_the_holes.size() + 1);
           }
         }
       }
