@@ -1,3 +1,4 @@
+# UNDER CONSTRUCTION
 # polygon_coverage_planning
 This repository accompanies our submission
 ```
@@ -6,6 +7,7 @@ Bähnemann, Rik, et al.
 Field and Service Robotics (submitted). Springer, 2019.
 ```
 It contains implementations to compute coverage patterns and shortest paths in general polygon with holes.
+<!---
 
 ## Installation
 Install [ROS](http://wiki.ros.org/kinetic/Installation/Ubuntu).
@@ -127,3 +129,5 @@ Gutin, Gregory, and Daniel Karapetyan.
 Natural Computing 9.1 (2010): 47-60.
 ```
 is free of charge for non-commercial purposes only.
+
+--->
