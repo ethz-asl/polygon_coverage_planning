@@ -59,8 +59,8 @@ bool checkValidOffset(
 
   PolygonWithHoles::Hole_const_iterator offset_hit =
       offset.front()->holes_begin();
-  for (PolygonWithHoles::Hole_const_iterator
-           original_hit = original.holes_begin();
+  for (PolygonWithHoles::Hole_const_iterator original_hit =
+           original.holes_begin();
        original_hit != original.holes_end(); ++original_hit, ++offset_hit) {
     if (original_hit->size() != offset_hit->size()) return false;
   }

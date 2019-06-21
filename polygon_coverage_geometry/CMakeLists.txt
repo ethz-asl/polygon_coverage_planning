@@ -18,6 +18,7 @@ set(CMAKE_BUILD_TYPE Release)
 cs_add_library(${PROJECT_NAME}
   src/bcd.cc
   src/cgal_comm.cc
+  src/decomposition.cc
   src/offset.cc
   src/visibility_graph.cc
   src/visibility_polygon.cc

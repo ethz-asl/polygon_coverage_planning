@@ -79,51 +79,6 @@ bool Polygon::computeTrapezoidalDecompositionFromPolygonWithHoles(
   return true;
 }
 
-std::vector<Direction_2> Polygon::findEdgeDirections() const {
-  // Get all possible polygon directions.
-  std::vector<Direction_2> directions;
-  for (size_t i = 0; i < polygon_.outer_boundary().size(); ++i) {
-    directions.push_back(polygon_.outer_boundary().edge(i).direction());
-  }
-  for (PolygonWithHoles::Hole_const_iterator hit = polygon_.holes_begin();
-       hit != polygon_.holes_end(); ++hit) {
-    for (size_t i = 0; i < hit->size(); i++) {
-      directions.push_back(hit->edge(i).direction());
-    }
-  }
-
-  // Remove redundant directions.
-  std::set<size_t> to_remove;
-  for (size_t i = 0; i < directions.size() - 1; ++i) {
-    for (size_t j = i + 1; j < directions.size(); ++j) {
-      if (CGAL::orientation(directions[i].vector(), directions[j].vector()) ==
-          CGAL::COLLINEAR)
-        to_remove.insert(j);
-    }
-  }
-  for (std::set<size_t>::reverse_iterator rit = to_remove.rbegin();
-       rit != to_remove.rend(); ++rit) {
-    directions.erase(std::next(directions.begin(), *rit));
-  }
-
-  // Add opposite directions.
-  std::vector<Direction_2> temp_directions = directions;
-  for (size_t i = 0; i < temp_directions.size(); ++i) {
-    directions.push_back(-temp_directions[i]);
-  }
-
-  return directions;
-}
-
-std::vector<Direction_2> Polygon::findPerpEdgeDirections() const {
-  std::vector<Direction_2> directions = findEdgeDirections();
-  for (Direction_2& d : directions) {
-    d = Direction_2(-d.dy(), d.dx());
-  }
-
-  return directions;
-}
-
 std::vector<Polygon> Polygon::rotatePolygon(
     const std::vector<Direction_2>& dirs) const {
   std::vector<Polygon> rotated_polys(dirs.size());
@@ -143,33 +98,6 @@ std::vector<Polygon> Polygon::rotatePolygon(
   }
 
   return rotated_polys;
-}
-
-double Polygon::findMinAltitude(const Polygon& subregion,
-                                Direction_2* sweep_dir) const {
-  // Get all possible sweep directions.
-  std::vector<Direction_2> sweep_dirs = subregion.findEdgeDirections();
-  std::vector<Polygon> rotated_polys = subregion.rotatePolygon(sweep_dirs);
-
-  // Find minimum altitude.
-  double min_altitude = std::numeric_limits<double>::max();
-  for (size_t i = 0; i < sweep_dirs.size(); ++i) {
-    const Polygon_2& poly_2 = rotated_polys[i].getPolygon().outer_boundary();
-    // Check if sweepable.
-    if (!CGAL::is_approx_y_monotone_2(poly_2.vertices_begin(),
-                                      poly_2.vertices_end())) {
-      DLOG(INFO) << "Polygon is not y-monotone.";
-      continue;
-    }
-
-    double altitude = poly_2.bbox().ymax() - poly_2.bbox().ymin();
-    if (altitude < min_altitude) {
-      min_altitude = altitude;
-      if (sweep_dir) *sweep_dir = sweep_dirs[i];
-    }
-  }
-
-  return min_altitude;
 }
 
 bool Polygon::computeBestTrapezoidalDecompositionFromPolygonWithHoles(
@@ -218,56 +146,6 @@ bool Polygon::computeBestTrapezoidalDecompositionFromPolygonWithHoles(
   }
 
   if (trap_polygons->empty())
-    return false;
-  else
-    return true;
-}
-
-bool Polygon::computeBestBCDFromPolygonWithHoles(
-    std::vector<Polygon>* bcd_polygons) const {
-  CHECK_NOTNULL(bcd_polygons);
-  bcd_polygons->clear();
-  double min_altitude_sum = std::numeric_limits<double>::max();
-
-  // Get all possible decomposition directions.
-  std::vector<Direction_2> directions = findPerpEdgeDirections();
-  std::vector<Polygon> rotated_polys = rotatePolygon(directions);
-
-  // For all possible rotations:
-  Direction_2 best_direction = directions.front();
-  CHECK_EQ(rotated_polys.size(), directions.size());
-  for (size_t i = 0; i < rotated_polys.size(); ++i) {
-    // Calculate decomposition.
-    std::vector<Polygon> bcds;
-    if (!rotated_polys[i].computeBCDFromPolygonWithHoles(&bcds)) {
-      LOG(WARNING) << "Failed to compute boustrophedon decomposition.";
-      continue;
-    }
-
-    // Calculate minimum altitude sum for each cell.
-    double min_altitude_sum_tmp = 0.0;
-    for (const Polygon& bcd : bcds) {
-      min_altitude_sum_tmp += findMinAltitude(bcd);
-    }
-
-    // Update best decomposition.
-    if (min_altitude_sum_tmp < min_altitude_sum) {
-      min_altitude_sum = min_altitude_sum_tmp;
-      *bcd_polygons = bcds;
-      best_direction = directions[i];
-    }
-  }
-
-  // Reverse bcd rotation.
-  CGAL::Aff_transformation_2<K> rotation(CGAL::ROTATION, best_direction, 1,
-                                         1e3);
-  for (Polygon& bcd : *bcd_polygons) {
-    Polygon_2 bcd_2 = bcd.getPolygon().outer_boundary();
-    bcd_2 = CGAL::transform(rotation, bcd_2);
-    bcd = Polygon(bcd_2, bcd.getPlaneTransformation());
-  }
-
-  if (bcd_polygons->empty())
     return false;
   else
     return true;

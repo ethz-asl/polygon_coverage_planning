@@ -1,7 +1,6 @@
 #include "polygon_coverage_planners/cost_functions/path_cost_functions.h"
 
 #include <cmath>
-#include <ros/assert.h>
 
 namespace polygon_coverage_planning {
 
