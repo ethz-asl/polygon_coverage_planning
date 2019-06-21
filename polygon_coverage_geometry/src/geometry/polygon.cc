@@ -65,20 +65,6 @@ std::vector<std::vector<Point_2>> Polygon::getHoleVertices() const {
   return hole_vertices;
 }
 
-bool Polygon::computeTrapezoidalDecompositionFromPolygonWithHoles(
-    std::vector<Polygon>* trap_polygons) const {
-  CHECK_NOTNULL(trap_polygons);
-  trap_polygons->clear();
-
-  std::vector<Polygon_2> traps;
-  Polygon_vertical_decomposition_2 decom;
-  decom(polygon_, std::back_inserter(traps));
-
-  for (const Polygon_2& p : traps) trap_polygons->emplace_back(p);
-
-  return true;
-}
-
 std::vector<Polygon> Polygon::rotatePolygon(
     const std::vector<Direction_2>& dirs) const {
   std::vector<Polygon> rotated_polys(dirs.size());
@@ -98,57 +84,6 @@ std::vector<Polygon> Polygon::rotatePolygon(
   }
 
   return rotated_polys;
-}
-
-bool Polygon::computeBestTrapezoidalDecompositionFromPolygonWithHoles(
-    std::vector<Polygon>* trap_polygons) const {
-  CHECK_NOTNULL(trap_polygons);
-  trap_polygons->clear();
-  double min_altitude_sum = std::numeric_limits<double>::max();
-
-  // Get all possible decomposition directions.
-  std::vector<Direction_2> directions = findPerpEdgeDirections();
-  std::vector<Polygon> rotated_polys = rotatePolygon(directions);
-
-  // For all possible rotations:
-  Direction_2 best_direction = directions.front();
-  CHECK_EQ(rotated_polys.size(), directions.size());
-  for (size_t i = 0; i < rotated_polys.size(); ++i) {
-    // Calculate decomposition.
-    std::vector<Polygon> traps;
-    if (!rotated_polys[i].computeTrapezoidalDecompositionFromPolygonWithHoles(
-            &traps)) {
-      LOG(WARNING) << "Failed to compute trapezoidal decomposition.";
-      continue;
-    }
-
-    // Calculate minimum altitude sum for each cell.
-    double min_altitude_sum_tmp = 0.0;
-    for (const Polygon& trap : traps) {
-      min_altitude_sum_tmp += findMinAltitude(trap);
-    }
-
-    // Update best decomposition.
-    if (min_altitude_sum_tmp < min_altitude_sum) {
-      min_altitude_sum = min_altitude_sum_tmp;
-      *trap_polygons = traps;
-      best_direction = directions[i];
-    }
-  }
-
-  // Reverse trap rotation.
-  CGAL::Aff_transformation_2<K> rotation(CGAL::ROTATION, best_direction, 1,
-                                         1e3);
-  for (Polygon& trap : *trap_polygons) {
-    Polygon_2 trap_2 = trap.getPolygon().outer_boundary();
-    trap_2 = CGAL::transform(rotation, trap_2);
-    trap = Polygon(trap_2, trap.getPlaneTransformation());
-  }
-
-  if (trap_polygons->empty())
-    return false;
-  else
-    return true;
 }
 
 std::vector<Direction_2> Polygon::getUniformDirections(const int num) const {

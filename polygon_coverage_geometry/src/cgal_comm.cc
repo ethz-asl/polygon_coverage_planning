@@ -137,4 +137,20 @@ void simplifyPolygon(PolygonWithHoles* pwh) {
     simplifyPolygon(&*hi);
 }
 
+PolygonWithHoles rotatePolygon(const PolygonWithHoles& polygon_in,
+                               const Direction_2& dir) {
+  CGAL::Aff_transformation_2<K> rotation(CGAL::ROTATION, dir, 1, 1e9);
+  rotation = rotation.inverse();
+  PolygonWithHoles rotated_polygon = polygon_in;
+  rotated_polygon.outer_boundary() =
+      CGAL::transform(rotation, polygon_in.outer_boundary());
+  PolygonWithHoles::Hole_iterator hit_rot = rotated_polygon.holes_begin();
+  for (PolygonWithHoles::Hole_const_iterator hit = polygon_in.holes_begin();
+       hit != polygon_in.holes_end(); ++hit) {
+    *(hit_rot++) = CGAL::transform(rotation, *hit);
+  }
+
+  return rotated_polygon;
+}
+
 }  // namespace polygon_coverage_planning

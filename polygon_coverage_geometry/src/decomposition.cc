@@ -1,5 +1,6 @@
 #include "polygon_coverage_geometry/bcd.h"
 #include "polygon_coverage_geometry/decomposition.h"
+#include "polygon_coverage_geometry/tcd.h"
 #include "polygon_coverage_geometry/weakly_monotone.h"
 
 #include <ros/assert.h>
@@ -80,37 +81,68 @@ double findBestSweepDir(const Polygon_2& cell, Direction_2* best_dir) {
 
 bool computeBestBCDFromPolygonWithHoles(const PolygonWithHoles& pwh,
                                         std::vector<Polygon_2>* bcd_polygons) {
-  {
-    ROS_ASSERT(bcd_polygons);
-    bcd_polygons->clear();
-    double min_altitude_sum = std::numeric_limits<double>::max();
+  ROS_ASSERT(bcd_polygons);
+  bcd_polygons->clear();
+  double min_altitude_sum = std::numeric_limits<double>::max();
 
-    // Get all possible decomposition directions.
-    std::vector<Direction_2> directions = findPerpEdgeDirections(pwh);
+  // Get all possible decomposition directions.
+  std::vector<Direction_2> directions = findPerpEdgeDirections(pwh);
 
-    // For all possible rotations:
-    for (const auto& dir : directions) {
-      // Calculate decomposition.
-      std::vector<Polygon_2> cells = computeBCD(pwh, dir);
+  // For all possible rotations:
+  for (const auto& dir : directions) {
+    // Calculate decomposition.
+    std::vector<Polygon_2> cells = computeBCD(pwh, dir);
 
-      // Calculate minimum altitude sum for each cell.
-      double min_altitude_sum_tmp = 0.0;
-      for (const auto& cell : cells) {
-        min_altitude_sum_tmp += findBestSweepDir(cell);
-      }
-
-      // Update best decomposition.
-      if (min_altitude_sum_tmp < min_altitude_sum) {
-        min_altitude_sum = min_altitude_sum_tmp;
-        *bcd_polygons = cells;
-      }
+    // Calculate minimum altitude sum for each cell.
+    double min_altitude_sum_tmp = 0.0;
+    for (const auto& cell : cells) {
+      min_altitude_sum_tmp += findBestSweepDir(cell);
     }
 
-    if (bcd_polygons->empty())
-      return false;
-    else
-      return true;
+    // Update best decomposition.
+    if (min_altitude_sum_tmp < min_altitude_sum) {
+      min_altitude_sum = min_altitude_sum_tmp;
+      *bcd_polygons = cells;
+    }
   }
+
+  if (bcd_polygons->empty())
+    return false;
+  else
+    return true;
+}
+
+bool computeBestTCDFromPolygonWithHoles(const PolygonWithHoles& pwh,
+                                        std::vector<Polygon_2>* tcd_polygons) {
+  ROS_ASSERT(tcd_polygons);
+  tcd_polygons->clear();
+  double min_altitude_sum = std::numeric_limits<double>::max();
+
+  // Get all possible decomposition directions.
+  std::vector<Direction_2> directions = findPerpEdgeDirections(pwh);
+
+  // For all possible rotations:
+  for (const auto& dir : directions) {
+    // Calculate decomposition.
+    std::vector<Polygon_2> cells = computeTCD(pwh, dir);
+
+    // Calculate minimum altitude sum for each cell.
+    double min_altitude_sum_tmp = 0.0;
+    for (const auto& cell : cells) {
+      min_altitude_sum_tmp += findBestSweepDir(cell);
+    }
+
+    // Update best decomposition.
+    if (min_altitude_sum_tmp < min_altitude_sum) {
+      min_altitude_sum = min_altitude_sum_tmp;
+      *tcd_polygons = cells;
+    }
+  }
+
+  if (tcd_polygons->empty())
+    return false;
+  else
+    return true;
 }
 
 }  // namespace polygon_coverage_planning

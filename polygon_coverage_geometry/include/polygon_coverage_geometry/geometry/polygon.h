@@ -53,10 +53,6 @@ class Polygon {
   bool computeTrapezoidalDecompositionFromPolygonWithHoles(
       std::vector<Polygon>* trap_polygons) const;
 
-  // The best TCD is considered the one with the smallest bound on sweeps.
-  bool computeBestTrapezoidalDecompositionFromPolygonWithHoles(
-      std::vector<Polygon>* trap_polygons) const;
-
   inline const PolygonWithHoles& getPolygon() const { return polygon_; }
   std::vector<Point_2> getHullVertices() const;
   std::vector<std::vector<Point_2>> getHoleVertices() const;
