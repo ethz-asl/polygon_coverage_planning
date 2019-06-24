@@ -6,6 +6,7 @@
 #include <polygon_coverage_solvers/graph_base.h>
 
 #include "polygon_coverage_planners/cost_functions/path_cost_functions.h"
+#include "polygon_coverage_planners/sensor_models/sensor_model_base.h"
 
 namespace polygon_coverage_planning {
 namespace sweep_plan_graph {
@@ -27,9 +28,8 @@ struct NodeProperty {
   std::vector<Point_2> waypoints;  // The sweep path or start / goal waypoint.
   double cost;                     // The length of the path.
   size_t cluster;                  // The cluster these waypoints are covering.
-  std::vector<Polygon_2>
-      visibility_polygons;  // The visibility polygons at start
-                            // and goal of sweep.
+  std::vector<Polygon_2> visibility_polygons;  // The visibility polygons at
+                                               // start and goal of sweep.
 
   // Checks whether this node property is non-optimal compared to any node
   // in node_properties.
@@ -57,6 +57,7 @@ class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
     PathCostFunctionType cost_function;  // The user defined cost function.
     std::shared_ptr<SensorModelBase> sensor_model;  // The sensor model.
     DecompositionType decomposition_type;           // The decomposition type.
+    FT wall_distance;             // The minimum distance to the polygon walls.
     bool offset_polygons;         // Flag to offset neighboring cells.
     bool sweep_single_direction;  // Flag to sweep only in best direction.
   };
@@ -108,29 +109,33 @@ class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
   // Compute the start and goal visibility polygon of a sweep. Also resets the
   // start and goal vertex in case they are not inside the polygon.
   bool computeStartAndGoalVisibility(
-      const Polygon& polygon, std::vector<Point_2>* sweep,
-      std::vector<Polygon>* visibility_polygons) const;
+      const PolygonWithHoles& polygon, std::vector<Point_2>* sweep,
+      std::vector<Polygon_2>* visibility_polygons) const;
 
   // Projects vertex into polygon and computes its visibility polygon.
-  bool computeVisibility(const Polygon& polygon, Point_2* vertex,
-                         Polygon* visibility_polygon) const;
+  bool computeVisibility(const PolygonWithHoles& polygon, Point_2* vertex,
+                         Polygon_2* visibility_polygon) const;
 
-  // Compute the desired decomposition and calculate cell adjacency (for
-  // offsetting).
-  void computeDecomposition();
+  // Offset the polygon from wall.
+  void offsetPolygonFromWalls();
+
+  // Compute the desired decomposition.
+  bool computeDecomposition();
+
+  // Offset neighboring decomposition cells from eachother.
+  bool offsetDecomposition();
 
   // Check which decomposition cells are adjacent. Return whether each cell has
   // at least one neighbor.
-  bool updateDecompositionAdjacency();
+  bool calculateDecompositionAdjacency(
+      std::map<size_t, std::set<size_t>>* decomposition_adjacency);
 
-  // Offset neighboring cells.
-  bool offsetDecomposition();
+  bool offsetAdjacentCells(const std::map<size_t, std::set<size_t>>& adj);
 
+  Settings settings_;  // User input settings.
   visibility_graph::VisibilityGraph
-      visibility_graph_;                   // The visibility to compute edges.
+      visibility_graph_;                     // The visibility to compute edges.
   std::vector<Polygon_2> polygon_clusters_;  // The polygon clusters.
-  std::map<size_t, std::set<size_t>> decomposition_adjacency_;
-  Settings settings_;                      // User input settings.
 };
 
 }  // namespace sweep_plan_graph

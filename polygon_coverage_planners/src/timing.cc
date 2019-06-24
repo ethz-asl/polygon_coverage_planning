@@ -27,9 +27,9 @@
 #include <sstream>
 #include <string>
 
-#include "mav_coverage_planning_comm/timing.h"
+#include "polygon_coverage_planners/timing.h"
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 namespace timing {
 
 Timing& Timing::Instance() {
@@ -200,4 +200,4 @@ std::string Timing::Print() {
 void Timing::Reset() { Instance().tag_map_.clear(); }
 
 }  // namespace timing
-} // namespace mav_coverage_planning
+} // namespace polygon_coverage_planning

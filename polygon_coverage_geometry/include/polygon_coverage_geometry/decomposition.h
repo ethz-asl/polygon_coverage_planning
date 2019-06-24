@@ -18,12 +18,13 @@ double findBestSweepDir(const Polygon_2& cell, Direction_2* best_dir = nullptr);
 
 // Compute BCDs for every edge direction. Return any with the smallest possible
 // altitude sum.
-bool computeBestBCDFromPolygonWithHoles(
-    std::vector<PolygonWithHoles>* bcd_polygons);
+bool computeBestBCDFromPolygonWithHoles(const PolygonWithHoles& pwh,
+                                        std::vector<Polygon_2>* bcd_polygons);
 
 // Compute TCDs for every edge direction. Return any with the smallest possible
 // altitude sum.
-bool computeBestTCDFromPolygonWithHoles(std::vector<Polygon_2>* trap_polygons);
+bool computeBestTCDFromPolygonWithHoles(const PolygonWithHoles& pwh,
+                                        std::vector<Polygon_2>* trap_polygons);
 
 }  // namespace polygon_coverage_planning
 

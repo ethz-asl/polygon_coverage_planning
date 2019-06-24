@@ -20,8 +20,8 @@
 
 /* Adapted from Paul Furgale Schweizer Messer sm_timing */
 
-#ifndef MAV_COVERAGE_PLANNING_COMM_TIMING_H_
-#define MAV_COVERAGE_PLANNING_COMM_TIMING_H_
+#ifndef POLYGON_COVERAGE_PLANNERS_TIMING_H_
+#define POLYGON_COVERAGE_PLANNERS_TIMING_H_
 
 #include <algorithm>
 #include <chrono>
@@ -30,7 +30,7 @@
 #include <string>
 #include <vector>
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 namespace timing {
 
 template <typename T, typename Total, int N>
@@ -214,6 +214,6 @@ class MiniTimer {
 };
 
 }  // namespace timing
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning
 
-#endif // MAV_COVERAGE_PLANNING_COMM_TIMING_H_
+#endif // POLYGON_COVERAGE_PLANNERS_TIMING_H_
