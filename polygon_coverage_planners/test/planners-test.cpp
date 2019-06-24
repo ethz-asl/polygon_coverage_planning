@@ -1,17 +1,19 @@
 #include <cstdlib>
 
-#include <gtest/gtest.h>
 #include <CGAL/Random.h>
+#include <gtest/gtest.h>
 
-#include "mav_2d_coverage_planning/cost_functions/path_cost_functions.h"
-#include "mav_2d_coverage_planning/planners/polygon_stripmap_planner.h"
-#include "mav_2d_coverage_planning/planners/polygon_stripmap_planner_exact.h"
-#include "mav_2d_coverage_planning/planners/polygon_stripmap_planner_exact_preprocessed.h"
-#include "mav_2d_coverage_planning/geometry/polygon.h"
-#include "mav_2d_coverage_planning/tests/test_helpers.h"
-#include "mav_2d_coverage_planning/sensor_models/frustum.h"
+#include <polygon_coverage_geometry/cgal_comm.h>
+#include <polygon_coverage_geometry/test_comm.h>
 
-using namespace mav_coverage_planning;
+#include "polygon_coverage_planners/cost_functions/path_cost_functions.h"
+#include "polygon_coverage_planners/graphs/sweep_plan_graph.h"
+#include "polygon_coverage_planners/planners/polygon_stripmap_planner.h"
+#include "polygon_coverage_planners/planners/polygon_stripmap_planner_exact.h"
+#include "polygon_coverage_planners/planners/polygon_stripmap_planner_exact_preprocessed.h"
+#include "polygon_coverage_planners/sensor_models/frustum.h"
+
+using namespace polygon_coverage_planning;
 
 const double kCenterMin = -50.0;
 const double kCenterMax = 50.0;
@@ -28,21 +30,22 @@ const size_t kSeed = 123456;
 const double kNear = 1e-3;
 
 // Given a set of polygons run all planners.
-void runPlanners(const std::vector<Polygon>& polygons) {
-  for (const Polygon& p : polygons) {
+void runPlanners(const std::vector<PolygonWithHoles>& polygons) {
+  for (const PolygonWithHoles& p : polygons) {
     // Create planner settings.
-    PolygonStripmapPlanner::Settings settings;
+    sweep_plan_graph::SweepPlanGraph::Settings settings;
     settings.polygon = p;
-    EXPECT_EQ(0, settings.polygon.getPolygon().number_of_holes());
-
-    settings.offset_polygons = true;
-    settings.decomposition_type = DecompositionType::kBoustrophedeon;
-    settings.path_cost_function =
+    settings.cost_function =
         std::bind(&computeEuclideanPathCost, std::placeholders::_1);
     settings.sensor_model = std::make_shared<Frustum>(
         createRandomDouble(kAltitudeMin, kAltitudeMax),
         createRandomDouble(kFOVCameraRadMin, kFOVCameraRadMax),
         createRandomDouble(kMinViewOverlapMin, kMinViewOverlapMax));
+    settings.decomposition_type = DecompositionType::kBoustrophedeon;
+    EXPECT_EQ(static_cast<size_t>(0), settings.polygon.number_of_holes());
+
+    settings.offset_polygons = true;
+    settings.decomposition_type = DecompositionType::kBoustrophedeon;
 
     // Create planners.
     PolygonStripmapPlanner planner_gk_ma(settings);
@@ -67,38 +70,41 @@ void runPlanners(const std::vector<Polygon>& polygons) {
     EXPECT_TRUE(planner_exact_preprocessed.solve(
         start, goal, &waypoints_exact_preprocessed));
 
-    EXPECT_LT(2, waypoints_gk_ma.size());
-    EXPECT_LT(2, waypoints_exact.size());
-    EXPECT_LT(2, waypoints_exact_preprocessed.size());
+    EXPECT_LT(static_cast<size_t>(2), waypoints_gk_ma.size());
+    EXPECT_LT(static_cast<size_t>(2), waypoints_exact.size());
+    EXPECT_LT(static_cast<size_t>(2), waypoints_exact_preprocessed.size());
 
     // Start and goal may lie outside of polygon.
-    EXPECT_TRUE(settings.polygon.pointsInPolygon(
-        std::next(waypoints_gk_ma.begin()), std::prev(waypoints_gk_ma.end())));
-    EXPECT_TRUE(settings.polygon.pointsInPolygon(
-        std::next(waypoints_exact.begin()), std::prev(waypoints_exact.end())));
-    EXPECT_TRUE(settings.polygon.pointsInPolygon(
-        std::next(waypoints_exact_preprocessed.begin()),
-        std::prev(waypoints_exact_preprocessed.end())));
+    EXPECT_TRUE(pointsInPolygon(settings.polygon,
+                                std::next(waypoints_gk_ma.begin()),
+                                std::prev(waypoints_gk_ma.end())));
+    EXPECT_TRUE(pointsInPolygon(settings.polygon,
+                                std::next(waypoints_exact.begin()),
+                                std::prev(waypoints_exact.end())));
+    EXPECT_TRUE(pointsInPolygon(settings.polygon,
+                                std::next(waypoints_exact_preprocessed.begin()),
+                                std::prev(waypoints_exact_preprocessed.end())));
 
-    EXPECT_EQ(settings.path_cost_function(waypoints_exact),
-              settings.path_cost_function(waypoints_exact_preprocessed));
-    EXPECT_NEAR(settings.path_cost_function(waypoints_gk_ma),
-                settings.path_cost_function(waypoints_exact), kNear);
+    EXPECT_EQ(settings.cost_function(waypoints_exact),
+              settings.cost_function(waypoints_exact_preprocessed));
+    EXPECT_NEAR(settings.cost_function(waypoints_gk_ma),
+                settings.cost_function(waypoints_exact), kNear);
   }
 }
 
 TEST(StripmapPlannerTest, RandomConvexPolygon) {
   std::srand(kSeed);
-  std::vector<Polygon> polygons(kNumPolygons);
+  std::vector<PolygonWithHoles> polygons(kNumPolygons);
 
   for (size_t i = 0; i < kNumPolygons; i++) {
     double x_0 = createRandomDouble(kCenterMin, kCenterMax);
     double y_0 = createRandomDouble(kCenterMin, kCenterMax);
     double r =
         createRandomDouble(kPolygonDiameterMin, kPolygonDiameterMax) / 2.0;
-    polygons[i] = Polygon(createRandomConvexPolygon<Polygon_2, K>(x_0, y_0, r));
-    if (polygons[i].getPolygon().outer_boundary().size() <= 2) continue;
-    EXPECT_TRUE(polygons[i].isConvex());
+    polygons[i] = createRandomConvexPolygon<PolygonWithHoles, K>(x_0, y_0, r);
+    if (polygons[i].outer_boundary().size() <= 2) continue;
+    EXPECT_TRUE(polygons[i].outer_boundary().is_simple());
+    EXPECT_TRUE(polygons[i].outer_boundary().is_convex());
   }
   runPlanners(polygons);
 }
@@ -106,22 +112,21 @@ TEST(StripmapPlannerTest, RandomConvexPolygon) {
 TEST(StripmapPlannerTest, RandomSimplePolygon) {
   CGAL::Random random(kSeed);
   std::srand(kSeed);
-  std::vector<Polygon> polygons(kNumPolygons);
+  std::vector<PolygonWithHoles> polygons(kNumPolygons);
 
   for (size_t i = 0; i < kNumPolygons; i++) {
     double r =
         createRandomDouble(kPolygonDiameterMin, kPolygonDiameterMax) / 2.0;
     const int kMaxPolySize = 10;
-    polygons[i] = Polygon(
-        createRandomSimplePolygon<Polygon_2, K>(r, random, kMaxPolySize));
-    if (polygons[i].getPolygon().outer_boundary().size() <= 2) continue;
-    EXPECT_TRUE(polygons[i].isStrictlySimple());
+    polygons[i] =
+        createRandomSimplePolygon<PolygonWithHoles, K>(r, random, kMaxPolySize);
+    if (polygons[i].outer_boundary().size() <= static_cast<size_t>(2)) continue;
+    EXPECT_TRUE(isStrictlySimple(polygons[i]));
   }
   runPlanners(polygons);
 }
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
-  google::InitGoogleLogging(argv[0]);
   return RUN_ALL_TESTS();
 }

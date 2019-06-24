@@ -56,10 +56,12 @@ class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
     PolygonWithHoles polygon;            // The input polygon to cover.
     PathCostFunctionType cost_function;  // The user defined cost function.
     std::shared_ptr<SensorModelBase> sensor_model;  // The sensor model.
-    DecompositionType decomposition_type;           // The decomposition type.
-    FT wall_distance;             // The minimum distance to the polygon walls.
-    bool offset_polygons;         // Flag to offset neighboring cells.
-    bool sweep_single_direction;  // Flag to sweep only in best direction.
+    DecompositionType decomposition_type =
+        DecompositionType::kBoustrophedeon;  // The decomposition type.
+    FT wall_distance = 0.0;       // The minimum distance to the polygon walls.
+    bool offset_polygons = true;  // Flag to offset neighboring cells.
+    bool sweep_single_direction =
+        false;  // Flag to sweep only in best direction.
   };
 
   SweepPlanGraph(const Settings& settings)
@@ -86,7 +88,9 @@ class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
     return polygon_clusters_;
   }
 
-  inline size_t getDecompositionSize() const { return polygon_clusters_.size(); }
+  inline size_t getDecompositionSize() const {
+    return polygon_clusters_.size();
+  }
 
   // Note: projects the start and goal inside the polygon.
   bool createNodeProperty(size_t cluster, std::vector<Point_2>* waypoints,

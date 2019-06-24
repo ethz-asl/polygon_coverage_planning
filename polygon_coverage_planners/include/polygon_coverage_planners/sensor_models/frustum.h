@@ -4,7 +4,7 @@
 #include <cmath>
 #include <ros/assert.h>
 
-#include "mav_2d_coverage_planning/sensor_models/sensor_model_base.h"
+#include "polygon_coverage_planners/sensor_models/sensor_model_base.h"
 
 namespace polygon_coverage_planning {
 

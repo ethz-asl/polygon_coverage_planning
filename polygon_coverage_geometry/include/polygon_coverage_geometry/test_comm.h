@@ -1,6 +1,7 @@
 #ifndef POLYGON_COVERAGE_PLANNING_TEST_COMMON_H_
 #define POLYGON_COVERAGE_PLANNING_TEST_COMMON_H_
 
+#include <ros/assert.h>
 #include <cstdlib>
 
 #include <CGAL/Kernel/global_functions.h>
@@ -148,7 +149,7 @@ bool checkVerticesIdentical(const typename Kernel::Point_2& a,
 
 template <class Kernel>
 void correctVertices(std::vector<typename Kernel::Point_2>* vertices) {
-  CHECK_NOTNULL(vertices);
+  ROS_ASSERT(vertices);
   // Delete identical adjacent vertices.
   typename std::vector<typename Kernel::Point_2>::iterator it =
       std::adjacent_find(vertices->begin(), vertices->end(),
@@ -171,8 +172,8 @@ Polygon createRandomConvexPolygon(double x0, double y0, double r) {
   std::vector<typename Kernel::Point_2> v;
   for (a = 0.0; a > -2.0 * M_PI;)  // full circle
   {
-    x = x0 + (r * cos(a));
-    y = y0 + (r * sin(a));
+    x = x0 + (r * std::cos(a));
+    y = y0 + (r * std::sin(a));
     // random angle step [20 .. 169] degrees
     a -= (20.0 + double((std::rand() % 150))) * M_PI / 180.0;
 
@@ -180,14 +181,14 @@ Polygon createRandomConvexPolygon(double x0, double y0, double r) {
   }
   correctVertices<Kernel>(&v);
 
-  return Polygon(v.begin(), v.end());
+  return Polygon(Polygon_2(v.begin(), v.end()));
 }
 
 template <class Polygon, class Kernel>
 Polygon createRandomSimplePolygon(double r, CGAL::Random& random,
                                   int max_poly_size) {
   typedef typename Kernel::Point_2 Point_2;
-  Polygon polygon;
+  Polygon_2 polygon;
   std::list<Point_2> point_set;
   int size = random.get_int(4, max_poly_size);
   // copy size points from the generator, eliminating duplicates, so the
@@ -198,7 +199,7 @@ Polygon createRandomSimplePolygon(double r, CGAL::Random& random,
                       std::back_inserter(point_set));
   CGAL::random_polygon_2(point_set.size(), std::back_inserter(polygon),
                          point_set.begin());
-  return polygon;
+  return Polygon(polygon);
 }
 
 // Sample 3 random points in cube with side length 2a and generate plane.
