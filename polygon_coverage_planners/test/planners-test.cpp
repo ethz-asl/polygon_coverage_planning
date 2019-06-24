@@ -2,6 +2,7 @@
 
 #include <CGAL/Random.h>
 #include <gtest/gtest.h>
+#include <ros/console.h>
 
 #include <polygon_coverage_geometry/cgal_comm.h>
 #include <polygon_coverage_geometry/test_comm.h>
@@ -35,6 +36,7 @@ void runPlanners(const std::vector<PolygonWithHoles>& polygons) {
     // Create planner settings.
     sweep_plan_graph::SweepPlanGraph::Settings settings;
     settings.polygon = p;
+    ROS_INFO_STREAM(p);
     settings.cost_function =
         std::bind(&computeEuclideanPathCost, std::placeholders::_1);
     settings.sensor_model = std::make_shared<Frustum>(
@@ -44,7 +46,7 @@ void runPlanners(const std::vector<PolygonWithHoles>& polygons) {
     settings.decomposition_type = DecompositionType::kBoustrophedeon;
     EXPECT_EQ(static_cast<size_t>(0), settings.polygon.number_of_holes());
 
-    settings.offset_polygons = true;
+    settings.offset_polygons = false;
     settings.decomposition_type = DecompositionType::kBoustrophedeon;
 
     // Create planners.
@@ -85,6 +87,7 @@ void runPlanners(const std::vector<PolygonWithHoles>& polygons) {
                                 std::next(waypoints_exact_preprocessed.begin()),
                                 std::prev(waypoints_exact_preprocessed.end())));
 
+    EXPECT_GT(settings.cost_function(waypoints_exact), 0.0);
     EXPECT_EQ(settings.cost_function(waypoints_exact),
               settings.cost_function(waypoints_exact_preprocessed));
     EXPECT_NEAR(settings.cost_function(waypoints_gk_ma),

@@ -158,6 +158,7 @@ bool SweepPlanGraph::create() {
   ROS_INFO_STREAM("Created sweep plan graph with "
                   << graph_.size() << " nodes and " << edge_properties_.size()
                   << " edges.");
+  ROS_INFO_STREAM("Initially created " << num_sweep_plans << " nodes.");
   ROS_INFO_STREAM("Pruned " << num_sweep_plans - graph_.size() << " nodes.");
   is_created_ = true;
   return true;
