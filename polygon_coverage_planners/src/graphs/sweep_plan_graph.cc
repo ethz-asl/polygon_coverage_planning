@@ -212,7 +212,7 @@ bool SweepPlanGraph::offsetDecomposition() {
 
   // Offset adjacent cells.
   timing::Timer timer_poly_offset("poly_offset");
-  if (!offsetAdjacentCells(adj)) {
+  if (settings_.offset_polygons && !offsetAdjacentCells(adj)) {
     ROS_ERROR("Failed to offset rectangular decomposition.");
     return false;
   }
@@ -223,6 +223,7 @@ bool SweepPlanGraph::offsetDecomposition() {
 bool SweepPlanGraph::calculateDecompositionAdjacency(
     std::map<size_t, std::set<size_t>>* decomposition_adjacency) {
   ROS_ASSERT(decomposition_adjacency);
+  (*decomposition_adjacency)[0] = std::set<size_t>();
 
   for (size_t i = 0; i < polygon_clusters_.size() - 1; ++i) {
     for (size_t j = i + 1; j < polygon_clusters_.size(); ++j) {
@@ -236,7 +237,7 @@ bool SweepPlanGraph::calculateDecompositionAdjacency(
 
   // Check connectivity.
   if (polygon_clusters_.size() == 1)
-    return decomposition_adjacency->count(0) == 0;
+    return decomposition_adjacency->count(0) == 1;
   for (size_t i = 0; i < polygon_clusters_.size(); ++i) {
     if (decomposition_adjacency->find(i) == decomposition_adjacency->end()) {
       return false;
