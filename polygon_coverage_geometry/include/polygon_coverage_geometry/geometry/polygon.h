@@ -82,13 +82,6 @@ class Polygon {
 
   bool checkConvexity() const;
 
-  // Sort boundary to be counter-clockwise and holes to be clockwise.
-  void sortCC();
-
-  // Merge consecutive collinear edges.
-  void simplifyPolygon(Polygon_2* polygon);
-  void simplify();
-
   // Helper function to check for full coverage in convex polygon.
   bool isCovered(const Point_2& p,
                  const std::vector<EdgeConstCirculator>& edges,

@@ -153,4 +153,13 @@ PolygonWithHoles rotatePolygon(const PolygonWithHoles& polygon_in,
   return rotated_polygon;
 }
 
+void sortVertices(PolygonWithHoles* pwh) {
+  if (pwh->outer_boundary().is_clockwise_oriented())
+    pwh->outer_boundary().reverse_orientation();
+
+  for (PolygonWithHoles::Hole_iterator hi = pwh->holes_begin();
+       hi != pwh->holes_end(); ++hi)
+    if (hi->is_counterclockwise_oriented()) hi->reverse_orientation();
+}
+
 }  // namespace polygon_coverage_planning

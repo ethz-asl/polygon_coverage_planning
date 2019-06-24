@@ -145,15 +145,6 @@ bool Polygon::checkConvexity() const {
   return polygon_.outer_boundary().is_convex();
 }
 
-void Polygon::sortCC() {
-  if (polygon_.outer_boundary().is_clockwise_oriented())
-    polygon_.outer_boundary().reverse_orientation();
-
-  for (PolygonWithHoles::Hole_iterator hi = polygon_.holes_begin();
-       hi != polygon_.holes_end(); ++hi)
-    if (hi->is_counterclockwise_oriented()) hi->reverse_orientation();
-}
-
 bool Polygon::computeLineSweepPlan(double max_sweep_distance,
                                    size_t start_vertex_idx,
                                    bool counter_clockwise,
