@@ -1,30 +1,20 @@
-#ifndef MAV_2D_COVERAGE_PLANNING_PLANNERS_POLYGON_STRIPMAP_PLANNER_H_
-#define MAV_2D_COVERAGE_PLANNING_PLANNERS_POLYGON_STRIPMAP_PLANNER_H_
+#ifndef POLYGON_COVERAGE_PLANNERS_PLANNERS_POLYGON_STRIPMAP_PLANNER_H_
+#define POLYGON_COVERAGE_PLANNERS_PLANNERS_POLYGON_STRIPMAP_PLANNER_H_
 
 #include <memory>
 
-#include <mav_coverage_planning_comm/cgal_definitions.h>
-#include "mav_2d_coverage_planning/cost_functions/path_cost_functions.h"
-#include "mav_2d_coverage_planning/geometry/polygon.h"
-#include "mav_2d_coverage_planning/graphs/sweep_plan_graph.h"
-#include "mav_2d_coverage_planning/sensor_models/sensor_model_base.h"
+#include <polygon_coverage_geometry/cgal_definitions.h>
+#include "polygon_coverage_planners/cost_functions/path_cost_functions.h"
+#include "polygon_coverage_planners/graphs/sweep_plan_graph.h"
+#include "polygon_coverage_planners/sensor_models/sensor_model_base.h"
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 
 class PolygonStripmapPlanner {
  public:
-  struct Settings {
-    Polygon polygon;
-    PathCostFunctionType path_cost_function;
-    std::shared_ptr<SensorModelBase> sensor_model;
-    bool sweep_around_obstacles;
-    bool offset_polygons;
-    DecompositionType decomposition_type;
-    bool sweep_single_direction;
-  };
-
   // Create a sweep plan for a 2D polygon with holes.
-  PolygonStripmapPlanner(const Settings& settings);
+  PolygonStripmapPlanner(
+      const sweep_plan_graph::SweepPlanGraph::Settings& settings);
 
   // Precompute solver essentials. To be run before solving.
   bool setup();
@@ -38,23 +28,11 @@ class PolygonStripmapPlanner {
 
   inline bool isInitialized() const { return is_initialized_; }
 
-  inline std::vector<Polygon> getDecomposition() const {
-    return decomposition_;
-  }
-
-  inline size_t getDecompositionSize() const { return decomposition_.size(); }
-  inline size_t getNumberOfNodes() const { return sweep_plan_graph_.size(); }
-  inline size_t getNumberOfEdges() const {
-    return sweep_plan_graph_.getNumberOfEdges();
-  }
-
  protected:
   virtual bool setupSolver() { return true; };
   // Default: Heuristic GTSPP solver.
   virtual bool runSolver(const Point_2& start, const Point_2& goal,
                          std::vector<Point_2>* solution) const;
-
-  virtual bool sweepAroundObstacles(std::vector<Point_2>* solution) const;
 
   // The sweep plan graph with all possible waypoints its node connections.
   sweep_plan_graph::SweepPlanGraph sweep_plan_graph_;
@@ -62,9 +40,9 @@ class PolygonStripmapPlanner {
  private:
   // Valid construction.
   bool is_initialized_;
-  // User problem settings.
-  Settings settings_;
+  // The sweep plan settings.
+  sweep_plan_graph::SweepPlanGraph::Settings settings_;
 };
 
-}  // namespace mav_coverage_planning
-#endif  // MAV_2D_COVERAGE_PLANNING_PLANNERS_POLYGON_STRIPMAP_PLANNER_H_
+}  // namespace polygon_coverage_planning
+#endif  // POLYGON_COVERAGE_PLANNERS_PLANNERS_POLYGON_STRIPMAP_PLANNER_H_

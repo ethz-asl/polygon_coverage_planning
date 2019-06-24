@@ -100,6 +100,7 @@ bool SweepPlanGraph::create() {
       findBestSweepDir(polygon_clusters_[cluster], &best_dir);
       visibility_graph::VisibilityGraph vis_graph(polygon_clusters_[cluster]);
       cluster_sweeps.resize(1);
+      ROS_ASSERT(settings_.sensor_model);
       if (!computeSweep(polygon_clusters_[cluster], vis_graph,
                         settings_.sensor_model->getSweepDistance(), best_dir,
                         true, &cluster_sweeps.front())) {
@@ -108,6 +109,7 @@ bool SweepPlanGraph::create() {
         return false;
       }
     } else {
+      ROS_ASSERT(settings_.sensor_model);
       if (!computeAllSweeps(polygon_clusters_[cluster],
                             settings_.sensor_model->getSweepDistance(),
                             &cluster_sweeps)) {
@@ -278,6 +280,7 @@ bool SweepPlanGraph::offsetAdjacentCells(
               if (*s == cell.edge(cell_e) ||
                   s->opposite() == cell.edge(cell_e)) {
                 Polygon_2 offset_cell;
+                ROS_ASSERT(settings_.sensor_model);
                 if (!offsetEdgeWithRadialOffset(
                         cell, cell_e,
                         settings_.sensor_model->getSweepDistance(),
@@ -296,6 +299,7 @@ bool SweepPlanGraph::offsetAdjacentCells(
               } else if (*s == neighbor.edge(neighbor_e) ||
                          s->opposite() == neighbor.edge(neighbor_e)) {
                 Polygon_2 offset_neighbor;
+                ROS_ASSERT(settings_.sensor_model);
                 if (!offsetEdgeWithRadialOffset(
                         neighbor, neighbor_e,
                         settings_.sensor_model->getSweepDistance(),

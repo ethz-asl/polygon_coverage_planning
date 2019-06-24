@@ -82,6 +82,12 @@ class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
 
   bool getClusters(std::vector<std::vector<int>>* clusters) const;
 
+  inline std::vector<Polygon_2> getDecomposition() const {
+    return polygon_clusters_;
+  }
+
+  inline size_t getDecompositionSize() const { return polygon_clusters_.size(); }
+
   // Note: projects the start and goal inside the polygon.
   bool createNodeProperty(size_t cluster, std::vector<Point_2>* waypoints,
                           NodeProperty* node) const;

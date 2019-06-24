@@ -25,7 +25,7 @@ cs_add_library(${PROJECT_NAME}
   src/graphs/gtspp_product_graph.cc
   src/graphs/sweep_plan_graph.cc
   src/timing.cc
-  #src/planners/polygon_stripmap_planner.cc
+  src/planners/polygon_stripmap_planner.cc
   #src/planners/polygon_stripmap_planner_exact.cc
   #src/planners/polygon_stripmap_planner_exact_preprocessed.cc
 )
