@@ -4,10 +4,10 @@
 #include <limits>
 #include <vector>
 
-#include <polygon_coverage_geometry/cgal_definitions.h>
-#include "mav_2d_coverage_planning/graphs/sweep_plan_graph.h"
-#include "mav_coverage_graph_solvers/boolean_lattice.h"
-#include "mav_coverage_graph_solvers/graph_base.h"
+#include <polygon_coverage_solvers/boolean_lattice.h>
+#include <polygon_coverage_solvers/graph_base.h>
+
+#include "polygon_coverage_planners/graphs/sweep_plan_graph.h"
 
 namespace polygon_coverage_planning {
 namespace gtspp_product_graph {

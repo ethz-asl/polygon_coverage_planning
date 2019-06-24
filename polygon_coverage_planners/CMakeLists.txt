@@ -22,7 +22,7 @@ include_directories(${MONO_INCLUDE_DIRS})
 #############
 cs_add_library(${PROJECT_NAME}
   src/cost_functions/path_cost_functions.cc
-  #src/graphs/gtspp_product_graph.cc
+  src/graphs/gtspp_product_graph.cc
   src/graphs/sweep_plan_graph.cc
   src/timing.cc
   #src/planners/polygon_stripmap_planner.cc
