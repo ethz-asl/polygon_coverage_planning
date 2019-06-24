@@ -22,16 +22,9 @@ include_directories(${MONO_INCLUDE_DIRS})
 #############
 cs_add_library(${PROJECT_NAME}
   src/cost_functions/path_cost_functions.cc
-  src/geometry/plane_transformation.cc
-  src/geometry/polygon_triangulation.cc
-  src/geometry/polygon.cc
-  src/geometry/BCD.cpp
-  src/geometry/bcd_exact.cc
-  src/geometry/weakly_monotone.cc
-  src/geometry/sweep.cc
   src/graphs/gtspp_product_graph.cc
   src/graphs/sweep_plan_graph.cc
-  src/graphs/visibility_graph.cc
+  src/timing.cc
   src/planners/polygon_stripmap_planner.cc
   src/planners/polygon_stripmap_planner_exact.cc
   src/planners/polygon_stripmap_planner_exact_preprocessed.cc
@@ -41,21 +34,6 @@ target_link_libraries(${PROJECT_NAME} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARI
 #########
 # TESTS #
 #########
-catkin_add_gtest(test_plane_transformation
-  test/plane_transformation-test.cpp
-)
-target_link_libraries(test_plane_transformation ${PROJECT_NAME})
-
-catkin_add_gtest(test_polygon
-  test/polygon-test.cpp
-)
-target_link_libraries(test_polygon ${PROJECT_NAME})
-
-catkin_add_gtest(test_visibility_graph
- test/visibility_graph-test.cpp
-)
-target_link_libraries(test_visibility_graph ${PROJECT_NAME})
-
 catkin_add_gtest(test_planners
   test/planners-test.cpp
 )

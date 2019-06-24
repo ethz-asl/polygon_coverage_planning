@@ -2,23 +2,22 @@
 
 #include <gtest/gtest.h>
 
-#include "mav_2d_coverage_planning/cost_functions/path_cost_functions.h"
-#include "mav_2d_coverage_planning/geometry/polygon.h"
-#include "mav_2d_coverage_planning/graphs/visibility_graph.h"
-#include "mav_2d_coverage_planning/tests/test_helpers.h"
+#include "polygon_coverage_geometry/cgal_comm.h"
+#include "polygon_coverage_geometry/test_comm.h"
+#include "polygon_coverage_geometry/visibility_graph.h"
 
-using namespace mav_coverage_planning;
-using namespace std::placeholders;
+using namespace polygon_coverage_planning;
 
 TEST(VisibilityGraphTest, ShortestPath) {
-  Polygon p(createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
+  PolygonWithHoles p(createRectangleInRectangle<Polygon_2, PolygonWithHoles>());
 
   Point_2 start(-1.0, 3.0);
-  EXPECT_FALSE(p.pointInPolygon(start));
+  EXPECT_FALSE(pointInPolygon(p, start));
   Point_2 goal(3.0, -1.0);
-  EXPECT_FALSE(p.pointInPolygon(goal));
+  EXPECT_FALSE(pointInPolygon(p, goal));
 
   visibility_graph::VisibilityGraph graph(p);
+  EXPECT_TRUE(graph.isInitialized());
   std::vector<Point_2> path;
   EXPECT_TRUE(graph.solve(start, goal, &path));
 
@@ -32,6 +31,5 @@ TEST(VisibilityGraphTest, ShortestPath) {
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);
-  google::InitGoogleLogging(argv[0]);
   return RUN_ALL_TESTS();
 }

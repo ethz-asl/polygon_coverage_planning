@@ -53,10 +53,6 @@ class Polygon {
   bool computeTrapezoidalDecompositionFromPolygonWithHoles(
       std::vector<Polygon>* trap_polygons) const;
 
-  // The best TCD is considered the one with the smallest bound on sweeps.
-  bool computeBestTrapezoidalDecompositionFromPolygonWithHoles(
-      std::vector<Polygon>* trap_polygons) const;
-
   inline const PolygonWithHoles& getPolygon() const { return polygon_; }
   std::vector<Point_2> getHullVertices() const;
   std::vector<std::vector<Point_2>> getHoleVertices() const;
@@ -80,24 +76,11 @@ class Polygon {
     return plane_tf_;
   }
 
-  std::vector<Direction_2> findEdgeDirections() const;
-  std::vector<Direction_2> findPerpEdgeDirections() const;
   std::vector<Direction_2> getUniformDirections(const int num) const;
-  std::vector<Polygon> rotatePolygon(
-      const std::vector<Direction_2>& dirs) const;
-  double findMinAltitude(const Polygon& subregion,
-                         Direction_2* sweep_dir = nullptr) const;
 
  private:
 
   bool checkConvexity() const;
-
-  // Sort boundary to be counter-clockwise and holes to be clockwise.
-  void sortCC();
-
-  // Merge consecutive collinear edges.
-  void simplifyPolygon(Polygon_2* polygon);
-  void simplify();
 
   // Helper function to check for full coverage in convex polygon.
   bool isCovered(const Point_2& p,

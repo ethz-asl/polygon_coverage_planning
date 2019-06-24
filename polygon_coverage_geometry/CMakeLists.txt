@@ -18,11 +18,13 @@ set(CMAKE_BUILD_TYPE Release)
 cs_add_library(${PROJECT_NAME}
   src/bcd.cc
   src/cgal_comm.cc
+  src/decomposition.cc
   src/offset.cc
   src/visibility_graph.cc
   src/visibility_polygon.cc
   src/weakly_monotone.cc
   src/sweep.cc
+  src/tcd.cc
 )
 target_link_libraries(${PROJECT_NAME} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES})
 
@@ -48,6 +50,11 @@ catkin_add_gtest(test_sweep
   test/sweep-test.cpp
 )
 target_link_libraries(test_sweep ${PROJECT_NAME})
+
+catkin_add_gtest(test_visibility_graph
+  test/visibility_graph-test.cpp
+)
+target_link_libraries(test_visibility_graph ${PROJECT_NAME})
 
 catkin_add_gtest(test_visibility_polygon
   test/visibility_polygon-test.cpp

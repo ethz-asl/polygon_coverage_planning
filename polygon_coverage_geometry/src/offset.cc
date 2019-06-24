@@ -59,8 +59,8 @@ bool checkValidOffset(
 
   PolygonWithHoles::Hole_const_iterator offset_hit =
       offset.front()->holes_begin();
-  for (PolygonWithHoles::Hole_const_iterator
-           original_hit = original.holes_begin();
+  for (PolygonWithHoles::Hole_const_iterator original_hit =
+           original.holes_begin();
        original_hit != original.holes_end(); ++original_hit, ++offset_hit) {
     if (original_hit->size() != offset_hit->size()) return false;
   }
@@ -101,12 +101,12 @@ bool offsetEdge(const Polygon_2& poly, const size_t& edge_id, double offset,
   polygon = CGAL::transform(rotation, polygon);
 
   // Calculate all remaining sweeps.
-  const double kMaskOffset = 1e-6;  // To cope with numerical imprecision.
+  const double kMaskOffset = 1e-9;  // To cope with numerical imprecision.
   double min_y = -kMaskOffset;
   double max_y = offset + kMaskOffset;
   if (0.5 * polygon.bbox().ymax() <= max_y) {
     max_y = 0.5 * polygon.bbox().ymax() - kMaskOffset;
-    ROS_DEBUG_STREAM("Offset too large. Re-adjusting.");
+    ROS_WARN_STREAM("Offset too large. Re-adjusting.");
   }
   double min_x = polygon.bbox().xmin() - kMaskOffset;
   double max_x = polygon.bbox().xmax() + kMaskOffset;
@@ -121,8 +121,12 @@ bool offsetEdge(const Polygon_2& poly, const size_t& edge_id, double offset,
   std::vector<PolygonWithHoles> intersection_list;
   CGAL::intersection(polygon, mask, std::back_inserter(intersection_list));
   if (intersection_list.size() != 1) {
-    ROS_WARN_STREAM("Not exactly one resulting intersections."
-                    << intersection_list.size());
+    ROS_WARN_STREAM("Not exactly one resulting intersections.");
+    ROS_WARN_STREAM("Polygon: " << polygon);
+    ROS_WARN_STREAM("Mask: " << mask);
+    ROS_WARN_STREAM("Intersections:");
+    for (auto p : intersection_list)
+      ROS_WARN_STREAM(p << "\n");
     return false;
   }
   if (intersection_list[0].number_of_holes() > 0) {
@@ -135,7 +139,7 @@ bool offsetEdge(const Polygon_2& poly, const size_t& edge_id, double offset,
   std::vector<PolygonWithHoles> diff_list;
   CGAL::difference(polygon, intersection, std::back_inserter(diff_list));
   if (diff_list.size() != 1) {
-    ROS_WARN_STREAM("Not exactle one resulting difference polygon."
+    ROS_WARN_STREAM("Not exactly one resulting difference polygon."
                     << diff_list.size());
     return false;
   }

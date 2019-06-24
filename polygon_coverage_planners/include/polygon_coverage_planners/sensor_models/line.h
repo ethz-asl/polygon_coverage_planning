@@ -1,9 +1,9 @@
-#ifndef MAV_2D_COVERAGE_PLANNING_SENSOR_MODELS_LINE_H_
-#define MAV_2D_COVERAGE_PLANNING_SENSOR_MODELS_LINE_H_
+#ifndef POLYGON_COVERAGE_PLANNERS_SENSOR_MODELS_LINE_H_
+#define POLYGON_COVERAGE_PLANNERS_SENSOR_MODELS_LINE_H_
 
 #include "mav_2d_coverage_planning/sensor_models/sensor_model_base.h"
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 
 class Line : public SensorModelBase {
  public:
@@ -19,6 +19,6 @@ class Line : public SensorModelBase {
   double lateral_footprint_;
 };
 
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning
 
-#endif  // MAV_2D_COVERAGE_PLANNING_SENSOR_MODELS_LINE_H_
+#endif  // POLYGON_COVERAGE_PLANNERS_SENSOR_MODELS_LINE_H_

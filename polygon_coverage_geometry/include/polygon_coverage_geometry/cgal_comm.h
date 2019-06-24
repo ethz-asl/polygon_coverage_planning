@@ -1,3 +1,6 @@
+#ifndef POLYGON_COVERAGE_GEOMETRY_CGAL_COMM_H_
+#define POLYGON_COVERAGE_GEOMETRY_CGAL_COMM_H_
+
 #include "polygon_coverage_geometry/cgal_definitions.h"
 
 namespace polygon_coverage_planning {
@@ -31,4 +34,12 @@ inline FT computeArea(const Polygon_2& poly) {
 void simplifyPolygon(Polygon_2* polygon);
 void simplifyPolygon(PolygonWithHoles* pwh);
 
+PolygonWithHoles rotatePolygon(const PolygonWithHoles& polygon_in,
+                               const Direction_2& dir);
+
+// Sort boundary to be counter-clockwise and holes to be clockwise.
+void sortVertices(PolygonWithHoles* pwh);
+
 }  // namespace polygon_coverage_planning
+
+#endif  // POLYGON_COVERAGE_GEOMETRY_CGAL_COMM_H_

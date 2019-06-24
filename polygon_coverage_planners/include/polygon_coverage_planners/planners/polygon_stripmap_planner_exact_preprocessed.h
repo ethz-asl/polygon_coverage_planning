@@ -1,14 +1,16 @@
-#ifndef MAV_2D_COVERAGE_PLANNING_PLANNERS_POLYGON_STRIPMAP_PLANNER_EXACT_PREPROCESSED_H_
-#define MAV_2D_COVERAGE_PLANNING_PLANNERS_POLYGON_STRIPMAP_PLANNER_EXACT_PREPROCESSED_H_
+#ifndef POLYGON_COVERAGE_PLANNERS_PLANNERS_POLYGON_STRIPMAP_PLANNER_EXACT_PREPROCESSED_H_
+#define POLYGON_COVERAGE_PLANNERS_PLANNERS_POLYGON_STRIPMAP_PLANNER_EXACT_PREPROCESSED_H_
 
-#include "mav_2d_coverage_planning/planners/polygon_stripmap_planner_exact.h"
+#include "polygon_coverage_planners/graphs/sweep_plan_graph.h"
+#include "polygon_coverage_planners/planners/polygon_stripmap_planner_exact.h"
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 
 class PolygonStripmapPlannerExactPreprocessed
     : public PolygonStripmapPlannerExact {
  public:
-  PolygonStripmapPlannerExactPreprocessed(const Settings& settings)
+  PolygonStripmapPlannerExactPreprocessed(
+      const sweep_plan_graph::SweepPlanGraph::Settings& settings)
       : PolygonStripmapPlannerExact(settings) {}
 
  private:
@@ -18,6 +20,6 @@ class PolygonStripmapPlannerExactPreprocessed
   bool preprocess() override;
 };
 
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning
 
-#endif  // MAV_2D_COVERAGE_PLANNING_PLANNERS_POLYGON_STRIPMAP_PLANNER_EXACT_PREPROCESSED_H_
+#endif  // POLYGON_COVERAGE_PLANNERS_PLANNERS_POLYGON_STRIPMAP_PLANNER_EXACT_PREPROCESSED_H_

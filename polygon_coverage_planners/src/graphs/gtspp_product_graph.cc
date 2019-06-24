@@ -1,16 +1,17 @@
-#include <glog/logging.h>
+#include <ros/console.h>
 #include <chrono>
+#include <numeric>
 
-#include "mav_2d_coverage_planning/graphs/gtspp_product_graph.h"
+#include "polygon_coverage_planners/graphs/gtspp_product_graph.h"
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 namespace gtspp_product_graph {
 
 const double kTimeOut = 200.0;
 
 bool GtsppProductGraph::create() {
   if (sweep_plan_graph_ == nullptr || boolean_lattice_ == nullptr) {
-    LOG(ERROR) << "Sweep plan graph or boolean lattice not set.";
+    ROS_ERROR("Sweep plan graph or boolean lattice not set.");
     return false;
   }
 
@@ -26,15 +27,16 @@ bool GtsppProductGraph::create() {
     }
   }
 
-  LOG(INFO) << "Created GTSPP product graph with " << graph_.size()
-            << " nodes and " << edge_properties_.size() << " edges.";
+  ROS_INFO_STREAM("Created GTSPP product graph with "
+                  << graph_.size() << " nodes and " << edge_properties_.size()
+                  << " edges.");
   is_created_ = true;
   return true;
 }
 
 bool GtsppProductGraph::createOnline() {
   if (sweep_plan_graph_ == nullptr || boolean_lattice_ == nullptr) {
-    LOG(ERROR) << "Sweep plan graph or boolean lattice not set.";
+    ROS_ERROR("Sweep plan graph or boolean lattice not set.");
     return false;
   }
 
@@ -51,8 +53,8 @@ bool GtsppProductGraph::createOnline() {
     }
   }
 
-  LOG(INFO) << "Created GTSPP product graph with " << graph_.size()
-            << " nodes without edges.";
+  ROS_INFO_STREAM("Created GTSPP product graph with "
+                  << graph_.size() << " nodes without edges.");
   is_created_ = true;
   return true;
 }
@@ -73,7 +75,7 @@ bool GtsppProductGraph::addStartNode(const NodeProperty& node_property) {
     auto current_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = current_time - start_time;
     if (elapsed.count() > kTimeOut) {
-      LOG(ERROR) << "Timout addStartNode.";
+      ROS_ERROR("Timout addStartNode.");
       return false;
     }
     if (lattice_id == boolean_lattice_->getStartIdx()) {
@@ -98,7 +100,7 @@ bool GtsppProductGraph::addGoalNode(const NodeProperty& node_property) {
     auto current_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = current_time - start_time;
     if (elapsed.count() > kTimeOut) {
-      LOG(ERROR) << "Timout addGoalNode.";
+      ROS_ERROR("Timout addGoalNode.");
       return false;
     }
     if (lattice_id == boolean_lattice_->getGoalIdx()) {
@@ -152,7 +154,7 @@ bool GtsppProductGraph::solve(const Point_2& start, const Point_2& goal,
   // Solve graph using Dijkstra.
   Solution solution;
   if (!temp_gtspp_product_graph.solveDijkstra(&solution)) {
-    LOG(ERROR) << "Dijkstra failed.";
+    ROS_ERROR("Dijkstra failed.");
     return false;
   }
 
@@ -161,7 +163,7 @@ bool GtsppProductGraph::solve(const Point_2& start, const Point_2& goal,
 
 bool GtsppProductGraph::solveOnline(const Point_2& start, const Point_2& goal,
                                     std::vector<Point_2>* waypoints) const {
-  CHECK_NOTNULL(waypoints);
+  ROS_ASSERT(waypoints);
   waypoints->clear();
 
   // Create temporary graph structure.
@@ -198,7 +200,7 @@ bool GtsppProductGraph::solveOnline(const Point_2& start, const Point_2& goal,
   // Create graph while solving Dijkstra.
   Solution solution;
   if (!temp_gtspp_product_graph.createDijkstra(&solution)) {
-    LOG(ERROR) << "Dijkstra failed.";
+    ROS_ERROR("Dijkstra failed.");
     return false;
   }
 
@@ -207,11 +209,11 @@ bool GtsppProductGraph::solveOnline(const Point_2& start, const Point_2& goal,
 
 bool GtsppProductGraph::getWaypoints(const Solution& solution,
                                      std::vector<Point_2>* waypoints) const {
-  CHECK_NOTNULL(waypoints);
+  ROS_ASSERT(waypoints);
   waypoints->clear();
 
   if (sweep_plan_graph_ == nullptr) {
-    LOG(ERROR) << "Sweep plan graph not set.";
+    ROS_ERROR("Sweep plan graph not set.");
     return false;
   }
   // Translate product graph solution in sweep plan graph indices.
@@ -243,7 +245,7 @@ bool GtsppProductGraph::getWaypoints(const Solution& solution,
 bool GtsppProductGraph::addEdges() {
   // Find 'new' node properties.
   if (graph_.empty()) {
-    LOG(ERROR) << "Cannot add edges to an empty graph.";
+    ROS_ERROR("Cannot add edges to an empty graph.");
     return false;
   }
 
@@ -382,7 +384,7 @@ GtsppProductGraph::getSweepPlanGraphNodeProperty(size_t node_id) const {
 
 bool GtsppProductGraph::getSweepPlanGraphEdgeCost(const EdgeId& edge_id,
                                                   double* cost) const {
-  CHECK_NOTNULL(cost);
+  ROS_ASSERT(cost);
   *cost = -1.0;
   const NodeProperty* from_node_property = getNodeProperty(edge_id.first);
   const NodeProperty* to_node_property = getNodeProperty(edge_id.second);
@@ -399,7 +401,7 @@ bool GtsppProductGraph::getSweepPlanGraphEdgeCost(const EdgeId& edge_id,
 
 bool GtsppProductGraph::getBooleanLatticeEdgeCost(const EdgeId& edge_id,
                                                   double* cost) const {
-  CHECK_NOTNULL(cost);
+  ROS_ASSERT(cost);
   *cost = -1.0;
   const NodeProperty* from_node_property = getNodeProperty(edge_id.first);
   const NodeProperty* to_node_property = getNodeProperty(edge_id.second);
@@ -415,7 +417,7 @@ bool GtsppProductGraph::getBooleanLatticeEdgeCost(const EdgeId& edge_id,
 }
 
 bool GtsppProductGraph::createDijkstra(Solution* solution) {
-  CHECK_NOTNULL(solution);
+  ROS_ASSERT(solution);
   solution->clear();
   if (!nodeExists(start_idx_) || !nodeExists(goal_idx_)) {
     return false;
@@ -438,7 +440,7 @@ bool GtsppProductGraph::createDijkstra(Solution* solution) {
     auto current_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = current_time - start_time;
     if (elapsed.count() > kTimeOut) {
-      LOG(ERROR) << "Timout createDijkstra.";
+      ROS_ERROR("Timout createDijkstra.");
       return false;
     }
     // Pop vertex with lowest score from open set.
@@ -496,4 +498,4 @@ bool GtsppProductGraph::createDijkstra(Solution* solution) {
 }
 
 }  // namespace gtspp_product_graph
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning

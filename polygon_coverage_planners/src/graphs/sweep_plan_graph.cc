@@ -1,13 +1,22 @@
-#include "mav_2d_coverage_planning/graphs/sweep_plan_graph.h"
+#include "polygon_coverage_planners/graphs/sweep_plan_graph.h"
+#include "polygon_coverage_planners/timing.h"
 
-#include <glog/logging.h>
+#include <ros/assert.h>
 
-#include <mav_coverage_planning_comm/timing.h>
+#include <polygon_coverage_geometry/bcd.h>
+#include <polygon_coverage_geometry/cgal_comm.h>
+#include <polygon_coverage_geometry/decomposition.h>
+#include <polygon_coverage_geometry/offset.h>
+#include <polygon_coverage_geometry/sweep.h>
+#include <polygon_coverage_geometry/tcd.h>
+#include <polygon_coverage_geometry/visibility_polygon.h>
 
-#include <mav_coverage_graph_solvers/gk_ma.h>
-#include "mav_2d_coverage_planning/geometry/sweep.h"
+#include <polygon_coverage_solvers/gk_ma.h>
 
-namespace mav_coverage_planning {
+#include <CGAL/Boolean_set_operations_2.h>
+#include <CGAL/create_offset_polygons_from_polygon_with_holes_2.h>
+
+namespace polygon_coverage_planning {
 namespace sweep_plan_graph {
 
 bool NodeProperty::isNonOptimal(
@@ -15,13 +24,13 @@ bool NodeProperty::isNonOptimal(
     const std::vector<NodeProperty>& node_properties,
     const PathCostFunctionType& cost_function) const {
   if (waypoints.empty()) {
-    LOG(WARNING) << "Node does not have waypoints.";
+    ROS_WARN_STREAM("Node does not have waypoints.");
     return false;
   }
 
   for (const NodeProperty& node_property : node_properties) {
     if (node_property.waypoints.empty()) {
-      LOG(WARNING) << "Comparison node does not have waypoints.";
+      ROS_WARN_STREAM("Comparison node does not have waypoints.");
       continue;
     }
     if (node_property.cluster == cluster) {
@@ -46,31 +55,66 @@ bool NodeProperty::isNonOptimal(
   return false;
 }
 
+void SweepPlanGraph::offsetPolygonFromWalls() {
+  if (settings_.wall_distance <= 0.0) return;
+
+  std::vector<boost::shared_ptr<PolygonWithHoles>> result =
+      CGAL::create_interior_skeleton_and_offset_polygons_with_holes_2(
+          settings_.wall_distance, settings_.polygon);
+
+  ROS_ASSERT(!result.empty());
+  ROS_WARN_COND(
+      result.size() > 1,
+      "Offsetting the polygon by %.2f m from the wall resulted in multiple "
+      "polygons with holes. Only considering the first polygon.",
+      CGAL::to_double(settings_.wall_distance));
+
+  if (result.empty()) {
+    ROS_WARN("No polygon left after offsetting from wall. Cancel offsetting.");
+  } else {
+    settings_.polygon = *(result.front());
+  }
+}
+
 bool SweepPlanGraph::create() {
   clear();
+  offsetPolygonFromWalls();
+  if (!computeDecomposition()) {
+    ROS_ERROR("Failed to compute decomposition.");
+    return false;
+  }
+  if (!offsetDecomposition()) {
+    ROS_ERROR("Failed to offset neighboring decomposition cells.");
+    return false;
+  }
+
+  // Create adjacency graph.
   size_t num_sweep_plans = 0;
   // Create sweep plans for each cluster.
   for (size_t cluster = 0; cluster < polygon_clusters_.size(); ++cluster) {
     // Compute all cluster sweeps.
     std::vector<std::vector<Point_2>> cluster_sweeps;
     timing::Timer timer_line_sweeps("line_sweeps");
-    if (sweep_single_direction_) {
+    if (settings_.sweep_single_direction) {
       Direction_2 best_dir;
-      polygon_clusters_[cluster].findMinAltitude(polygon_clusters_[cluster],
-                                                 &best_dir);
+      findBestSweepDir(polygon_clusters_[cluster], &best_dir);
       visibility_graph::VisibilityGraph vis_graph(polygon_clusters_[cluster]);
-      const Polygon_2& poly =
-          polygon_clusters_[cluster].getPolygon().outer_boundary();
       cluster_sweeps.resize(1);
-      if (!computeSweep(poly, vis_graph, sweep_distance_, best_dir, true,
-                        &cluster_sweeps.front())) {
-        LOG(ERROR) << "Cannot compute single sweep for cluster: " << cluster;
+      ROS_ASSERT(settings_.sensor_model);
+      if (!computeSweep(polygon_clusters_[cluster], vis_graph,
+                        settings_.sensor_model->getSweepDistance(), best_dir,
+                        true, &cluster_sweeps.front())) {
+        ROS_ERROR_STREAM(
+            "Cannot compute single sweep for cluster: " << cluster);
         return false;
       }
     } else {
-      if (!computeAllSweeps(polygon_clusters_[cluster], sweep_distance_,
+      ROS_ASSERT(settings_.sensor_model);
+      if (!computeAllSweeps(polygon_clusters_[cluster],
+                            settings_.sensor_model->getSweepDistance(),
                             &cluster_sweeps)) {
-        LOG(ERROR) << "Cannot create all sweep plans for cluster " << cluster;
+        ROS_ERROR_STREAM("Cannot create all sweep plans for cluster "
+                         << cluster);
         return false;
       }
     }
@@ -96,7 +140,7 @@ bool SweepPlanGraph::create() {
         node_properties.begin(), node_properties.end(),
         [node_properties, this](const NodeProperty& node_property) {
           return node_property.isNonOptimal(visibility_graph_, node_properties,
-                                            cost_function_);
+                                            settings_.cost_function);
         });
     node_properties.erase(new_end, node_properties.end());
     timer_pruning.Stop();
@@ -111,16 +155,189 @@ bool SweepPlanGraph::create() {
     timer_edge_creation.Stop();
   }
 
-  LOG(INFO) << "Created sweep plan graph with " << graph_.size()
-            << " nodes and " << edge_properties_.size() << " edges.";
-  LOG(INFO) << "Pruned " << num_sweep_plans - graph_.size() << " nodes.";
+  ROS_INFO_STREAM("Created sweep plan graph with "
+                  << graph_.size() << " nodes and " << edge_properties_.size()
+                  << " edges.");
+  ROS_INFO_STREAM("Initially created " << num_sweep_plans << " nodes.");
+  ROS_INFO_STREAM("Pruned " << num_sweep_plans - graph_.size() << " nodes.");
   is_created_ = true;
+  return true;
+}
+
+bool SweepPlanGraph::computeDecomposition() {
+  // Create decomposition.
+  timing::Timer timer_decom("decomposition");
+  switch (settings_.decomposition_type) {
+    case DecompositionType::kBoustrophedeon: {
+      if (!computeBestBCDFromPolygonWithHoles(settings_.polygon,
+                                              &polygon_clusters_)) {
+        ROS_ERROR_STREAM("Cannot compute boustrophedon decomposition.");
+        return false;
+      } else {
+        ROS_INFO_STREAM("Successfully created boustrophedon decomposition with "
+                        << polygon_clusters_.size() << " polygon(s).");
+      }
+      break;
+    }
+    case DecompositionType::kTrapezoidal: {
+      if (!computeBestTCDFromPolygonWithHoles(settings_.polygon,
+                                              &polygon_clusters_)) {
+        ROS_ERROR_STREAM("Cannot compute trapezoidal decomposition.");
+        return false;
+      } else {
+        ROS_INFO_STREAM("Successfully created trapezoidal decomposition with "
+                        << polygon_clusters_.size() << " polygon(s).");
+      }
+      break;
+    }
+    default: {
+      ROS_ERROR_STREAM("No valid decomposition type set.");
+      return false;
+      break;
+    }
+  }
+  timer_decom.Stop();
+
+  return true;
+}
+
+bool SweepPlanGraph::offsetDecomposition() {
+  // Compute adjacency.
+  timing::Timer timer_poly_adj("polygon_adjacency");
+  std::map<size_t, std::set<size_t>> adj;
+  if (settings_.offset_polygons && !calculateDecompositionAdjacency(&adj)) {
+    ROS_ERROR("Decomposition not fully connected.");
+    return false;
+  }
+  timer_poly_adj.Stop();
+
+  // Offset adjacent cells.
+  timing::Timer timer_poly_offset("poly_offset");
+  if (settings_.offset_polygons && !offsetAdjacentCells(adj)) {
+    ROS_ERROR("Failed to offset rectangular decomposition.");
+    return false;
+  }
+  timer_poly_offset.Stop();
+  return true;
+}
+
+bool SweepPlanGraph::calculateDecompositionAdjacency(
+    std::map<size_t, std::set<size_t>>* decomposition_adjacency) {
+  ROS_ASSERT(decomposition_adjacency);
+  (*decomposition_adjacency)[0] = std::set<size_t>();
+
+  for (size_t i = 0; i < polygon_clusters_.size() - 1; ++i) {
+    for (size_t j = i + 1; j < polygon_clusters_.size(); ++j) {
+      PolygonWithHoles joined;
+      if (CGAL::join(polygon_clusters_[i], polygon_clusters_[j], joined)) {
+        (*decomposition_adjacency)[i].emplace(j);
+        (*decomposition_adjacency)[j].emplace(i);
+      }
+    }
+  }
+
+  // Check connectivity.
+  if (polygon_clusters_.size() == 1)
+    return decomposition_adjacency->count(0) == 1;
+  for (size_t i = 0; i < polygon_clusters_.size(); ++i) {
+    if (decomposition_adjacency->find(i) == decomposition_adjacency->end()) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool SweepPlanGraph::offsetAdjacentCells(
+    const std::map<size_t, std::set<size_t>>& adj) {
+  // Find overlapping edges.
+  std::vector<Polygon_2> offsetted_decomposition = polygon_clusters_;
+  std::vector<Segment_2> offsetted_segments;
+  // For all cells...
+  for (size_t i = 0; i < polygon_clusters_.size(); ++i) {
+    const Polygon_2& cell = polygon_clusters_[i];
+    const size_t num_edges_cell = cell.size();
+    // Go through all neighbors of cell i.
+    for (auto it = adj.at(i).begin(); it != adj.at(i).end(); it++) {
+      const Polygon_2& neighbor = polygon_clusters_[*it];
+      // If they do not touch anymore, skip.
+      PolygonWithHoles joined;
+      if (!CGAL::join(cell, neighbor, joined)) continue;
+
+      const size_t num_edges_neighbor = neighbor.size();
+      for (size_t cell_e = 0; cell_e < num_edges_cell; ++cell_e) {
+        if (std::find(offsetted_segments.begin(), offsetted_segments.end(),
+                      cell.edge(cell_e)) != offsetted_segments.end())
+          continue;  // Already offsetted this segment.
+        for (size_t neighbor_e = 0; neighbor_e < num_edges_neighbor;
+             ++neighbor_e) {
+          if (std::find(offsetted_segments.begin(), offsetted_segments.end(),
+                        neighbor.edge(neighbor_e)) != offsetted_segments.end())
+            continue;  // Already offsetted this segment.
+          // If segments intersect, offset polygon.
+          CGAL::cpp11::result_of<Intersect_2(Segment_2, Segment_2)>::type
+              result = CGAL::intersection(cell.edge(cell_e),
+                                          neighbor.edge(neighbor_e));
+          if (result) {
+            if (const Segment_2* s = boost::get<Segment_2>(&*result)) {
+              if (*s == cell.edge(cell_e) ||
+                  s->opposite() == cell.edge(cell_e)) {
+                Polygon_2 offset_cell;
+                ROS_ASSERT(settings_.sensor_model);
+                if (!offsetEdgeWithRadialOffset(
+                        cell, cell_e,
+                        settings_.sensor_model->getSweepDistance(),
+                        &offset_cell))
+                  return false;
+                std::vector<PolygonWithHoles> intersection_list;
+                CGAL::intersection(offsetted_decomposition[i], offset_cell,
+                                   std::back_inserter(intersection_list));
+                if (intersection_list.size() != 1) return false;
+                if (intersection_list.front().number_of_holes() != 0)
+                  return false;
+                offsetted_decomposition[i] =
+                    intersection_list.front().outer_boundary();
+                offsetted_segments.push_back(*s);
+                offsetted_segments.push_back(s->opposite());
+              } else if (*s == neighbor.edge(neighbor_e) ||
+                         s->opposite() == neighbor.edge(neighbor_e)) {
+                Polygon_2 offset_neighbor;
+                ROS_ASSERT(settings_.sensor_model);
+                if (!offsetEdgeWithRadialOffset(
+                        neighbor, neighbor_e,
+                        settings_.sensor_model->getSweepDistance(),
+                        &offset_neighbor))
+                  return false;
+                std::vector<PolygonWithHoles> intersection_list;
+                CGAL::intersection(offsetted_decomposition[*it],
+                                   offset_neighbor,
+                                   std::back_inserter(intersection_list));
+                if (intersection_list.size() != 1) return false;
+                if (intersection_list.front().number_of_holes() != 0)
+                  return false;
+                offsetted_decomposition[*it] =
+                    intersection_list.front().outer_boundary();
+                offsetted_segments.push_back(*s);
+                offsetted_segments.push_back(s->opposite());
+              } else {
+                ROS_DEBUG_STREAM("Segment intersection but not identical.");
+              }
+            } else {
+              ROS_DEBUG_STREAM("Only point intersection... "
+                               << *boost::get<Point_2>(&*result));
+            }
+          }
+        }
+      }
+    }
+  }
+  polygon_clusters_ = offsetted_decomposition;
+
   return true;
 }
 
 bool SweepPlanGraph::getClusters(
     std::vector<std::vector<int>>* clusters) const {
-  CHECK_NOTNULL(clusters);
+  ROS_ASSERT(clusters);
   clusters->clear();
 
   std::set<size_t> cluster_set;
@@ -138,7 +355,7 @@ bool SweepPlanGraph::getClusters(
   }
   if (cluster_set != expected_clusters) {
     return false;  // Clusters not enumerated [0 .. n-1].
-  }                // HERE
+  }
 
   clusters->resize(cluster_set.size());
   for (size_t i = 0; i < clusters->size(); ++i) {
@@ -159,25 +376,25 @@ bool SweepPlanGraph::getClusters(
 bool SweepPlanGraph::createNodeProperty(size_t cluster,
                                         std::vector<Point_2>* waypoints,
                                         NodeProperty* node) const {
-  CHECK_NOTNULL(waypoints);
-  CHECK_NOTNULL(node);
+  ROS_ASSERT(waypoints);
+  ROS_ASSERT(node);
 
-  std::vector<Polygon> visibility_polygons;
-  if (!computeStartAndGoalVisibility(visibility_graph_.getPolygon(), waypoints,
+  std::vector<Polygon_2> visibility_polygons;
+  if (!computeStartAndGoalVisibility(settings_.polygon, waypoints,
                                      &visibility_polygons)) {
-    LOG(ERROR) << "Cannot compute start and goal visibility graph.";
+    ROS_ERROR("Cannot compute start and goal visibility graph.");
     return false;
   }
 
-  *node =
-      NodeProperty(*waypoints, cost_function_, cluster, visibility_polygons);
+  *node = NodeProperty(*waypoints, settings_.cost_function, cluster,
+                       visibility_polygons);
 
   return true;
 }
 
 bool SweepPlanGraph::addEdges() {
   if (graph_.empty()) {
-    LOG(ERROR) << "Cannot add edges to an empty graph.";
+    ROS_ERROR("Cannot add edges to an empty graph.");
     return false;
   }
 
@@ -209,7 +426,7 @@ bool SweepPlanGraph::addEdges() {
 
 bool SweepPlanGraph::computeEdge(const EdgeId& edge_id,
                                  EdgeProperty* edge_property) const {
-  CHECK_NOTNULL(edge_property);
+  ROS_ASSERT(edge_property);
 
   // Access node properties:
   const NodeProperty* from_node_property = getNodeProperty(edge_id.first);
@@ -221,7 +438,7 @@ bool SweepPlanGraph::computeEdge(const EdgeId& edge_id,
   // Calculate shortest path.
   if (from_node_property->waypoints.empty() ||
       to_node_property->waypoints.empty()) {
-    LOG(ERROR) << "Waypoints in node property are empty.";
+    ROS_ERROR("Waypoints in node property are empty.");
     return false;
   }
 
@@ -231,13 +448,13 @@ bool SweepPlanGraph::computeEdge(const EdgeId& edge_id,
                                to_node_property->waypoints.front(),
                                to_node_property->visibility_polygons.front(),
                                &shortest_path)) {
-    LOG(ERROR) << "Cannot compute shortest path from "
-               << from_node_property->waypoints.back() << " to "
-               << to_node_property->waypoints.front();
+    ROS_ERROR_STREAM("Cannot compute shortest path from "
+                     << from_node_property->waypoints.back() << " to "
+                     << to_node_property->waypoints.front());
     return false;
   }
 
-  *edge_property = EdgeProperty(shortest_path, cost_function_);
+  *edge_property = EdgeProperty(shortest_path, settings_.cost_function);
 
   return true;
 }
@@ -273,11 +490,11 @@ bool SweepPlanGraph::isConnected(const EdgeId& edge_id) const {
 
 bool SweepPlanGraph::solve(const Point_2& start, const Point_2& goal,
                            std::vector<Point_2>* waypoints) const {
-  CHECK_NOTNULL(waypoints);
+  ROS_ASSERT(waypoints);
   waypoints->clear();
 
   if (!is_created_) {
-    LOG(ERROR) << "Graph not created.";
+    ROS_ERROR("Graph not created.");
     return false;
   }
 
@@ -292,7 +509,7 @@ bool SweepPlanGraph::solve(const Point_2& start, const Point_2& goal,
 
   if (!temp_gtsp_graph.addStartNode(start_node) ||
       !temp_gtsp_graph.addGoalNode(goal_node)) {
-    LOG(ERROR) << "Cannot add start and goal.";
+    ROS_ERROR("Cannot add start and goal.");
     return false;
   }
   const size_t goal_idx = temp_gtsp_graph.size() - 1;
@@ -302,19 +519,19 @@ bool SweepPlanGraph::solve(const Point_2& start, const Point_2& goal,
   std::vector<std::vector<int>> m = temp_gtsp_graph.getAdjacencyMatrix();
   std::vector<std::vector<int>> clusters;
   if (!temp_gtsp_graph.getClusters(&clusters)) {
-    LOG(ERROR) << "Cannot get clusters.";
+    ROS_ERROR("Cannot get clusters.");
     return false;
   }
   gk_ma::Task task(m, clusters);
   gk_ma::GkMa& solver = gk_ma::GkMa::getInstance();
   solver.setSolver(task);
 
-  LOG(INFO) << "Start solving GTSP";
+  ROS_INFO("Start solving GTSP");
   if (!solver.solve()) {
-    LOG(ERROR) << "GkMa solution failed.";
+    ROS_ERROR("GkMa solution failed.");
     return false;
   }
-  LOG(INFO) << "Finished solving GTSP";
+  ROS_INFO("Finished solving GTSP");
   std::vector<int> solution_int = solver.getSolution();
   Solution solution(solution_int.size());
   std::copy(solution_int.begin(), solution_int.end(), solution.begin());
@@ -323,17 +540,17 @@ bool SweepPlanGraph::solve(const Point_2& start, const Point_2& goal,
   Solution::iterator start_it =
       std::find(solution.begin(), solution.end(), start_idx);
   if (start_it == solution.end()) {
-    LOG(ERROR) << "Cannot find start node in solution.";
+    ROS_ERROR("Cannot find start node in solution.");
     return false;
   }
   std::rotate(solution.begin(), start_it, solution.end());
   if (solution.back() != goal_idx) {
-    LOG(ERROR) << "Goal node is not at back of solution.";
+    ROS_ERROR("Goal node is not at back of solution.");
     return false;
   }
 
   if (!temp_gtsp_graph.getWaypoints(solution, waypoints)) {
-    LOG(ERROR) << "Cannot recover waypoints.";
+    ROS_ERROR("Cannot recover waypoints.");
     return false;
   }
 
@@ -342,7 +559,7 @@ bool SweepPlanGraph::solve(const Point_2& start, const Point_2& goal,
 
 bool SweepPlanGraph::getWaypoints(const Solution& solution,
                                   std::vector<Point_2>* waypoints) const {
-  CHECK_NOTNULL(waypoints);
+  ROS_ASSERT(waypoints);
   waypoints->clear();
 
   for (size_t i = 0; i < solution.size() - 1; ++i) {
@@ -374,10 +591,10 @@ bool SweepPlanGraph::getWaypoints(const Solution& solution,
 }
 
 bool SweepPlanGraph::computeStartAndGoalVisibility(
-    const Polygon& polygon, std::vector<Point_2>* sweep,
-    std::vector<Polygon>* visibility_polygons) const {
-  CHECK_NOTNULL(sweep);
-  CHECK_NOTNULL(visibility_polygons);
+    const PolygonWithHoles& polygon, std::vector<Point_2>* sweep,
+    std::vector<Polygon_2>* visibility_polygons) const {
+  ROS_ASSERT(sweep);
+  ROS_ASSERT(visibility_polygons);
   visibility_polygons->resize(2);
 
   if (sweep->front() == sweep->back()) {
@@ -398,16 +615,17 @@ bool SweepPlanGraph::computeStartAndGoalVisibility(
   }
 }
 
-bool SweepPlanGraph::computeVisibility(const Polygon& polygon, Point_2* vertex,
-                                       Polygon* visibility_polygon) const {
-  CHECK_NOTNULL(vertex);
-  CHECK_NOTNULL(visibility_polygon);
+bool SweepPlanGraph::computeVisibility(const PolygonWithHoles& polygon,
+                                       Point_2* vertex,
+                                       Polygon_2* visibility_polygon) const {
+  ROS_ASSERT(vertex);
+  ROS_ASSERT(visibility_polygon);
 
-  *vertex = polygon.pointInPolygon(*vertex)
+  *vertex = pointInPolygon(polygon, *vertex)
                 ? *vertex
-                : polygon.projectPointOnHull(*vertex);
-  return polygon.computeVisibilityPolygon(*vertex, visibility_polygon);
+                : projectPointOnHull(polygon, *vertex);
+  return computeVisibilityPolygon(polygon, *vertex, visibility_polygon);
 }
 
 }  // namespace sweep_plan_graph
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning

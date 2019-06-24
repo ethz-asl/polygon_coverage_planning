@@ -1,5 +1,5 @@
-#include "polygon_coverage_geometry/visibility_graph.h"
 #include "polygon_coverage_geometry/cgal_comm.h"
+#include "polygon_coverage_geometry/visibility_graph.h"
 #include "polygon_coverage_geometry/visibility_polygon.h"
 
 #include <ros/assert.h>
@@ -16,6 +16,8 @@ VisibilityGraph::VisibilityGraph(const PolygonWithHoles& polygon)
 
 bool VisibilityGraph::create() {
   clear();
+  // Sort vertices.
+  sortVertices(&polygon_);
   // Select shortest path vertices.
   std::vector<VertexConstCirculator> graph_vertices;
   findConcaveOuterBoundaryVertices(&graph_vertices);

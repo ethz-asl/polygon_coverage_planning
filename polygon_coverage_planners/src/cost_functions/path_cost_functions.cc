@@ -1,8 +1,9 @@
-#include "mav_2d_coverage_planning/cost_functions/path_cost_functions.h"
+#include "polygon_coverage_planners/cost_functions/path_cost_functions.h"
 
 #include <cmath>
+#include <ros/assert.h>
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 
 double computeWaypointsPathCost(const std::vector<Point_2>& path) {
   return path.size();
@@ -31,6 +32,9 @@ double computeVelocityRampPathCost(const std::vector<Point_2>& path,
 
 double computeVelocityRampSegmentCost(const Point_2& from, const Point_2& to,
                                       double v_max, double a_max) {
+  ROS_ASSERT(v_max > 0.0);
+  ROS_ASSERT(a_max > 0.0);
+
   const double distance = computeEuclideanSegmentCost(from, to);
   // Time to accelerate or decelerate to or from maximum velocity:
   const double acc_time = v_max / a_max;
@@ -46,4 +50,4 @@ double computeVelocityRampSegmentCost(const Point_2& from, const Point_2& to,
   }
 }
 
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning

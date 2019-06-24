@@ -13,8 +13,6 @@ std::vector<Polygon_2> computeBCD(const PolygonWithHoles& polygon_in,
 void sortPolygon(PolygonWithHoles* pwh);
 std::vector<VertexConstCirculator> getXSortedVertices(
     const PolygonWithHoles& p);
-PolygonWithHoles rotatePolygon(const PolygonWithHoles& polygon_in,
-                               const Direction_2& dir);
 void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,
                   std::vector<VertexConstCirculator>* sorted_vertices,
                   std::vector<Point_2>* processed_vertices,

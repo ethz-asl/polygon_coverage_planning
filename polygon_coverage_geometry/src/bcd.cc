@@ -4,6 +4,7 @@
 #include <ros/console.h>
 
 #include "polygon_coverage_geometry/bcd.h"
+#include "polygon_coverage_geometry/cgal_comm.h"
 
 namespace polygon_coverage_planning {
 
@@ -13,6 +14,8 @@ std::vector<Polygon_2> computeBCD(const PolygonWithHoles& polygon_in,
   // TODO(rikba): Make this independent of rotation.
   PolygonWithHoles rotated_polygon = rotatePolygon(polygon_in, dir);
   sortPolygon(&rotated_polygon);
+  simplifyPolygon(&rotated_polygon);
+  ROS_INFO_STREAM(rotated_polygon);
 
   // Sort vertices by x value.
   std::vector<VertexConstCirculator> sorted_vertices =
@@ -68,22 +71,6 @@ std::vector<VertexConstCirculator> getXSortedVertices(
             });
 
   return sorted_vertices;
-}
-
-PolygonWithHoles rotatePolygon(const PolygonWithHoles& polygon_in,
-                               const Direction_2& dir) {
-  CGAL::Aff_transformation_2<K> rotation(CGAL::ROTATION, dir, 1, 1e9);
-  rotation = rotation.inverse();
-  PolygonWithHoles rotated_polygon = polygon_in;
-  rotated_polygon.outer_boundary() =
-      CGAL::transform(rotation, polygon_in.outer_boundary());
-  PolygonWithHoles::Hole_iterator hit_rot = rotated_polygon.holes_begin();
-  for (PolygonWithHoles::Hole_const_iterator hit = polygon_in.holes_begin();
-       hit != polygon_in.holes_end(); ++hit) {
-    *(hit_rot++) = CGAL::transform(rotation, *hit);
-  }
-
-  return rotated_polygon;
 }
 
 void processEvent(const PolygonWithHoles& pwh, const VertexConstCirculator& v,

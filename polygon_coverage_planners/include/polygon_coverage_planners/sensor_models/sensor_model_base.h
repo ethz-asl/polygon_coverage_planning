@@ -1,7 +1,7 @@
-#ifndef MAV_2D_COVERAGE_PLANNING_SENSOR_MODELS_SENSOR_MODEL_BASE_H_
-#define MAV_2D_COVERAGE_PLANNING_SENSOR_MODELS_SENSOR_MODEL_BASE_H_
+#ifndef POLYGON_COVERAGE_PLANNERS_SENSOR_MODELS_SENSOR_MODEL_BASE_H_
+#define POLYGON_COVERAGE_PLANNERS_SENSOR_MODELS_SENSOR_MODEL_BASE_H_
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 
 enum SensorModelType { kLine = 0, kFrustum };
 
@@ -33,6 +33,6 @@ class SensorModelBase {
   double lateral_overlap_;
 };
 
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning
 
-#endif  // MAV_2D_COVERAGE_PLANNING_SENSOR_MODELS_SENSOR_MODEL_BASE_H_
+#endif  // POLYGON_COVERAGE_PLANNERS_SENSOR_MODELS_SENSOR_MODEL_BASE_H_

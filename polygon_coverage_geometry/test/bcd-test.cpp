@@ -12,12 +12,12 @@ TEST(BctTest, computeBCD) {
   PolygonWithHoles diamond(createDiamond<Polygon_2>());
   FT expected_area = diamond.outer_boundary().area();
   std::vector<Polygon_2> bcd = computeBCD(diamond, Direction_2(1, 0));
-  EXPECT_EQ(bcd.size(), 1);
+  EXPECT_EQ(bcd.size(), static_cast<size_t>(1));
   EXPECT_EQ(bcd[0].size(), diamond.outer_boundary().size()) << bcd[0];
   FT area = 0.0;
   for (const Polygon_2& p : bcd) {
     EXPECT_TRUE(CGAL::is_y_monotone_2(p.vertices_begin(), p.vertices_end()));
-    EXPECT_EQ(p.size(), 4);
+    EXPECT_EQ(p.size(), static_cast<size_t>(4));
     area += p.area();
   }
   EXPECT_EQ(area, expected_area);
@@ -32,11 +32,11 @@ TEST(BctTest, computeBCD) {
     expected_area -= hit->area();
   }
   bcd = computeBCD(rectangle_in_rectangle, Direction_2(1, 0));
-  EXPECT_EQ(bcd.size(), 4);
+  EXPECT_EQ(bcd.size(), static_cast<size_t>(4));
   area = 0.0;
   for (const Polygon_2& p : bcd) {
     EXPECT_TRUE(CGAL::is_y_monotone_2(p.vertices_begin(), p.vertices_end()));
-    EXPECT_EQ(p.size(), 4);
+    EXPECT_EQ(p.size(), static_cast<size_t>(4));
     area += p.area();
   }
   EXPECT_EQ(area, expected_area);
@@ -50,7 +50,7 @@ TEST(BctTest, computeBCD) {
     expected_area += hit->area();
   }
   bcd = computeBCD(pwh, Direction_2(1, 0));
-  EXPECT_EQ(bcd.size(), 14);
+  EXPECT_EQ(bcd.size(), static_cast<size_t>(14));
   area = 0.0;
   for (const Polygon_2& p : bcd) {
     Direction_2 dir(0, 1);

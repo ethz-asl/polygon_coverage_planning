@@ -18,7 +18,7 @@ TEST(VisibilityPolygonTest, computeVisibilityPolygon) {
                                        &visibility_polygon));
   // Result manually checked.
   VertexConstIterator vit = visibility_polygon.vertices_begin();
-  EXPECT_EQ(9, visibility_polygon.size());
+  EXPECT_EQ(static_cast<size_t>(9), visibility_polygon.size());
   EXPECT_EQ(Point_2(0.0, 2.0), *vit++);
   EXPECT_EQ(Point_2(0.0, 0.0), *vit++);
   EXPECT_EQ(Point_2(2.0, 0.0), *vit++);
@@ -34,7 +34,7 @@ TEST(VisibilityPolygonTest, computeVisibilityPolygon) {
   EXPECT_TRUE(computeVisibilityPolygon(rectangle_in_rectangle, query,
                                        &visibility_polygon));
   vit = visibility_polygon.vertices_begin();
-  EXPECT_EQ(6, visibility_polygon.size())
+  EXPECT_EQ(static_cast<size_t>(6), visibility_polygon.size())
       << "Query point: " << query << " PWH: " << rectangle_in_rectangle
       << "Visibility: " << visibility_polygon;
   EXPECT_EQ(Point_2(1, 1.25), *vit++);
@@ -50,7 +50,7 @@ TEST(VisibilityPolygonTest, computeVisibilityPolygon) {
                                        &visibility_polygon));
   // Result manually checked.
   vit = visibility_polygon.vertices_begin();
-  EXPECT_EQ(7, visibility_polygon.size());
+  EXPECT_EQ(static_cast<size_t>(7), visibility_polygon.size());
   EXPECT_EQ(Point_2(1, 1.25), *vit++);
   EXPECT_EQ(Point_2(0.5, 1.25), *vit++);
   EXPECT_EQ(Point_2(0, 2), *vit++);
@@ -65,7 +65,7 @@ TEST(VisibilityPolygonTest, computeVisibilityPolygon) {
                                        &visibility_polygon));
   // Result manually checked.
   vit = visibility_polygon.vertices_begin();
-  EXPECT_EQ(8, visibility_polygon.size());
+  EXPECT_EQ(static_cast<size_t>(8), visibility_polygon.size());
   EXPECT_EQ(Point_2(0, 2), *vit++);
   EXPECT_EQ(Point_2(0, 0), *vit++);
   EXPECT_EQ(Point_2(2, 0), *vit++);
@@ -81,7 +81,7 @@ TEST(VisibilityPolygonTest, computeVisibilityPolygon) {
                                        &visibility_polygon));
   // Result manually checked.
   vit = visibility_polygon.vertices_begin();
-  EXPECT_EQ(4, visibility_polygon.size());
+  EXPECT_EQ(static_cast<size_t>(4), visibility_polygon.size());
   EXPECT_EQ(Point_2(2, 1.25), *vit++);
   EXPECT_EQ(Point_2(0, 1.25), *vit++);
   EXPECT_EQ(Point_2(0, 0), *vit++);
