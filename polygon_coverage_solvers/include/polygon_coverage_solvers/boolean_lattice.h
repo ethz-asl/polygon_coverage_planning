@@ -2,6 +2,7 @@
 #define POLYGON_COVERAGE_SOLVERS_BOOLEAN_LATTICE_H_
 
 #include <set>
+#include <numeric>
 
 #include "polygon_coverage_solvers/graph_base.h"
 

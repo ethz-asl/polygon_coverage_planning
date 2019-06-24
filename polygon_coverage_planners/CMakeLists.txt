@@ -26,8 +26,8 @@ cs_add_library(${PROJECT_NAME}
   src/graphs/sweep_plan_graph.cc
   src/timing.cc
   src/planners/polygon_stripmap_planner.cc
-  #src/planners/polygon_stripmap_planner_exact.cc
-  #src/planners/polygon_stripmap_planner_exact_preprocessed.cc
+  src/planners/polygon_stripmap_planner_exact.cc
+  src/planners/polygon_stripmap_planner_exact_preprocessed.cc
 )
 target_link_libraries(${PROJECT_NAME} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES})
 

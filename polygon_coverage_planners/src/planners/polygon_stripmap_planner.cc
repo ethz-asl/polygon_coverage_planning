@@ -1,4 +1,5 @@
 #include <ros/assert.h>
+#include <ros/console.h>
 #include <cmath>
 
 #include <polygon_coverage_geometry/cgal_comm.h>

@@ -1,16 +1,18 @@
-#ifndef MAV_2D_COVERAGE_PLANNING_PLANNERS_POLYGON_STRIPMAP_PLANNER_EXACT_H_
-#define MAV_2D_COVERAGE_PLANNING_PLANNERS_POLYGON_STRIPMAP_PLANNER_EXACT_H_
+#ifndef POLYGON_COVERAGE_PLANNERS_PLANNERS_POLYGON_STRIPMAP_PLANNER_EXACT_H_
+#define POLYGON_COVERAGE_PLANNERS_PLANNERS_POLYGON_STRIPMAP_PLANNER_EXACT_H_
 
-#include "mav_2d_coverage_planning/planners/polygon_stripmap_planner.h"
+#include "polygon_coverage_planners/graphs/gtspp_product_graph.h"
+#include "polygon_coverage_planners/graphs/sweep_plan_graph.h"
+#include "polygon_coverage_planners/planners/polygon_stripmap_planner.h"
 
-#include <mav_coverage_graph_solvers/boolean_lattice.h>
-#include "mav_2d_coverage_planning/graphs/gtspp_product_graph.h"
+#include <polygon_coverage_solvers/boolean_lattice.h>
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 
 class PolygonStripmapPlannerExact : public PolygonStripmapPlanner {
  public:
-  PolygonStripmapPlannerExact(const Settings& settings)
+  PolygonStripmapPlannerExact(
+      const sweep_plan_graph::SweepPlanGraph::Settings& settings)
       : PolygonStripmapPlanner(settings) {}
 
  protected:
@@ -28,6 +30,6 @@ class PolygonStripmapPlannerExact : public PolygonStripmapPlanner {
   // combinations.
   boolean_lattice::BooleanLattice boolean_lattice_;
 };
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning
 
-#endif  // MAV_2D_COVERAGE_PLANNING_PLANNERS_POLYGON_STRIPMAP_PLANNER_EXACT_H_
+#endif  // POLYGON_COVERAGE_PLANNERS_PLANNERS_POLYGON_STRIPMAP_PLANNER_EXACT_H_
