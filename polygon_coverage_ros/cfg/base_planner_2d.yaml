@@ -1,0 +1,11 @@
+cost_function_type: 1 # [0: Euclidean Distance, 1: Time, 2: Number of Waypoints]
+v_max: 3.0 # Only for time optimization.
+a_max: 1.0 # Only for time optimization.
+min_wall_distance: 0.0
+
+latch_topics: true
+
+local_frame_id: 'odom'
+
+publish_plan_on_planning_complete: false
+publish_visualization_on_planning_complete: true

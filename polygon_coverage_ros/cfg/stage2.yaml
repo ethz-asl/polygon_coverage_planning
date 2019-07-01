@@ -1,0 +1,57 @@
+# A mav_planning_msgs/PolygonWithHoles.msg to describe a square environment with 4 holes. 
+polygon:
+  header:
+    seq: 0
+    stamp:
+      secs: 0
+      nsecs: 0
+    frame_id: 'stage2'
+  altitude: 2.0
+  polygon:
+    hull:
+      points:
+      - x: -1.925
+        y: 1.925
+      - x: 1.925
+        y: 1.925
+      - x: 1.925
+        y: -1.925
+      - x: -1.925
+        y: -1.925
+    holes:
+      - points:
+        - x: 0.45
+          y: 0.45
+        - x: 0.75
+          y: 0.45
+        - x: 0.45
+          y: 0.75
+        - x: 0.75
+          y: 0.75
+      - points:
+        - x: 0.45
+          y: -0.45
+        - x: 0.45
+          y: -0.75
+        - x: 0.75
+          y: -0.75
+        - x: 0.75
+          y: -0.45
+      - points:
+        - x: -0.45
+          y: 0.45
+        - x: -0.45
+          y: 0.75
+        - x: -0.75
+          y: 0.75
+        - x: -0.75
+          y: 0.45
+      - points:
+        - x: -0.45
+          y: -0.45
+        - x: -0.45
+          y: -0.75
+        - x: -0.75
+          y: -0.75
+        - x: -0.75
+          y: -0.45

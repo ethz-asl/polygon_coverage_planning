@@ -1,0 +1,47 @@
+# A mav_planning_msgs/PolygonWithHoles.msg to describe a soccer field like
+# environment with a hole in the middle.
+polygon:
+  header:
+    seq: 0
+    stamp:
+      secs: 0
+      nsecs: 0
+    frame_id: 'world'
+  altitude: 5.0
+  polygon:
+    hull:
+      points:
+      - x: -50.0
+        y: 30.0
+      - x: 50.0
+        y: 30.0
+      - x: 50.0
+        y: 10.0
+      - x: 35.0
+        y: 10.0
+      - x: 35.0
+        y: -10.0
+      - x: 50.0
+        y: -10.0
+      - x: 50.0
+        y: -30.0
+      - x: -50.0
+        y: -30.0
+      - x: -50.0
+        y: -10.0
+      - x: -35.0
+        y: -10.0
+      - x: -35.0
+        y: 10.0
+      - x: -50.0
+        y: 10.0
+    holes:
+      - points:
+        - x: -5.0
+          y: -5.0
+        - x: -5.0
+          y: 5.0
+        - x: 5.0
+          y: 5.0
+        - x: 5.0
+          y: -5.0

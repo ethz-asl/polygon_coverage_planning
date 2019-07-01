@@ -1,0 +1,21 @@
+# A mav_planning_msgs/PolygonWithHoles.msg to describe a square environment 
+polygon:
+  header:
+    seq: 0
+    stamp:
+      secs: 0
+      nsecs: 0
+    frame_id: 'world'
+  altitude: 2.0
+  polygon:
+    hull:
+      points:
+      - x: -1.925
+        y: 1.925
+      - x: 1.925
+        y: 1.925
+      - x: 1.925
+        y: -1.925
+      - x: -1.925
+        y: -1.925
+

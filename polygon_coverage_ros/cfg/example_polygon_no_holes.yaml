@@ -1,0 +1,28 @@
+# A mav_planning_msgs/PolygonWithHoles.msg to describe a polygon without holes.
+polygon:
+  header:
+    seq: 0
+    stamp:
+      secs: 0
+      nsecs: 0
+    frame_id: 'world'
+  altitude: 5.0
+  polygon:
+    hull:
+      points:
+      - x: -50.0
+        y: -50.0
+      - x: -50.0
+        y: 50.0
+      - x: 50.0
+        y: 50.0
+      - x: 50.0
+        y: -50.0
+      - x: 25.0
+        y: -50.0
+      - x: 25.0
+        y: 25.0
+      - x: -25.0
+        y: 25.0
+      - x: -25.0
+        y: -50.0

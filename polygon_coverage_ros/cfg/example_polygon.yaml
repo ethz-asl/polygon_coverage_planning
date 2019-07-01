@@ -1,0 +1,48 @@
+# A mav_planning_msgs/PolygonWithHoles.msg to describe a simple environment with
+# 2 obstacles.
+polygon:
+  header:
+    seq: 0
+    stamp:
+      secs: 0
+      nsecs: 0
+    frame_id: 'world'
+  altitude: 2.0
+  polygon:
+    hull:
+      points:
+      - x: -30.0
+        y: 30.0
+      - x: 30.0
+        y: 30.0
+      - x: 30.0
+        y: 10.0
+      - x: 60.0
+        y: 0.0
+      - x: 30.0
+        y: -40.0
+      - x: -30.0
+        y: -40.0
+    holes:
+      - points:
+        - x: -5.0
+          y: 10.0
+        - x: -5.0
+          y: 15.0
+        - x: -15.0
+          y: 15.0
+        - x: -15.0
+          y: 0.0
+        - x: 10.0
+          y: 0.0
+        - x: 10.0
+          y: 10.0
+      - points:
+        - x: -1.0
+          y: -14.0
+        - x: -1.0
+          y: -16.0
+        - x: 1.0
+          y: -16.0
+        - x: 1.0
+          y: -14.0

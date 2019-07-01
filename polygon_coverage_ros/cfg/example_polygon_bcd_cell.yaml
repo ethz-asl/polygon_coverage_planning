@@ -1,0 +1,22 @@
+# A mav_planning_msgs/PolygonWithHoles.msg to describe a typical BCD cell.
+polygon:
+  header:
+    seq: 0
+    stamp:
+      secs: 0
+      nsecs: 0
+    frame_id: 'world'
+  altitude: 5.0
+  polygon:
+    hull:
+      points:
+      - x: -55.0
+        y: 91.0
+      - x: -55.0
+        y: 59.0
+      - x: -2.52786
+        y: 59.0
+      - x: 35.0
+        y: 40.2361
+      - x: 35.0
+        y: 91.0
