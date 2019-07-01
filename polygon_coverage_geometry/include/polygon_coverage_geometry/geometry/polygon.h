@@ -54,8 +54,6 @@ class Polygon {
       std::vector<Polygon>* trap_polygons) const;
 
   inline const PolygonWithHoles& getPolygon() const { return polygon_; }
-  std::vector<Point_2> getHullVertices() const;
-  std::vector<std::vector<Point_2>> getHoleVertices() const;
 
   // Appends all convex hole vertices.
   bool appendConvexHoleVertices(

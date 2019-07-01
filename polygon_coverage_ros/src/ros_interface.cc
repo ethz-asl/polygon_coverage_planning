@@ -1,23 +1,23 @@
-#include "mav_coverage_planning_ros/conversions/ros_interface.h"
+#include "polygon_coverage_ros/ros_interface.h"
 
 #include <algorithm>
 #include <limits>
 
 #include <geometry_msgs/Point.h>
-#include <glog/logging.h>
-#include <mav_coverage_planning_comm/cgal_definitions.h>
 #include <mav_msgs/conversions.h>
 #include <mav_msgs/eigen_mav_msgs.h>
+#include <polygon_coverage_geometry/cgal_comm.h>
+#include <polygon_coverage_geometry/cgal_definitions.h>
+#include <ros/assert.h>
 #include <ros/ros.h>
 #include <Eigen/Core>
-#include <CGAL/Polygon_mesh_processing/triangulate_faces.h>
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 
 void eigenTrajectoryPointVectorFromPath(
     const std::vector<Point_2>& waypoints, double altitude,
     mav_msgs::EigenTrajectoryPointVector* traj_points) {
-  CHECK_NOTNULL(traj_points);
+  ROS_ASSERT(traj_points);
 
   traj_points->clear();
   traj_points->resize(waypoints.size());
@@ -32,7 +32,7 @@ void poseArrayMsgFromEigenTrajectoryPointVector(
     const mav_msgs::EigenTrajectoryPointVector& trajectory_points,
     const std::string& frame_id,
     geometry_msgs::PoseArray* trajectory_points_pose_array) {
-  CHECK_NOTNULL(trajectory_points_pose_array);
+  ROS_ASSERT(trajectory_points_pose_array);
 
   // Header
   trajectory_points_pose_array->header.frame_id = frame_id;
@@ -49,7 +49,7 @@ void poseArrayMsgFromPath(
     const std::vector<Point_2>& waypoints, double altitude,
     const std::string& frame_id,
     geometry_msgs::PoseArray* trajectory_points_pose_array) {
-  CHECK_NOTNULL(trajectory_points_pose_array);
+  ROS_ASSERT(trajectory_points_pose_array);
 
   mav_msgs::EigenTrajectoryPointVector eigen_traj;
   eigenTrajectoryPointVectorFromPath(waypoints, altitude, &eigen_traj);
@@ -60,7 +60,7 @@ void poseArrayMsgFromPath(
 void msgMultiDofJointTrajectoryFromPath(
     const std::vector<Point_2>& waypoints, double altitude,
     trajectory_msgs::MultiDOFJointTrajectory* msg) {
-  CHECK_NOTNULL(msg);
+  ROS_ASSERT(msg);
 
   mav_msgs::EigenTrajectoryPointVector eigen_traj;
   eigenTrajectoryPointVectorFromPath(waypoints, altitude, &eigen_traj);
@@ -71,12 +71,11 @@ void createMarkers(const std::vector<Point_2>& vertices, double altitude,
                    const std::string& frame_id, const std::string& ns,
                    const mav_visualization::Color& points_color,
                    const mav_visualization::Color& lines_color,
-                   const double line_size,
-                   const double point_size,
+                   const double line_size, const double point_size,
                    visualization_msgs::Marker* points,
                    visualization_msgs::Marker* line_strip) {
-  CHECK_NOTNULL(points);
-  CHECK_NOTNULL(line_strip);
+  ROS_ASSERT(points);
+  ROS_ASSERT(line_strip);
   points->points.clear();
   line_strip->points.clear();
 
@@ -110,19 +109,19 @@ void createMarkers(const std::vector<Point_2>& vertices, double altitude,
   }
 }
 
-void createPolygonMarkers(const Polygon& polygon, double altitude,
+void createPolygonMarkers(const PolygonWithHoles& polygon, double altitude,
                           const std::string& frame_id, const std::string& ns,
                           const mav_visualization::Color& polygon_color,
                           const mav_visualization::Color& hole_color,
                           const double line_size, const double point_size,
                           visualization_msgs::MarkerArray* array) {
-  CHECK_NOTNULL(array);
+  ROS_ASSERT(array);
   array->markers.clear();
 
   // Polygon markers.
   visualization_msgs::Marker hull_points, hull_vertices;
   // Hull.
-  std::vector<Point_2> hull = polygon.getHullVertices();
+  std::vector<Point_2> hull = getHullVertices(polygon);
   hull.push_back(hull.front());
   createMarkers(hull, altitude, frame_id, ns + "hull", polygon_color,
                 polygon_color, line_size, point_size, &hull_points,
@@ -131,7 +130,7 @@ void createPolygonMarkers(const Polygon& polygon, double altitude,
   array->markers.push_back(hull_vertices);
 
   // Hole markers:
-  std::vector<std::vector<Point_2>> holes = polygon.getHoleVertices();
+  std::vector<std::vector<Point_2>> holes = getHoleVertices(polygon);
   size_t i = 0;
   for (std::vector<Point_2>& hole : holes) {
     visualization_msgs::Marker hole_points, hole_vertices;
@@ -169,8 +168,8 @@ void createStartAndEndPointMarkers(const mav_msgs::EigenTrajectoryPoint& start,
                                    const std::string& ns,
                                    visualization_msgs::Marker* start_point,
                                    visualization_msgs::Marker* end_point) {
-  CHECK_NOTNULL(start_point);
-  CHECK_NOTNULL(end_point);
+  ROS_ASSERT(start_point);
+  ROS_ASSERT(end_point);
 
   start_point->header.frame_id = end_point->header.frame_id = frame_id;
   start_point->header.stamp = end_point->header.stamp = ros::Time::now();
@@ -222,20 +221,21 @@ void createStartAndEndTextMarkers(const Point_2& start, const Point_2& end,
 }
 
 void createStartAndEndTextMarkers(const mav_msgs::EigenTrajectoryPoint& start,
-                                   const mav_msgs::EigenTrajectoryPoint& end,
-                                   const std::string& frame_id,
-                                   const std::string& ns,
-                                   visualization_msgs::Marker* start_text,
-                                   visualization_msgs::Marker* end_text) {
-  CHECK_NOTNULL(start_text);
-  CHECK_NOTNULL(end_text);
+                                  const mav_msgs::EigenTrajectoryPoint& end,
+                                  const std::string& frame_id,
+                                  const std::string& ns,
+                                  visualization_msgs::Marker* start_text,
+                                  visualization_msgs::Marker* end_text) {
+  ROS_ASSERT(start_text);
+  ROS_ASSERT(end_text);
 
   start_text->header.frame_id = end_text->header.frame_id = frame_id;
   start_text->header.stamp = end_text->header.stamp = ros::Time::now();
   start_text->ns = ns + "_start_text";
   start_text->ns = ns + "_end_text";
   start_text->action = end_text->action = visualization_msgs::Marker::ADD;
-  start_text->type = end_text->type = visualization_msgs::Marker::TEXT_VIEW_FACING;
+  start_text->type = end_text->type =
+      visualization_msgs::Marker::TEXT_VIEW_FACING;
 
   geometry_msgs::PoseStamped start_stamped, end_stamped;
   msgPoseStampedFromEigenTrajectoryPoint(start, &start_stamped);
@@ -255,9 +255,9 @@ void createStartAndEndTextMarkers(const mav_msgs::EigenTrajectoryPoint& start,
   start_text->scale.z = end_text->scale.z = 1.0;
 }
 
-void polygon2FromPolygonMsg(const mav_planning_msgs::Polygon2D& msg,
+void polygon2FromPolygonMsg(const geometry_msgs::Polygon& msg,
                             Polygon_2* polygon) {
-  CHECK_NOTNULL(polygon);
+  ROS_ASSERT(polygon);
 
   std::vector<Point_2> vertices(msg.points.size());
   for (size_t i = 0; i < msg.points.size(); ++i)
@@ -266,124 +266,42 @@ void polygon2FromPolygonMsg(const mav_planning_msgs::Polygon2D& msg,
   *polygon = Polygon_2(vertices.begin(), vertices.end());
 }
 
-bool polygonFromMsg(const mav_planning_msgs::PolygonWithHolesStamped& msg,
-                    Polygon* polygon, double* altitude, std::string* frame) {
-  CHECK_NOTNULL(polygon);
-  CHECK_NOTNULL(altitude);
-  CHECK_NOTNULL(frame);
+bool polygonFromMsg(const polygon_coverage_msgs::PolygonWithHolesStamped& msg,
+                    PolygonWithHoles* polygon, double* altitude,
+                    std::string* frame) {
+  ROS_ASSERT(polygon);
+  ROS_ASSERT(altitude);
+  ROS_ASSERT(frame);
 
   *frame = msg.header.frame_id;
-  *altitude = msg.altitude;
+
+  if (msg.polygon.hull.points.size() > 0) {
+    *altitude = msg.polygon.hull.points[0].z;
+    ROS_INFO_STREAM(
+        "Setting polygon altitude height to first z variable: " << *altitude);
+  } else {
+    ROS_ERROR("Polygon hull data empty. Cannot set altitude.");
+    return false;
+  }
 
   Polygon_2 hull;
   polygon2FromPolygonMsg(msg.polygon.hull, &hull);
-  PolygonWithHoles pwh(hull);
+  *polygon = PolygonWithHoles(hull);
 
   for (size_t i = 0; i < msg.polygon.holes.size(); ++i) {
     Polygon_2 hole;
     polygon2FromPolygonMsg(msg.polygon.holes[i], &hole);
-    pwh.add_hole(hole);
+    polygon->add_hole(hole);
   }
 
-  *polygon = Polygon(pwh);
-  if (polygon->getPolygon().outer_boundary().size() < 3) {
+  if (polygon->outer_boundary().size() < 3) {
     ROS_ERROR_STREAM("Input polygon is not valid.");
     return false;
-  } else if (!polygon->isStrictlySimple()) {
+  } else if (!isStrictlySimple(*polygon)) {
     ROS_ERROR_STREAM("Input polygon is not simple.");
     return false;
   }
   return true;
 }
 
-bool createPolyhedronMarkerArray(const Polyhedron_3& polyhedron,
-                                 const std::string& frame_id,
-                                 visualization_msgs::MarkerArray* markers) {
-  typedef Polyhedron_3::Halfedge_around_facet_circulator halfedge_circulator;
-  typedef boost::graph_traits<Polyhedron_3>::face_descriptor face_descriptor;
-
-  CHECK_NOTNULL(markers);
-  markers->markers.clear();
-
-  // Triangulate mesh.
-  Polyhedron_3 mesh = polyhedron;
-  if (!CGAL::Polygon_mesh_processing::triangulate_faces(mesh)) return false;
-
-  // Create faces.
-  visualization_msgs::Marker triangle_list;
-  triangle_list.header.frame_id = frame_id;
-  triangle_list.header.stamp = ros::Time::now();
-  triangle_list.ns = "faces";
-  triangle_list.id = 0;
-  triangle_list.type = visualization_msgs::Marker::TRIANGLE_LIST;
-  triangle_list.action = visualization_msgs::Marker::ADD;
-  triangle_list.pose.position.x = 0.0;
-  triangle_list.pose.position.y = 0.0;
-  triangle_list.pose.position.z = 0.0;
-  triangle_list.pose.orientation.x = 0.0;
-  triangle_list.pose.orientation.y = 0.0;
-  triangle_list.pose.orientation.z = 0.0;
-  triangle_list.pose.orientation.w = 1.0;
-  triangle_list.scale.x = 1.0;
-  triangle_list.scale.y = 1.0;
-  triangle_list.scale.z = 1.0;
-  triangle_list.color.r = 0.5;
-  triangle_list.color.g = 0.5;
-  triangle_list.color.b = 0.5;
-  triangle_list.color.a = 1.0;
-  for (const face_descriptor& f : faces(mesh)) {
-    halfedge_circulator he_c = f->facet_begin();
-    do {
-      geometry_msgs::Point p;
-      p.x = CGAL::to_double(he_c->vertex()->point().x());
-      p.y = CGAL::to_double(he_c->vertex()->point().y());
-      p.z = CGAL::to_double(he_c->vertex()->point().z());
-      triangle_list.points.push_back(p);
-    } while (++he_c != f->facet_begin());
-  }
-  markers->markers.push_back(triangle_list);
-
-  // Create lines.
-  size_t id = 0;
-  for (const face_descriptor& f : faces(mesh)) {
-    visualization_msgs::Marker border;
-    border.header.frame_id = frame_id;
-    border.header.stamp = ros::Time::now();
-    border.ns = "border_" + std::to_string(id);
-    border.id = id++;
-    border.type = visualization_msgs::Marker::LINE_STRIP;
-    border.action = visualization_msgs::Marker::ADD;
-    border.pose.position.x = 0.0;
-    border.pose.position.y = 0.0;
-    border.pose.position.z = 0.0;
-    border.pose.orientation.x = 0.0;
-    border.pose.orientation.y = 0.0;
-    border.pose.orientation.z = 0.0;
-    border.pose.orientation.w = 1.0;
-    border.scale.x = 0.1;
-    border.color.r = 0.0;
-    border.color.g = 0.0;
-    border.color.b = 0.0;
-    border.color.a = 1.0;
-
-    halfedge_circulator he_c = f->facet_begin();
-    do {
-      geometry_msgs::Point p;
-      p.x = CGAL::to_double(he_c->vertex()->point().x());
-      p.y = CGAL::to_double(he_c->vertex()->point().y());
-      p.z = CGAL::to_double(he_c->vertex()->point().z());
-      border.points.push_back(p);
-    } while (++he_c != f->facet_begin());
-    geometry_msgs::Point p;
-    p.x = CGAL::to_double(he_c->vertex()->point().x());
-    p.y = CGAL::to_double(he_c->vertex()->point().y());
-    p.z = CGAL::to_double(he_c->vertex()->point().z());
-    border.points.push_back(p);
-
-    markers->markers.push_back(border);
-  }
-
-  return true;
-}
-
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning

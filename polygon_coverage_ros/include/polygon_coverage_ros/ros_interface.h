@@ -1,24 +1,23 @@
-#ifndef MAV_COVERAGE_PLANNING_ROS_CONVERSIONS_ROS_INTERFACE_H_
-#define MAV_COVERAGE_PLANNING_ROS_CONVERSIONS_ROS_INTERFACE_H_
+#ifndef POLYGON_COVERAGE_ROS_INTERFACE_H_
+#define POLYGON_COVERAGE_ROS_INTERFACE_H_
 
 #include <fstream>
 #include <vector>
 
 #include <eigen_conversions/eigen_msg.h>
+#include <geometry_msgs/Polygon.h>
 #include <geometry_msgs/PoseArray.h>
 #include <mav_msgs/conversions.h>
-#include <mav_planning_msgs/Polygon2D.h>
-#include <mav_planning_msgs/PolygonWithHolesStamped.h>
+#include <polygon_coverage_msgs/PolygonWithHolesStamped.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 #include <visualization_msgs/Marker.h>
 
 #include <mav_msgs/eigen_mav_msgs.h>
 #include <mav_visualization/helpers.h>
 
-#include <mav_2d_coverage_planning/geometry/polygon.h>
-#include <mav_coverage_planning_comm/cgal_definitions.h>
+#include <polygon_coverage_geometry/cgal_definitions.h>
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 
 // Warning: Does not set frame or time stamps or orientation.
 void eigenTrajectoryPointVectorFromPath(
@@ -47,7 +46,7 @@ void createMarkers(const std::vector<Point_2>& vertices, double altitude,
                    visualization_msgs::Marker* points,
                    visualization_msgs::Marker* line_strip);
 
-void createPolygonMarkers(const Polygon& polygon, double altitude,
+void createPolygonMarkers(const PolygonWithHoles& polygon, double altitude,
                           const std::string& frame_id, const std::string& ns,
                           const mav_visualization::Color& polygon_color,
                           const mav_visualization::Color& hole_color,
@@ -80,15 +79,12 @@ void createStartAndEndTextMarkers(const mav_msgs::EigenTrajectoryPoint& start,
                                   visualization_msgs::Marker* start_text,
                                   visualization_msgs::Marker* end_text);
 
-bool createPolyhedronMarkerArray(const Polyhedron_3& polyhedron,
-                                 const std::string& frame_id,
-                                 visualization_msgs::MarkerArray* markers);
-
-void polygon2FromPolygonMsg(const mav_planning_msgs::Polygon2D& msg,
+void polygon2FromPolygonMsg(const geometry_msgs::Polygon& msg,
                             Polygon_2* polygon);
-bool polygonFromMsg(const mav_planning_msgs::PolygonWithHolesStamped& msg,
-                    Polygon* polygon, double* altitude, std::string* frame);
+bool polygonFromMsg(const polygon_coverage_msgs::PolygonWithHolesStamped& msg,
+                    PolygonWithHoles* polygon, double* altitude,
+                    std::string* frame);
 
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning
 
-#endif /* MAV_COVERAGE_PLANNING_ROS_CONVERSIONS_ROS_INTERFACE_H_ */
+#endif /* POLYGON_COVERAGE_ROS_INTERFACE_H_ */

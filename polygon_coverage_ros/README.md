@@ -1,2 +1,2 @@
-# mav_coverage_planning_ros
-ROS interface for 2D and 3D MAV coverage planner.
+# polygon_coverage_ros
+A ROS interface for the polygon coverage planner.

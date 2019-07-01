@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>mav_coverage_planning_ros</name>
+  <name>polygon_coverage_ros</name>
   <version>0.0.0</version>
   <description>
-    A ROS interface for MAV coverage planner.
+    A ROS interface for the polygon coverage planner.
   </description>
   <author>Rik Bähnemann</author>
   <maintainer email="brik@ethz.ch">Rik Bähnemann</maintainer>
@@ -29,9 +29,8 @@
 
   <depend>mav_trajectory_generation_ros</depend>
 
-  <depend>mav_2d_coverage_planning</depend>
-  <depend>mav_3d_coverage_planning</depend>
-  <depend>mav_coverage_planning_comm</depend>
+  <depend>polygon_coverage_msgs</depend>
+  <depend>polygon_coverage_geometry</depend>
 
   <depend>cgal_catkin</depend>
 

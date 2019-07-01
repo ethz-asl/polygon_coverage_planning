@@ -42,29 +42,6 @@ Polygon::Polygon(const PolygonWithHoles& polygon,
   simplify();
 }
 
-std::vector<Point_2> Polygon::getHullVertices() const {
-  std::vector<Point_2> vec(polygon_.outer_boundary().size());
-  std::vector<Point_2>::iterator vecit = vec.begin();
-  for (VertexConstIterator vit = polygon_.outer_boundary().vertices_begin();
-       vit != polygon_.outer_boundary().vertices_end(); ++vit, ++vecit)
-    *vecit = *vit;
-  return vec;
-}
-
-std::vector<std::vector<Point_2>> Polygon::getHoleVertices() const {
-  std::vector<std::vector<Point_2>> hole_vertices(polygon_.number_of_holes());
-  std::vector<std::vector<Point_2>>::iterator hvit = hole_vertices.begin();
-  for (PolygonWithHoles::Hole_const_iterator hi = polygon_.holes_begin();
-       hi != polygon_.holes_end(); ++hi, ++hvit) {
-    hvit->resize(hi->size());
-    std::vector<Point_2>::iterator it = hvit->begin();
-    for (VertexConstIterator vit = hi->vertices_begin();
-         vit != hi->vertices_end(); ++vit, ++it)
-      *it = *vit;
-  }
-  return hole_vertices;
-}
-
 std::vector<Polygon> Polygon::rotatePolygon(
     const std::vector<Direction_2>& dirs) const {
   std::vector<Polygon> rotated_polys(dirs.size());
