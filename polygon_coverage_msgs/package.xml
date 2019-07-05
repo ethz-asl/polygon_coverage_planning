@@ -21,4 +21,5 @@
   <depend>message_runtime</depend>
   <depend>geometry_msgs</depend>
   <depend>std_msgs</depend>
+  <depend>xmlrpcpp</depend>
 </package>
