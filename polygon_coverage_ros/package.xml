@@ -23,15 +23,12 @@
   <depend>visualization_msgs</depend>
   <depend>mav_visualization</depend>
   <depend>std_srvs</depend>
-
-  <depend>minkindr_conversions</depend>
   <depend>eigen_conversions</depend>
 
   <depend>mav_trajectory_generation_ros</depend>
 
   <depend>polygon_coverage_msgs</depend>
   <depend>polygon_coverage_geometry</depend>
-
-  <depend>cgal_catkin</depend>
+  <depend>polygon_coverage_planners</depend>
 
 </package>

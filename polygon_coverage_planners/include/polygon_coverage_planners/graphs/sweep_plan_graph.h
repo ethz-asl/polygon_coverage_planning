@@ -14,15 +14,14 @@ namespace sweep_plan_graph {
 struct NodeProperty {
   NodeProperty() : cost(-1.0), cluster(0) {}
   NodeProperty(const std::vector<Point_2>& waypoints,
-               const PathCostFunctionType& cost_function, size_t cluster,
+               const PathCostFunction& cost_function, size_t cluster,
                const std::vector<Polygon_2>& visibility_polygons)
       : waypoints(waypoints),
         cost(cost_function(waypoints)),
         cluster(cluster),
         visibility_polygons(visibility_polygons) {}
-  NodeProperty(const Point_2& waypoint,
-               const PathCostFunctionType& cost_function, size_t cluster,
-               const Polygon_2& visibility_polygon)
+  NodeProperty(const Point_2& waypoint, const PathCostFunction& cost_function,
+               size_t cluster, const Polygon_2& visibility_polygon)
       : NodeProperty(std::vector<Point_2>({waypoint}), cost_function, cluster,
                      std::vector<Polygon_2>({visibility_polygon})) {}
   std::vector<Point_2> waypoints;  // The sweep path or start / goal waypoint.
@@ -35,14 +34,14 @@ struct NodeProperty {
   // in node_properties.
   bool isNonOptimal(const visibility_graph::VisibilityGraph& visibility_graph,
                     const std::vector<NodeProperty>& node_properties,
-                    const PathCostFunctionType& cost_function) const;
+                    const PathCostFunction& cost_function) const;
 };
 
 // Internal edge property storage, i.e., shortest path.
 struct EdgeProperty {
   EdgeProperty() : cost(-1.0) {}
   EdgeProperty(const std::vector<Point_2>& waypoints,
-               const PathCostFunctionType& cost_function)
+               const PathCostFunction& cost_function)
       : waypoints(waypoints), cost(cost_function(waypoints)) {}
   std::vector<Point_2> waypoints;  // The waypoints defining the edge.
   double cost;                     // The shortest path length.
@@ -53,8 +52,8 @@ struct EdgeProperty {
 class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
  public:
   struct Settings {
-    PolygonWithHoles polygon;            // The input polygon to cover.
-    PathCostFunctionType cost_function;  // The user defined cost function.
+    PolygonWithHoles polygon;        // The input polygon to cover.
+    PathCostFunction cost_function;  // The user defined cost function.
     std::shared_ptr<SensorModelBase> sensor_model;  // The sensor model.
     DecompositionType decomposition_type =
         DecompositionType::kBoustrophedeon;  // The decomposition type.

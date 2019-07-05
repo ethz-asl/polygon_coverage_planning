@@ -22,7 +22,7 @@ namespace sweep_plan_graph {
 bool NodeProperty::isNonOptimal(
     const visibility_graph::VisibilityGraph& visibility_graph,
     const std::vector<NodeProperty>& node_properties,
-    const PathCostFunctionType& cost_function) const {
+    const PathCostFunction& cost_function) const {
   if (waypoints.empty()) {
     ROS_WARN_STREAM("Node does not have waypoints.");
     return false;
