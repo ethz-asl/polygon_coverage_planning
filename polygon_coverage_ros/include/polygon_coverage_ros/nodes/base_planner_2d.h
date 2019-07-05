@@ -89,16 +89,6 @@ class BasePlanner2D {
   void subscribeToTopics();
   void advertiseTopics();
 
- protected:
-  // Call to the actual planner.
-  virtual bool solvePlanner(const Point_2& start, const Point_2& goal) = 0;
-  // Reset the planner when a new polygon is set.
-  virtual bool resetPlanner() = 0;
-
-  // Node handles
-  ros::NodeHandle nh_;
-  ros::NodeHandle nh_private_;
-
   Settings settings_;
 
   // The solution waypoints for a given start and goal.

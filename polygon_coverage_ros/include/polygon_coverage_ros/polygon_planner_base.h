@@ -23,15 +23,15 @@ class PolygonPlannerBase {
   PolygonPlannerBase(const ros::NodeHandle& nh,
                      const ros::NodeHandle& nh_private);
 
- private:
-  // Initial interactions with ROS
-  void getParametersFromRos();
-  void advertiseTopics();
-
+ protected:
   // Call to the actual planner.
-  bool solvePlanner(const Point_2& start, const Point_2& goal);
+  virtual bool solvePlanner(const Point_2& start, const Point_2& goal) = 0;
   // Reset the planner when a new polygon is set.
-  bool resetPlanner();
+  virtual bool resetPlanner() = 0;
+  // Publish the decomposition.
+  virtual inline visualization_msgs::MarkerArray createDecompositionMarkers() {
+    return visualization_msgs::MarkerArray();
+  }
 
   // Node handles
   ros::NodeHandle nh_;
@@ -39,6 +39,23 @@ class PolygonPlannerBase {
 
   // The solution waypoints for a given start and goal.
   std::vector<Point_2> solution_;
+
+  // Parameters
+  std::optional<PolygonWithHoles> polygon_;
+  double wall_distance_;
+  std::pair<PathCostFunction, CostFunctionType> path_cost_function_;
+  std::optional<double> altitude_;
+  bool latch_topics_;
+  std::string global_frame_id_;
+  bool publish_plan_on_planning_complete_;
+  bool publish_visualization_on_planning_complete_;
+  std::optional<double> v_max_;
+  std::optional<double> a_max_;
+
+ private:
+  // Initial interactions with ROS
+  void getParametersFromRos();
+  void advertiseTopics();
 
   // Set a new polygon through a service call.
   bool setPolygonCallback(
@@ -60,7 +77,6 @@ class PolygonPlannerBase {
 
   // Visualization
   bool publishVisualization();
-  visualization_msgs::MarkerArray createDecompositionMarkers();
 
   // Publishing the plan
   bool publishTrajectoryPoints();
@@ -77,18 +93,6 @@ class PolygonPlannerBase {
   bool planning_complete_;
 
   visualization_msgs::MarkerArray markers_;
-
-  // Parameters
-  std::optional<PolygonWithHoles> polygon_;
-  double wall_distance_;
-  std::pair<PathCostFunction, CostFunctionType> path_cost_function_;
-  std::optional<double> altitude_;
-  bool latch_topics_;
-  std::string global_frame_id_;
-  bool publish_plan_on_planning_complete_;
-  bool publish_visualization_on_planning_complete_;
-  std::optional<double> v_max_;
-  std::optional<double> a_max_;
 };
 }  // namespace polygon_coverage_planning
 

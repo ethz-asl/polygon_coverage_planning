@@ -15,7 +15,6 @@ PolygonPlannerBase::PolygonPlannerBase(const ros::NodeHandle& nh,
                                        const ros::NodeHandle& nh_private)
     : nh_(nh),
       nh_private_(nh_private),
-      planning_complete_(false),
       wall_distance_(0.0),
       path_cost_function_(
           {std::bind(&computeEuclideanPathCost, std::placeholders::_1),
@@ -23,7 +22,8 @@ PolygonPlannerBase::PolygonPlannerBase(const ros::NodeHandle& nh,
       latch_topics_(true),
       global_frame_id_("world"),
       publish_plan_on_planning_complete_(false),
-      publish_visualization_on_planning_complete_(true) {
+      publish_visualization_on_planning_complete_(true),
+      planning_complete_(false) {
   // Initial interactions with ROS
   getParametersFromRos();
   advertiseTopics();

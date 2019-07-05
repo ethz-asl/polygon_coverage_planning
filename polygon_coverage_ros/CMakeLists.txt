@@ -43,6 +43,7 @@ cs_add_library(${PROJECT_NAME}
   #src/coverage_planner.cc
   src/polygon_planner_base.cc
   src/ros_interface.cc
+  src/shortest_path_planner.cc
   #test/test_polygon_coverage_planning.cc
 )
 target_link_libraries(${PROJECT_NAME})
@@ -54,6 +55,11 @@ target_link_libraries(${PROJECT_NAME})
 #  src/polygon_coverage_planner.cc
 #)
 #target_link_libraries(polygon_coverage_planner ${PROJECT_NAME})
+
+cs_add_executable(shortest_path_planner
+  src/shortest_path_planner_node.cc
+)
+target_link_libraries(shortest_path_planner ${PROJECT_NAME})
 
 ##########
 # EXPORT #
