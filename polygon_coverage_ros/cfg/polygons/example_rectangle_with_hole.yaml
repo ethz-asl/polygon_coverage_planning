@@ -1,0 +1,50 @@
+# A polygon_coverage_msgs/PolygonWithHoles.msg to describe a rectangle.
+polygon:
+  header:
+    seq: 0
+    stamp:
+      secs: 0
+      nsecs: 0
+    frame_id: 'world'
+  polygon:
+    hull:
+      points:
+      - x: 0.0
+        y: 0.0
+        z: 1.0
+      - x: 160.0
+        y: 0.0
+        z: 1.0
+      - x: 160.0
+        y: 100.0
+        z: 1.0
+      - x: 0.0
+        y: 100.0
+        z: 1.0
+    holes:
+      - points:
+        - x: 30.0
+          y: 30.0
+          z: 1.0
+        - x: 60.0
+          y: 30.0
+          z: 1.0
+        - x: 60.0
+          y: 60.0
+          z: 1.0
+        - x: 30.0
+          y: 60.0
+          z: 1.0
+      - points:
+        - x: 100.0
+          y: 40.0
+          z: 1.0
+        - x: 140.0
+          y: 40.0
+          z: 1.0
+        - x: 140.0
+          y: 70.0
+          z: 1.0
+        - x: 100.0
+          y: 70.0
+          z: 1.0

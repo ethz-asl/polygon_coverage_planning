@@ -1,0 +1,7 @@
+cost_function_type: 0 # [0: Euclidean Distance, 1: Time, 2: Number of Waypoints]
+wall_distance: 0.0
+
+latch_topics: true
+
+publish_plan_on_planning_complete: false
+publish_visualization_on_planning_complete: true
