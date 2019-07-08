@@ -63,11 +63,11 @@ void PolygonPlannerBase::getParametersFromRos() {
       double temp_alt;
       if (polygonFromMsg(poly_msg, &temp_pwh, &temp_alt, &global_frame_id_)) {
         ROS_INFO_STREAM("Successfully loaded polygon.");
-        ROS_INFO_STREAM("Altiude: " << temp_alt << "m");
+        ROS_INFO_STREAM("Altiude: " << temp_alt << " m");
         ROS_INFO_STREAM("Global frame: " << global_frame_id_);
         ROS_INFO_STREAM("Polygon:" << temp_pwh);
-        polygon_.value() = temp_pwh;
-        altitude_.value() = temp_alt;
+        polygon_ = std::make_optional(temp_pwh);
+        altitude_ = std::make_optional(temp_alt);
       }
     } else {
       ROS_WARN_STREAM("Failed reading polygon message from parameter server.");
@@ -86,16 +86,16 @@ void PolygonPlannerBase::getParametersFromRos() {
     ROS_WARN_STREAM("No wall distance specified. Using default value of: "
                     << wall_distance_);
   } else
-    ROS_INFO_STREAM("Wall distance: " << wall_distance_);
+    ROS_INFO_STREAM("Wall distance: " << wall_distance_ << " m");
 
   // Cost function
   double temp_v_max;
   if (nh_private_.getParam("v_max", temp_v_max)) {
-    v_max_.value() = temp_v_max;
+    v_max_ = std::make_optional(temp_v_max);
   }
   double temp_a_max;
   if (nh_private_.getParam("a_max", temp_a_max)) {
-    a_max_.value() = temp_a_max;
+    a_max_ = std::make_optional(temp_a_max);
   }
 
   // Cost function type.
@@ -297,13 +297,17 @@ bool PolygonPlannerBase::publishTrajectoryPoints() {
 bool PolygonPlannerBase::setPolygonCallback(
     polygon_coverage_msgs::PolygonService::Request& request,
     polygon_coverage_msgs::PolygonService::Response& response) {
-  if (!polygonFromMsg(request.polygon, &polygon_.value(), &altitude_.value(),
+  PolygonWithHoles temp_pwh;
+  double temp_alt;
+  if (!polygonFromMsg(request.polygon, &temp_pwh, &temp_alt,
                       &global_frame_id_)) {
     ROS_ERROR_STREAM("Failed loading correct polygon.");
     ROS_ERROR_STREAM("Planner is in an invalid state.");
     polygon_.reset();
     return false;
   }
+  polygon_ = std::make_optional(temp_pwh);
+  altitude_ = std::make_optional(temp_alt);
 
   ROS_INFO_STREAM("Successfully loaded polygon.");
   ROS_INFO_STREAM("Altiude: " << altitude_.value() << "m");

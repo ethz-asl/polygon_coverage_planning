@@ -27,7 +27,9 @@ bool ShortestPathPlanner::resetPlanner() {
     return false;
   }
   PolygonWithHoles temp_poly = polygon_.value();
+  std::cout << "offsetting." << std::endl;
   computeOffsetPolygon(temp_poly, wall_distance_, &polygon_.value());
+  std::cout << polygon_.value() << std::endl;
   planner_.reset(new visibility_graph::VisibilityGraph(polygon_.value()));
   if (planner_->isInitialized()) {
     ROS_INFO("Finished creating the shortest plan graph.");

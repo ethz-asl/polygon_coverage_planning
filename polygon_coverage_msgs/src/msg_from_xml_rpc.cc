@@ -169,7 +169,7 @@ bool point32MsgFromXmlRpc(XmlRpc::XmlRpcValue& xml_rpc,
 
     // Get z.
     if (!readElementaryTypeFromXmlRpc(
-            xml_rpc, kYKey, XmlRpc::XmlRpcValue::TypeDouble, &msg->z)) {
+            xml_rpc, kZKey, XmlRpc::XmlRpcValue::TypeDouble, &msg->z)) {
       ROS_WARN_STREAM("Resetting key " << kZKey << " to default.");
       msg->z = std_msgs::Float64().data;
     }
