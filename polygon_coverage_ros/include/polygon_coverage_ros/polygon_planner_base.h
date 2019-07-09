@@ -29,7 +29,8 @@ class PolygonPlannerBase {
   // Reset the planner when a new polygon is set.
   virtual bool resetPlanner() = 0;
   // Publish the decomposition.
-  virtual inline visualization_msgs::MarkerArray createDecompositionMarkers() {
+  virtual inline visualization_msgs::MarkerArray createDecompositionMarkers()
+      const {
     return visualization_msgs::MarkerArray();
   }
 

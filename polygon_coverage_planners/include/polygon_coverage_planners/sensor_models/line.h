@@ -1,7 +1,7 @@
 #ifndef POLYGON_COVERAGE_PLANNERS_SENSOR_MODELS_LINE_H_
 #define POLYGON_COVERAGE_PLANNERS_SENSOR_MODELS_LINE_H_
 
-#include "mav_2d_coverage_planning/sensor_models/sensor_model_base.h"
+#include "polygon_coverage_planners/sensor_models/sensor_model_base.h"
 
 namespace polygon_coverage_planning {
 

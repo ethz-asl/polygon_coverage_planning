@@ -8,6 +8,9 @@ add_definitions(-std=c++17)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 
+find_package(CGAL QUIET COMPONENTS Core)
+include(${CGAL_USE_FILE})
+
 ############
 # YAML-CPP #
 ############
@@ -40,21 +43,21 @@ ExternalProject_Add(
 # LIBRARIES #
 #############
 cs_add_library(${PROJECT_NAME}
-  #src/coverage_planner.cc
+  src/coverage_planner.cc
   src/polygon_planner_base.cc
   src/ros_interface.cc
   src/shortest_path_planner.cc
   #test/test_polygon_coverage_planning.cc
 )
-target_link_libraries(${PROJECT_NAME})
+target_link_libraries(${PROJECT_NAME} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES})
 
 ############
 # Binaries #
 ############
-#cs_add_executable(polygon_coverage_planner
-#  src/polygon_coverage_planner.cc
-#)
-#target_link_libraries(polygon_coverage_planner ${PROJECT_NAME})
+cs_add_executable(coverage_planner
+  src/coverage_planner_node.cc
+)
+target_link_libraries(coverage_planner ${PROJECT_NAME})
 
 cs_add_executable(shortest_path_planner
   src/shortest_path_planner_node.cc

@@ -2,6 +2,7 @@
 #define POLYGON_COVERAGE_PLANNING_GRAPHS_SWEEP_PLAN_GRAPH_H_
 
 #include <polygon_coverage_geometry/cgal_definitions.h>
+#include <polygon_coverage_geometry/decomposition.h>
 #include <polygon_coverage_geometry/visibility_graph.h>
 #include <polygon_coverage_solvers/graph_base.h>
 
@@ -56,7 +57,7 @@ class SweepPlanGraph : public GraphBase<NodeProperty, EdgeProperty> {
     PathCostFunction cost_function;  // The user defined cost function.
     std::shared_ptr<SensorModelBase> sensor_model;  // The sensor model.
     DecompositionType decomposition_type =
-        DecompositionType::kBoustrophedeon;  // The decomposition type.
+        DecompositionType::kBCD;  // The decomposition type.
     FT wall_distance = 0.0;       // The minimum distance to the polygon walls.
     bool offset_polygons = true;  // Flag to offset neighboring cells.
     bool sweep_single_direction =

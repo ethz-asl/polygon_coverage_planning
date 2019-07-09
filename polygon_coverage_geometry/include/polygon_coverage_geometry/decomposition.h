@@ -26,6 +26,26 @@ bool computeBestBCDFromPolygonWithHoles(const PolygonWithHoles& pwh,
 bool computeBestTCDFromPolygonWithHoles(const PolygonWithHoles& pwh,
                                         std::vector<Polygon_2>* trap_polygons);
 
+enum DecompositionType {
+  kBCD = 0,  // Boustrophedon.
+  kTCD       // Trapezoidal.
+};
+
+inline bool checkDecompositionTypeValid(const int type) {
+  return (type == DecompositionType::kBCD) || (type == DecompositionType::kTCD);
+}
+
+inline std::string getDecompositionTypeName(const DecompositionType& type) {
+  switch (type) {
+    case DecompositionType::kBCD:
+      return "Boustrophedon Cell Decomposition";
+    case DecompositionType::kTCD:
+      return "Trapezoidal Cell Decomposition";
+    default:
+      return "Unknown!";
+  }
+}
+
 }  // namespace polygon_coverage_planning
 
 #endif  // POLYGON_COVERAGE_GEOMETRY_DECOMPOSITION_H_

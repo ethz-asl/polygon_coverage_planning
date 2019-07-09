@@ -3,7 +3,7 @@
   <name>polygon_coverage_ros</name>
   <version>0.0.0</version>
   <description>
-    A ROS interface for the polygon coverage planner.
+    A ROS interface for polygon coverage planning.
   </description>
   <author>Rik Bähnemann</author>
   <maintainer email="brik@ethz.ch">Rik Bähnemann</maintainer>
@@ -30,5 +30,6 @@
   <depend>polygon_coverage_msgs</depend>
   <depend>polygon_coverage_geometry</depend>
   <depend>polygon_coverage_planners</depend>
+  <depend>cgal_catkin</depend>
 
 </package>

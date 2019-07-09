@@ -168,7 +168,7 @@ bool SweepPlanGraph::computeDecomposition() {
   // Create decomposition.
   timing::Timer timer_decom("decomposition");
   switch (settings_.decomposition_type) {
-    case DecompositionType::kBoustrophedeon: {
+    case DecompositionType::kBCD: {
       if (!computeBestBCDFromPolygonWithHoles(settings_.polygon,
                                               &polygon_clusters_)) {
         ROS_ERROR_STREAM("Cannot compute boustrophedon decomposition.");
@@ -179,7 +179,7 @@ bool SweepPlanGraph::computeDecomposition() {
       }
       break;
     }
-    case DecompositionType::kTrapezoidal: {
+    case DecompositionType::kTCD: {
       if (!computeBestTCDFromPolygonWithHoles(settings_.polygon,
                                               &polygon_clusters_)) {
         ROS_ERROR_STREAM("Cannot compute trapezoidal decomposition.");
