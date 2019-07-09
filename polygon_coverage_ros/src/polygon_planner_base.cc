@@ -27,6 +27,9 @@ PolygonPlannerBase::PolygonPlannerBase(const ros::NodeHandle& nh,
   // Initial interactions with ROS
   getParametersFromRos();
   advertiseTopics();
+
+  // Publish RVIZ.
+  publishVisualization();
 }
 
 void PolygonPlannerBase::advertiseTopics() {
@@ -198,11 +201,6 @@ void PolygonPlannerBase::solve(const Point_2& start, const Point_2& goal) {
 }
 
 bool PolygonPlannerBase::publishVisualization() {
-  if (!planning_complete_) {
-    ROS_WARN_STREAM(
-        "Cannot send visualization message because plan has not been made.");
-    return false;
-  }
   ROS_INFO_STREAM("Sending visualization messages.");
 
   // Delete old markers.
@@ -220,28 +218,34 @@ bool PolygonPlannerBase::publishVisualization() {
     ROS_WARN_STREAM("Cannot send visualization because altitude not set.");
     return false;
   }
-  createMarkers(solution_, altitude_.value(), global_frame_id_,
-                "vertices_and_strip", mav_visualization::Color::Gray(),
-                mav_visualization::Color::Gray(), kPathLineSize, kPathPointSize,
-                &path_points, &path_line_strips);
-  markers_.markers.push_back(path_points);
-  markers_.markers.push_back(path_line_strips);
 
-  // Start and end points
-  visualization_msgs::Marker start_point, end_point;
-  createStartAndEndPointMarkers(solution_.front(), solution_.back(),
-                                altitude_.value(), global_frame_id_, "points",
-                                &start_point, &end_point);
-  markers_.markers.push_back(start_point);
-  markers_.markers.push_back(end_point);
+  if (!planning_complete_) {
+    ROS_WARN_STREAM(
+        "Cannot send solution visualization because plan has not been made.");
+  } else {
+    createMarkers(solution_, altitude_.value(), global_frame_id_,
+                  "vertices_and_strip", mav_visualization::Color::Gray(),
+                  mav_visualization::Color::Gray(), kPathLineSize,
+                  kPathPointSize, &path_points, &path_line_strips);
+    markers_.markers.push_back(path_points);
+    markers_.markers.push_back(path_line_strips);
 
-  // Start and end text.
-  visualization_msgs::Marker start_text, end_text;
-  createStartAndEndTextMarkers(solution_.front(), solution_.back(),
-                               altitude_.value(), global_frame_id_, "points",
-                               &start_text, &end_text);
-  markers_.markers.push_back(start_text);
-  markers_.markers.push_back(end_text);
+    // Start and end points
+    visualization_msgs::Marker start_point, end_point;
+    createStartAndEndPointMarkers(solution_.front(), solution_.back(),
+                                  altitude_.value(), global_frame_id_, "points",
+                                  &start_point, &end_point);
+    markers_.markers.push_back(start_point);
+    markers_.markers.push_back(end_point);
+
+    // Start and end text.
+    visualization_msgs::Marker start_text, end_text;
+    createStartAndEndTextMarkers(solution_.front(), solution_.back(),
+                                 altitude_.value(), global_frame_id_, "points",
+                                 &start_text, &end_text);
+    markers_.markers.push_back(start_text);
+    markers_.markers.push_back(end_text);
+  }
 
   // The original polygon:
   const double kPolygonLineSize = 0.4;
