@@ -33,6 +33,10 @@ class PolygonPlannerBase {
     return visualization_msgs::MarkerArray();
   }
 
+  // Solve the planning problem. Stores status planning_complete_ and publishes
+  // trajectory and visualization if enabled.
+  void solve(const Point_2& start, const Point_2& goal);
+
   // Node handles
   ros::NodeHandle nh_;
   ros::NodeHandle nh_private_;
@@ -70,10 +74,6 @@ class PolygonPlannerBase {
                                     std_srvs::Empty::Response& response);
   bool publishTrajectoryPointsCallback(std_srvs::Empty::Request& request,
                                        std_srvs::Empty::Response& response);
-
-  // Solve the planning problem. Stores status planning_complete_ and publishes
-  // trajectory and visualization if enabled.
-  void solve(const Point_2& start, const Point_2& goal);
 
   // Visualization
   bool publishVisualization();

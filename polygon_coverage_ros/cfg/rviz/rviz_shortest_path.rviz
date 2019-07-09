@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /Grid1
         - /MarkerArray1
         - /MarkerArray1/Namespaces1
       Splitter Ratio: 0.5
@@ -51,7 +52,7 @@ Visualization Manager:
         Y: 0
         Z: 0
       Plane: XY
-      Plane Cell Count: 10
+      Plane Cell Count: 500
       Reference Frame: <Fixed Frame>
       Value: true
     - Class: rviz/MarkerArray
@@ -114,7 +115,7 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 5.706080913543701
+      Scale: 7.1190361976623535
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
       X: 79.70069885253906
