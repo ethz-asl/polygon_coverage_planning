@@ -59,6 +59,16 @@ cs_add_executable(coverage_planner
 )
 target_link_libraries(coverage_planner ${PROJECT_NAME})
 
+cs_add_executable(coverage_planner_exact
+  src/coverage_planner_exact_node.cc
+)
+target_link_libraries(coverage_planner_exact ${PROJECT_NAME})
+
+cs_add_executable(coverage_planner_exact_preprocessed
+  src/coverage_planner_exact_preprocessed_node.cc
+)
+target_link_libraries(coverage_planner_exact_preprocessed ${PROJECT_NAME})
+
 cs_add_executable(shortest_path_planner
   src/shortest_path_planner_node.cc
 )

@@ -1,21 +1,18 @@
-#include <glog/logging.h>
 #include <ros/ros.h>
 
-#include <mav_2d_coverage_planning/planners/polygon_stripmap_planner_exact_preprocessed.h>
-#include "mav_coverage_planning_ros/nodes/2d/stripmap_planner_2d.h"
+#include <polygon_coverage_planners/planners/polygon_stripmap_planner_exact_preprocessed.h>
+#include "polygon_coverage_ros/coverage_planner.h"
 
 // Standard C++ entry point
 int main(int argc, char** argv) {
-  // Starting the logging
-  google::InitGoogleLogging(argv[0]);
   // Announce this program to the ROS master
   ros::init(argc, argv, "stripmap_planner_2d_node");
   // Creating the node handles
   ros::NodeHandle nh;
   ros::NodeHandle nh_private("~");
   // Creating the coverage planner with ros interface
-  mav_coverage_planning::StripmapPlanner2D<
-      mav_coverage_planning::PolygonStripmapPlannerExactPreprocessed>
+  polygon_coverage_planning::CoveragePlanner<
+      polygon_coverage_planning::PolygonStripmapPlannerExactPreprocessed>
       planner(nh, nh_private);
   // Spinning (and processing service calls)
   ros::spin();
