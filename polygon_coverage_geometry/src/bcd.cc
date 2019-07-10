@@ -15,7 +15,6 @@ std::vector<Polygon_2> computeBCD(const PolygonWithHoles& polygon_in,
   PolygonWithHoles rotated_polygon = rotatePolygon(polygon_in, dir);
   sortPolygon(&rotated_polygon);
   simplifyPolygon(&rotated_polygon);
-  ROS_INFO_STREAM(rotated_polygon);
 
   // Sort vertices by x value.
   std::vector<VertexConstCirculator> sorted_vertices =
