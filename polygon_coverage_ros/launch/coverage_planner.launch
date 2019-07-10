@@ -22,7 +22,7 @@
     <!-- Decomposition type: 0, 1 [bcd, trapezoidal]-->
     <param name="decomposition_type" value="0" />
     <!-- Cost function type: 0, 1 [0: Euclidean Distance, 1: Time, 2: Number of Waypoints] -->
-    <param name="cost_function_type" value="0" />
+    <param name="cost_function_type" value="1" />
     <!-- Only for time optimization. -->
     <param name="v_max" value="3.0" />
     <!-- Only for time optimization. -->
