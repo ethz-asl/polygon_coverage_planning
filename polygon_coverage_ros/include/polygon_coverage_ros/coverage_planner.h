@@ -77,7 +77,7 @@ class CoveragePlanner : public PolygonPlannerBase {
     }
 
     double lateral_fov_temp = -1.0;
-    if (nh_private_.getParam("lateral_fov_", lateral_fov_temp)) {
+    if (nh_private_.getParam("lateral_fov", lateral_fov_temp)) {
       lateral_fov_ = std::make_optional(lateral_fov_temp);
     }
 
