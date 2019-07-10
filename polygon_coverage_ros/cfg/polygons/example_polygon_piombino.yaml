@@ -7,38 +7,51 @@ polygon:
       secs: 0
       nsecs: 0
     frame_id: 'world'
-  altitude: 5.0
   polygon:
     hull:
       points:
       - x: 0.0
         y: 0.0
+        z: 5.0
       - x: 110.0
         y: 0.0
+        z: 5.0
       - x: 110.0
         y: 20.0
+        z: 5.0
       - x: 60.0
         y: 20.0
+        z: 5.0
       - x: 60.0
         y: 60.0
+        z: 5.0
       - x: 0.0
         y: 60.0
+        z: 5.0
     holes:
       - points:
         - x: 20.0
           y: 10.0
+          z: 5.0
         - x: 40.0
           y: 10.0
+          z: 5.0
         - x: 40.0
           y: 35.0
+          z: 5.0
         - x: 20.0
           y: 35.0
+          z: 5.0
       - points:
         - x: 50.0
           y: 40.0
+          z: 5.0
         - x: 55.0
           y: 40.0
+          z: 5.0
         - x: 55.0
           y: 50.0
+          z: 5.0
         - x: 50.0
           y: 50.0
+          z: 5.0
