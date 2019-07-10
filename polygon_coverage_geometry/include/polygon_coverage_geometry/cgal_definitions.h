@@ -24,6 +24,4 @@ typedef Polygon_2::Edge_const_circulator EdgeConstCirculator;
 typedef CGAL::Polygon_with_holes_2<K> PolygonWithHoles;
 typedef CGAL::Exact_predicates_inexact_constructions_kernel InexactKernel;
 
-enum DecompositionType { kBoustrophedeon, kTrapezoidal };
-
 #endif  // POLYGON_COVERAGE_GEOMETRY_CGAL_DEFINITIONS_H_

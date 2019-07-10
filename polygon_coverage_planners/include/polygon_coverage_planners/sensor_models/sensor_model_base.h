@@ -5,6 +5,22 @@ namespace polygon_coverage_planning {
 
 enum SensorModelType { kLine = 0, kFrustum };
 
+inline bool checkSensorModelTypeValid(const int type) {
+  return (type == SensorModelType::kLine) ||
+         (type == SensorModelType::kFrustum);
+}
+
+inline std::string getSensorModelTypeName(const SensorModelType& type) {
+  switch (type) {
+    case SensorModelType::kLine:
+      return "Line";
+    case SensorModelType::kFrustum:
+      return "Frustum";
+    default:
+      return "Unknown!";
+  }
+}
+
 // Given the overlap parameters, this sensor model allows setting the sweep
 // distance.
 class SensorModelBase {

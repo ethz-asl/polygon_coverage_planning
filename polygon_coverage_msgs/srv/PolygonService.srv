@@ -1,0 +1,6 @@
+# A service to set a new polygon with holes.
+# Request fields:
+polygon_coverage_msgs/PolygonWithHolesStamped polygon # The new polygon.
+---
+# Response fields:
+bool success # True on success, false on polygon error.

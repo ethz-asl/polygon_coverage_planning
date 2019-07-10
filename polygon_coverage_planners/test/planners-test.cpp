@@ -43,11 +43,10 @@ void runPlanners(const std::vector<PolygonWithHoles>& polygons) {
         createRandomDouble(kAltitudeMin, kAltitudeMax),
         createRandomDouble(kFOVCameraRadMin, kFOVCameraRadMax),
         createRandomDouble(kMinViewOverlapMin, kMinViewOverlapMax));
-    settings.decomposition_type = DecompositionType::kBoustrophedeon;
+    settings.decomposition_type = DecompositionType::kBCD;
     EXPECT_EQ(static_cast<size_t>(0), settings.polygon.number_of_holes());
 
     settings.offset_polygons = false;
-    settings.decomposition_type = DecompositionType::kBoustrophedeon;
 
     // Create planners.
     PolygonStripmapPlanner planner_gk_ma(settings);

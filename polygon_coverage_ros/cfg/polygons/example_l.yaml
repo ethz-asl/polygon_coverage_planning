@@ -1,0 +1,43 @@
+# A mav_planning_msgs/PolygonWithHoles.msg to describe a rectangle.
+polygon:
+  header:
+    seq: 0
+    stamp:
+      secs: 0
+      nsecs: 0
+    frame_id: 'world'
+  polygon:
+    hull:
+      points:
+      - x: 0.0
+        y: 0.0
+        z: 0.1
+      - x: 1.1
+        y: 0.0
+        z: 0.1
+      - x: 1.1
+        y: 0.5
+        z: 0.1
+      - x: 0.15
+        y: 0.5
+        z: 0.1
+      - x: 0.15
+        y: 0.9
+        z: 0.1
+      - x: 0.0
+        y: 0.9
+        z: 0.1
+    holes:
+      - points:
+        - x: 0.9
+          y: 0.2
+          z: 0.1
+        - x: 0.95
+          y: 0.2
+          z: 0.1
+        - x: 0.95
+          y: 0.3
+          z: 0.1
+        - x: 0.9
+          y: 0.3
+          z: 0.1

@@ -1,3 +1,4 @@
+#include "polygon_coverage_geometry/cgal_comm.h"
 #include "polygon_coverage_geometry/offset.h"
 
 #include <CGAL/Boolean_set_operations_2.h>
@@ -14,16 +15,20 @@ void computeOffsetPolygon(const PolygonWithHoles& pwh, FT max_offset,
                           PolygonWithHoles* offset_polygon) {
   ROS_ASSERT(offset_polygon);
 
+  PolygonWithHoles sorted_pwh = pwh;
+  sortVertices(&sorted_pwh);
+
   // TODO(rikba): Check weak simplicity.
 
   // Try maximum offsetting.
   std::vector<boost::shared_ptr<PolygonWithHoles>> result =
       CGAL::create_interior_skeleton_and_offset_polygons_with_holes_2(
-          max_offset, pwh);
-  if (checkValidOffset(pwh, result)) {
+          max_offset, sorted_pwh);
+  if (checkValidOffset(sorted_pwh, result)) {
     *offset_polygon = *result.front();
+    return;
   } else {
-    result = {boost::make_shared<PolygonWithHoles>(pwh)};
+    result = {boost::make_shared<PolygonWithHoles>(sorted_pwh)};
   }
 
   // Binary search for smaller valid offset.
@@ -33,9 +38,9 @@ void computeOffsetPolygon(const PolygonWithHoles& pwh, FT max_offset,
   while (max - min > kBinarySearchResolution) {
     const FT mid = (min + max) / 2.0;
     std::vector<boost::shared_ptr<PolygonWithHoles>> temp_result =
-        CGAL::create_interior_skeleton_and_offset_polygons_with_holes_2(mid,
-                                                                        pwh);
-    if (checkValidOffset(pwh, temp_result)) {
+        CGAL::create_interior_skeleton_and_offset_polygons_with_holes_2(
+            mid, sorted_pwh);
+    if (checkValidOffset(sorted_pwh, temp_result)) {
       min = mid;
       result = temp_result;
     } else {
@@ -50,12 +55,9 @@ bool checkValidOffset(
     const PolygonWithHoles& original,
     const std::vector<boost::shared_ptr<PolygonWithHoles>>& offset) {
   // Valid if number of vertices remains constant.
-  if (offset.size() != 1) return false;
-  if (original.number_of_holes() != offset.front()->number_of_holes())
+  if (offset.size() != 1) {
     return false;
-  if (original.outer_boundary().size() !=
-      offset.front()->outer_boundary().size())
-    return false;
+  }
 
   PolygonWithHoles::Hole_const_iterator offset_hit =
       offset.front()->holes_begin();
@@ -125,8 +127,7 @@ bool offsetEdge(const Polygon_2& poly, const size_t& edge_id, double offset,
     ROS_WARN_STREAM("Polygon: " << polygon);
     ROS_WARN_STREAM("Mask: " << mask);
     ROS_WARN_STREAM("Intersections:");
-    for (auto p : intersection_list)
-      ROS_WARN_STREAM(p << "\n");
+    for (auto p : intersection_list) ROS_WARN_STREAM(p << "\n");
     return false;
   }
   if (intersection_list[0].number_of_holes() > 0) {

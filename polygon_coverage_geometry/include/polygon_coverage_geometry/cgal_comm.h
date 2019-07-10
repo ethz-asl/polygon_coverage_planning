@@ -40,6 +40,9 @@ PolygonWithHoles rotatePolygon(const PolygonWithHoles& polygon_in,
 // Sort boundary to be counter-clockwise and holes to be clockwise.
 void sortVertices(PolygonWithHoles* pwh);
 
+std::vector<Point_2> getHullVertices(const PolygonWithHoles& pwh);
+std::vector<std::vector<Point_2>> getHoleVertices(const PolygonWithHoles& pwh);
+
 }  // namespace polygon_coverage_planning
 
 #endif  // POLYGON_COVERAGE_GEOMETRY_CGAL_COMM_H_

@@ -162,4 +162,27 @@ void sortVertices(PolygonWithHoles* pwh) {
     if (hi->is_counterclockwise_oriented()) hi->reverse_orientation();
 }
 
+std::vector<Point_2> getHullVertices(const PolygonWithHoles& pwh) {
+  std::vector<Point_2> vec(pwh.outer_boundary().size());
+  std::vector<Point_2>::iterator vecit = vec.begin();
+  for (VertexConstIterator vit = pwh.outer_boundary().vertices_begin();
+       vit != pwh.outer_boundary().vertices_end(); ++vit, ++vecit)
+    *vecit = *vit;
+  return vec;
+}
+
+std::vector<std::vector<Point_2>> getHoleVertices(const PolygonWithHoles& pwh) {
+  std::vector<std::vector<Point_2>> hole_vertices(pwh.number_of_holes());
+  std::vector<std::vector<Point_2>>::iterator hvit = hole_vertices.begin();
+  for (PolygonWithHoles::Hole_const_iterator hi = pwh.holes_begin();
+       hi != pwh.holes_end(); ++hi, ++hvit) {
+    hvit->resize(hi->size());
+    std::vector<Point_2>::iterator it = hvit->begin();
+    for (VertexConstIterator vit = hi->vertices_begin();
+         vit != hi->vertices_end(); ++vit, ++it)
+      *it = *vit;
+  }
+  return hole_vertices;
+}
+
 }  // namespace polygon_coverage_planning

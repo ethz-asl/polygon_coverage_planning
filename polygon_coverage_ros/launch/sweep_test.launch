@@ -1,0 +1,19 @@
+<launch>
+
+  <node name="rviz"
+    pkg="rviz"
+    type="rviz"
+    output="log"
+    args="-d $(find polygon_coverage_ros)/cfg/rviz/sweep_test.rviz" />
+
+  <node name="sweep_test"
+    pkg="polygon_coverage_ros"
+    type="sweep_test"
+    output="screen"
+    clear_params="true" >
+
+    <!-- Polygon, altitude, and world frame ID -->
+    <rosparam command="load" file="$(find polygon_coverage_ros)/cfg/polygons/example_polygon_bcd_cell.yaml" />
+  </node>
+
+</launch>

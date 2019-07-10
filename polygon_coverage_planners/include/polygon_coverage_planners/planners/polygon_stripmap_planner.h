@@ -28,6 +28,10 @@ class PolygonStripmapPlanner {
 
   inline bool isInitialized() const { return is_initialized_; }
 
+  inline std::vector<Polygon_2> getDecomposition() {
+    return sweep_plan_graph_.getDecomposition();
+  }
+
  protected:
   virtual bool setupSolver() { return true; };
   // Default: Heuristic GTSPP solver.

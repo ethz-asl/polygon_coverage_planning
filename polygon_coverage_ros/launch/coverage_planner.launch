@@ -1,0 +1,42 @@
+<launch>
+  <arg name="sensor_model_type" default="1"/>
+
+  <node name="rviz"
+    pkg="rviz"
+    type="rviz"
+    output="log"
+    args="-d $(find polygon_coverage_ros)/cfg/rviz/coverage_planner.rviz" />
+
+  <node name="coverage_planner"
+    pkg="polygon_coverage_ros"
+    type="coverage_planner"
+    output="screen"
+    clear_params="true" >
+
+    <!-- Polygon, altitude, and world frame ID -->
+    <rosparam command="load" file="$(find polygon_coverage_ros)/cfg/polygons/example_polygon_epfl.yaml" />
+    <!-- Sweep planner specific parameter -->
+    <param name="lateral_overlap" value="0.6" />
+    <param name="offset_polygons" value="true" />
+    <param name="sweep_single_direction" value="false" />
+    <!-- Decomposition type: 0, 1 [bcd, trapezoidal]-->
+    <param name="decomposition_type" value="0" />
+    <!-- Cost function type: 0, 1 [0: Euclidean Distance, 1: Time, 2: Number of Waypoints] -->
+    <param name="cost_function_type" value="1" />
+    <!-- Only for time optimization. -->
+    <param name="v_max" value="3.0" />
+    <!-- Only for time optimization. -->
+    <param name="a_max" value="1.0" />
+    <!-- Sensor model: 0, 1 [line, frustum]-->
+    <param name="sensor_model_type" value="$(arg sensor_model_type)" />
+    <!-- Line parameters. -->
+    <param name="lateral_footprint" value="1.0" if="$(eval arg('sensor_model_type') == 0)" />
+    <!-- Frustum parameters. -->
+    <param name="lateral_fov" value="0.84" if="$(eval arg('sensor_model_type') == 1)" />
+    <!-- Node parameters. -->
+    <param name="latch_topics" value="true" />
+    <param name="publish_plan_on_planning_complete" value="true" />
+    <param name="publish_visualization_on_planning_complete" value="true" />
+  </node>
+
+</launch>
