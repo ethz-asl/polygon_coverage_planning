@@ -1,21 +1,15 @@
-#include <mav_2d_coverage_planning/geometry/polygon.h>
-
-#include <mav_2d_coverage_planning/geometry/sweep.h>
-#include <mav_2d_coverage_planning/geometry/weakly_monotone.h>
-#include <mav_2d_coverage_planning/graphs/visibility_graph.h>
-
-#include <mav_coverage_planning_ros/conversions/msg_from_xml_rpc.h>
-#include <mav_coverage_planning_ros/conversions/ros_interface.h>
-#include <mav_planning_msgs/PolygonWithHolesStamped.h>
+#include <polygon_coverage_geometry/cgal_definitions.h>
+#include <polygon_coverage_geometry/sweep.h>
+#include <polygon_coverage_msgs/PolygonWithHolesStamped.h>
+#include <polygon_coverage_msgs/msg_from_xml_rpc.h>
+#include <polygon_coverage_ros/ros_interface.h>
 #include <ros/ros.h>
-
-#include <mav_coverage_planning_comm/cgal_definitions.h>
 #include <limits>
 
-using namespace mav_coverage_planning;
+using namespace polygon_coverage_planning;
 
 int main(int argc, char** argv) {
-  ros::init(argc, argv, "sweep_calculator");
+  ros::init(argc, argv, "sweep_test");
 
   ros::NodeHandle nh_private("~");
   // Load polygon.
@@ -25,14 +19,14 @@ int main(int argc, char** argv) {
     ROS_ERROR("No polygon set on parameter server.");
     return 0;
   }
-  mav_planning_msgs::PolygonWithHolesStamped poly_msg;
-  Polygon poly;
-  double altitude;
-  std::string global_frame_id;
+  polygon_coverage_msgs::PolygonWithHolesStamped poly_msg;
   if (!PolygonWithHolesStampedMsgFromXmlRpc(polygon_xml_rpc, &poly_msg)) {
     ROS_ERROR("Failed to get polygon from XMLRpc.");
     return 0;
   }
+  PolygonWithHoles poly;
+  double altitude;
+  std::string global_frame_id;
   if (polygonFromMsg(poly_msg, &poly, &altitude, &global_frame_id)) {
     ROS_INFO_STREAM("Successfully loaded polygon.");
     ROS_INFO_STREAM("Altiude: " << altitude << "m");
@@ -60,9 +54,9 @@ int main(int argc, char** argv) {
   // Compute sweep permutations.
   std::vector<std::vector<Point_2>> waypoints;
   const double kMaxSweepDistance = 9.0;
-  computeAllSweeps(poly, kMaxSweepDistance, &waypoints);
+  Polygon_2 hull = poly.outer_boundary();
+  computeAllSweeps(hull, kMaxSweepDistance, &waypoints);
 
-  ros::Rate loop_rate(1.0);
   size_t i = 0;
   while (ros::ok()) {
     for (const Point_2& p : waypoints[i]) {
@@ -124,7 +118,7 @@ int main(int argc, char** argv) {
     i++;
     i = i % waypoints.size();
 
-    std::cout << "Press ENTER to continue...";
+    ROS_INFO("Press ENTER to continue...");
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
   }
 

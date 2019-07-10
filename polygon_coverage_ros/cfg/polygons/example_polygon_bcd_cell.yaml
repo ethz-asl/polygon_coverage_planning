@@ -6,17 +6,21 @@ polygon:
       secs: 0
       nsecs: 0
     frame_id: 'world'
-  altitude: 5.0
   polygon:
     hull:
       points:
       - x: -55.0
         y: 91.0
+        z: 5.0
       - x: -55.0
         y: 59.0
+        z: 5.0
       - x: -2.52786
         y: 59.0
+        z: 5.0
       - x: 35.0
         y: 40.2361
+        z: 5.0
       - x: 35.0
         y: 91.0
+        z: 5.0

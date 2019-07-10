@@ -47,7 +47,6 @@ cs_add_library(${PROJECT_NAME}
   src/polygon_planner_base.cc
   src/ros_interface.cc
   src/shortest_path_planner.cc
-  #test/test_polygon_coverage_planning.cc
 )
 target_link_libraries(${PROJECT_NAME} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES})
 
@@ -73,6 +72,11 @@ cs_add_executable(shortest_path_planner
   src/shortest_path_planner_node.cc
 )
 target_link_libraries(shortest_path_planner ${PROJECT_NAME})
+
+cs_add_executable(sweep_test
+  test/sweep_test_node.cc
+)
+target_link_libraries(sweep_test ${PROJECT_NAME})
 
 ##########
 # EXPORT #

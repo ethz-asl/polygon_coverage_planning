@@ -4,7 +4,7 @@
     pkg="rviz"
     type="rviz"
     output="log"
-    args="-d $(find polygon_coverage_ros)/cfg/rviz/rviz_shortest_path.rviz" />
+    args="-d $(find polygon_coverage_ros)/cfg/rviz/shortest_path.rviz" />
 
 
   <node name="shortest_path_planner"
