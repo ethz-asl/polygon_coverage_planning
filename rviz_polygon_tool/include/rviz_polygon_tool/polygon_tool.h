@@ -1,5 +1,5 @@
-#ifndef FM_RVIZ_POLYGON_TOOL_POLYGON_TOOL_H_
-#define FM_RVIZ_POLYGON_TOOL_POLYGON_TOOL_H_
+#ifndef RVIZ_POLYGON_TOOL_POLYGON_TOOL_H_
+#define RVIZ_POLYGON_TOOL_POLYGON_TOOL_H_
 
 #include <OGRE/OgreEntity.h>
 #include <OGRE/OgreSceneManager.h>
@@ -25,7 +25,7 @@
 #include <std_msgs/Bool.h>
 #include <std_msgs/Int8.h>
 
-namespace mav_polygon_tool {
+namespace rviz_polygon_tool {
 
 typedef CGAL::Exact_predicates_inexact_constructions_kernel K;
 typedef K::Point_2 Point;
@@ -139,6 +139,6 @@ class PolygonTool : public rviz::Tool {
   void polygonPublisherCallback(const std_msgs::Bool& incomming);
 };
 
-}  // namespace mav_polygon_tool
+}  // namespace rviz_polygon_tool
 
-#endif  // FM_RVIZ_POLYGON_TOOL_POLYGON_TOOL_H_
+#endif  // RVIZ_POLYGON_TOOL_POLYGON_TOOL_H_

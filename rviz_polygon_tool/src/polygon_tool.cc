@@ -1,8 +1,8 @@
-#include "fm_rviz_polygon_tool/polygon_tool.h"
 #include <mav_planning_msgs/Point2D.h>
 #include <mav_planning_msgs/Polygon2D.h>
 #include <mav_planning_msgs/PolygonWithHoles.h>
-namespace mav_polygon_tool {
+#include "rviz_polygon_tool/polygon_tool.h"
+namespace rviz_polygon_tool {
 
 const Ogre::ColourValue kRed = Ogre::ColourValue(1.f, 0.f, 0.f, 1.0);
 const Ogre::ColourValue kGreen = Ogre::ColourValue(0.f, 1.f, 0.f, 1.0);
@@ -614,7 +614,7 @@ void PolygonTool::polygonPublisherCallback(const std_msgs::Bool& incomming) {
   polygon_wh_publisher_.publish(pwh_msg);
 }
 
-}  // namespace mav_polygon_tool
+}  // namespace rviz_polygon_tool
 
 #include <pluginlib/class_list_macros.h>
-PLUGINLIB_EXPORT_CLASS(mav_polygon_tool::PolygonTool, rviz::Tool)
+PLUGINLIB_EXPORT_CLASS(rviz_polygon_tool::PolygonTool, rviz::Tool)
