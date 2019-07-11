@@ -28,7 +28,7 @@ namespace rviz_polygon_tool {
 // Left click: Insert a new vertex before the selected vertex.
 // Right click: Remove a vertex, select the next vertex.
 // 'h': Add hole
-// 'p': Select next polygon
+// 'n': Select next polygon
 // 'v': Select next vertex
 // 'r': Reset currently selected polygon
 // 'c': Clear all
@@ -59,6 +59,8 @@ class PolygonTool : public rviz::Tool {
   void resetPolygon();
   void clearAll();
   void publishPolygon();
+  void updateStatus();
+  void removeEmptyHoles();
 
   std::list<Polygon_2> polygons_;
   std::list<Polygon_2>::iterator polygon_selection_;  // 0: hull, 1..N-1: holes

@@ -4,12 +4,27 @@
 
 namespace rviz_polygon_tool {
 
+// Colors.
 const Ogre::ColourValue kRed = Ogre::ColourValue(1.f, 0.f, 0.f, 1.0);
 const Ogre::ColourValue kGreen = Ogre::ColourValue(0.f, 1.f, 0.f, 1.0);
 const Ogre::ColourValue kBlue = Ogre::ColourValue(0.f, 0.f, 1.f, 1.0);
 const Ogre::ColourValue kPink = Ogre::ColourValue(1.f, 0.f, 1.f, 1.0);
 const Ogre::ColourValue kYellow = Ogre::ColourValue(1.f, 1.f, 0.f, 1.0);
 const Ogre::ColourValue kTransparent = Ogre::ColourValue(0.f, 0.f, 0.f, 0.0);
+
+// Status.
+const QString kLeftClick = "<b>Left-Click:</b> Insert a new vertex";
+const QString kRightClick = "<b>Right-Click:</b> Remove a vertex";
+const QString kH = "<b>h:</b> Add hole";
+const QString kP = "<b>n:</b> Select next polygon";
+const QString kV = "<b>v:</b> Select next vertex";
+const QString kR = "<b>r:</b> Reset polygon";
+const QString kC = "<b>c:</b> Clear all";
+const QString kEnter = "<b>Enter:</b> Publish polygon";
+const QString kSelection = "Current Selection: ";
+const QString kStatus = kLeftClick + ", " + kRightClick + ", " + kH + ", " +
+                        kP + ", " + kV + ", " + kR + ", " + kC + ", " + kEnter +
+                        ", " + kSelection;
 
 // Point scales.
 const float kPtScale = 0.5;
@@ -42,6 +57,8 @@ void PolygonTool::onInitialize() {
   // ROS.
   polygon_pub_ = nh_.advertise<polygon_coverage_msgs::PolygonWithHolesStamped>(
       "polygon", 1, true);
+
+  updateStatus();
 }
 
 void PolygonTool::activate() {
@@ -86,17 +103,6 @@ int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent& event) {
     moving_vertex_node_->setVisible(false);
   }
 
-  // Status
-  const QString kLeftClick = "<b>Left-Click:</b> Insert a new vertex";
-  const QString kRightClick = "<b>Right-Click:</b> Remove a vertex";
-  const QString kH = "<b>h:</b> Add hole";
-  const QString kP = "<b>p:</b> Select next polygon";
-  const QString kV = "<b>v:</b> Select next vertex";
-  const QString kR = "<b>r:</b> Reset polygon";
-  const QString kC = "<b>r:</b> Clear all";
-  const QString kEnter = "<b>Enter:</b> Publish polygon";
-  setStatus(kLeftClick + ", " + kRightClick + ", " + kH + ", " + kP + ", " +
-            kV + ", " + kR + ", " + kC + ", " + kEnter);
   return Render;
 }
 
@@ -175,7 +181,14 @@ void PolygonTool::renderPolygons() {
 
   polygon_node_->removeAllChildren();  // Clear polygon visualization.
   for (auto p = polygons_.begin(); p != polygons_.end(); ++p) {
-    Ogre::ColourValue c = kBlue;
+    // Hull is blue, holes are red. Selected polygon is yellow.
+    Ogre::ColourValue c = kRed;
+    if (p == polygon_selection_) {
+      c = kYellow;
+    } else if (p == polygons_.begin()) {
+      c = kBlue;
+    }
+
     renderPolygon(*p, c);
   }
 }
@@ -183,7 +196,7 @@ void PolygonTool::renderPolygons() {
 int PolygonTool::processKeyEvent(QKeyEvent* event, rviz::RenderPanel* panel) {
   if (event->text() == 'h') {
     addHole();
-  } else if (event->text() == 'p') {
+  } else if (event->text() == 'n') {
     nextPolygon();
   } else if (event->text() == 'v') {
     nextVertex();
@@ -195,17 +208,26 @@ int PolygonTool::processKeyEvent(QKeyEvent* event, rviz::RenderPanel* panel) {
     publishPolygon();
   }
 
+  updateStatus();
   renderPolygons();
   return Render;
 }
 
 void PolygonTool::addHole() {
+  removeEmptyHoles();
+  // Add a new hole.
   polygons_.push_back(Polygon_2());
   polygon_selection_ = std::prev(polygons_.end());
   vertex_selection_ = polygon_selection_->vertices_begin();
 }
 
-void PolygonTool::nextPolygon() {}
+void PolygonTool::nextPolygon() {
+  removeEmptyHoles();
+  polygon_selection_ = std::next(polygon_selection_) == polygons_.end()
+                           ? polygons_.begin()
+                           : std::next(polygon_selection_);
+  vertex_selection_ = polygon_selection_->vertices_begin();
+}
 
 void PolygonTool::nextVertex() {
   vertex_selection_ = std::next(vertex_selection_);
@@ -213,9 +235,44 @@ void PolygonTool::nextVertex() {
     vertex_selection_ = polygon_selection_->vertices_begin();
 }
 
-void PolygonTool::resetPolygon() {}
-void PolygonTool::clearAll() {}
+void PolygonTool::resetPolygon() {
+  polygon_selection_->clear();
+  if (polygon_selection_ != polygons_.begin()) {
+    // This is a hole. Remove it completely.
+    polygon_selection_ = polygons_.erase(polygon_selection_);
+    polygon_selection_ = std::prev(polygon_selection_);
+  }
+  vertex_selection_ = polygon_selection_->vertices_begin();
+}
+void PolygonTool::clearAll() {
+  polygons_ = {Polygon_2()};
+  polygon_selection_ = polygons_.begin();
+  vertex_selection_ = polygon_selection_->vertices_begin();
+}
 void PolygonTool::publishPolygon() {}
+
+void PolygonTool::updateStatus() {
+  if (polygon_selection_ == polygons_.begin()) {
+    setStatus(kStatus + " Hull");
+  } else {
+    int idx = std::distance(polygons_.begin(), polygon_selection_) - 1;
+    setStatus(kStatus + " Hole " + QString::number(idx));
+  }
+}
+
+void PolygonTool::removeEmptyHoles() {
+  // Remove all empty holes.
+  auto new_end =
+      std::remove_if(std::next(polygons_.begin()), polygons_.end(),
+                     [](const Polygon_2& p) { return p.is_empty(); });
+  if (new_end == polygons_.end()) return;  // Nothing to do.
+  // Erase and update polygon selection.
+  polygon_selection_ = polygons_.erase(new_end, polygons_.end());
+  polygon_selection_ = polygon_selection_ == polygons_.begin()
+                           ? polygons_.begin()
+                           : std::prev(polygon_selection_);
+  vertex_selection_ = polygon_selection_->vertices_begin();
+}
 
 // void PolygonTool::newPolyCallback(const std_msgs::Int8& new_poly_type) {
 //   if (is_active_) {
