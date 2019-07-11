@@ -1,5 +1,6 @@
 #include "rviz_polygon_tool/polygon_tool.h"
 
+#include <CGAL/number_utils.h>
 #include <polygon_coverage_geometry/boolean.h>
 #include <polygon_coverage_msgs/PolygonWithHolesStamped.h>
 #include <polygon_coverage_msgs/conversion.h>
