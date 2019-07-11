@@ -23,20 +23,28 @@ const QString kV = "<b>v:</b> Select next vertex";
 const QString kR = "<b>r:</b> Reset polygon";
 const QString kC = "<b>c:</b> Clear all";
 const QString kEnter = "<b>Enter:</b> Publish polygon";
+const QString kMouse = "<b>Mouse wheel (+shift/ctrl):</b> Change altitude";
+const QString kAltitude = "Altitude: ";
 const QString kSelection = "Current Selection: ";
 const QString kStatus = kLeftClick + ", " + kRightClick + ", " + kH + ", " +
                         kP + ", " + kV + ", " + kR + ", " + kC + ", " + kEnter +
-                        ", " + kSelection;
+                        ", " + kMouse + ", " + kAltitude;
 
 // Point scales.
 const float kPtScale = 0.5;
 const float kDeleteTol = 0.5;
+
+// Altitude changes.
+const double kSmallAltitudeDelta = 0.05;
+const double kNormalAltitudeDelta = 1.0;
+const double kLargeAltitudeDelta = 10.0;
 
 PolygonTool::PolygonTool()
     : Tool(),
       polygons_({Polygon_2()}),
       polygon_selection_(polygons_.begin()),
       vertex_selection_(polygon_selection_->vertices_begin()),
+      altitude_(0.0),
       polygon_node_(nullptr),
       moving_vertex_node_(nullptr),
       sphere_(nullptr) {
@@ -98,6 +106,10 @@ int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent& event) {
       clickLeft(event);
     } else if (event.rightUp()) {
       clickRight(event);
+    } else if (event.wheel_delta > 0) {
+      increaseAltitude(event);
+    } else if (event.wheel_delta < 0) {
+      decreaseAltitude(event);
     }
   } else {
     // Don't show point if not on plane.
@@ -114,6 +126,8 @@ void PolygonTool::clickLeft(const rviz::ViewportMouseEvent& event) {
                                         event.y, intersection)) {
     createVertex(intersection);
   }
+
+  updateStatus();
   renderPolygons();
 }
 
@@ -130,6 +144,8 @@ void PolygonTool::clickRight(const rviz::ViewportMouseEvent& event) {
                                         event.y, intersection)) {
     deleteVertex(intersection);
   }
+
+  updateStatus();
   renderPolygons();
 }
 
@@ -137,7 +153,8 @@ void PolygonTool::deleteVertex(const Ogre::Vector3& position) {
   // Select vertex close by.
   for (auto p = polygons_.begin(); p != polygons_.end(); ++p) {
     for (auto v = p->vertices_begin(); v != p->vertices_end(); ++v) {
-      Ogre::Vector3 pt(CGAL::to_double(v->x()), CGAL::to_double(v->y()), 0.0);
+      Ogre::Vector3 pt(CGAL::to_double(v->x()), CGAL::to_double(v->y()),
+                       altitude_);
       if ((position - pt).length() < kDeleteTol) {
         polygon_selection_ = p;
         vertex_selection_ = v;
@@ -159,7 +176,8 @@ void PolygonTool::renderPolygon(const Polygon_2& polygon,
         new rviz::Shape(rviz::Shape::Sphere, scene_manager_, polygon_node_);
     sphere->setColor(c);
     sphere->setScale(Ogre::Vector3(kPtScale));
-    Ogre::Vector3 p(CGAL::to_double(v->x()), CGAL::to_double(v->y()), 0.0);
+    Ogre::Vector3 p(CGAL::to_double(v->x()), CGAL::to_double(v->y()),
+                    altitude_);
     sphere->setPosition(p);
     if (v == vertex_selection_) sphere->setColor(kGreen);
 
@@ -169,7 +187,7 @@ void PolygonTool::renderPolygon(const Polygon_2& polygon,
                       ? std::prev(polygon.vertices_end())
                       : std::prev(v);
     Ogre::Vector3 start(CGAL::to_double(v_prev->x()),
-                        CGAL::to_double(v_prev->y()), 0.0);
+                        CGAL::to_double(v_prev->y()), altitude_);
     rviz::Line* line = new rviz::Line(scene_manager_, polygon_node_);
     line->setColor(c);
     line->setPoints(start, p);
@@ -249,6 +267,7 @@ void PolygonTool::clearAll() {
   polygons_ = {Polygon_2()};
   polygon_selection_ = polygons_.begin();
   vertex_selection_ = polygon_selection_->vertices_begin();
+  altitude_ = 0.0;
 }
 void PolygonTool::publishPolygon() {
   // Check simplicity.
@@ -283,8 +302,8 @@ void PolygonTool::publishPolygon() {
   msg.header.stamp = ros::Time::now();
   msg.header.frame_id = context_->getFixedFrame().toStdString();
   if (!res.empty()) {
-    polygon_coverage_planning::convertPolygonWithHolesToMsg(res.front(), 0.0,
-                                                            &msg.polygon);
+    polygon_coverage_planning::convertPolygonWithHolesToMsg(
+        res.front(), altitude_, &msg.polygon);
   }
   polygon_pub_.publish(msg);
 
@@ -292,11 +311,13 @@ void PolygonTool::publishPolygon() {
 }
 
 void PolygonTool::updateStatus() {
+  const QString kPrefix =
+      kStatus + QString::number(altitude_) + "m, " + kSelection;
   if (polygon_selection_ == polygons_.begin()) {
-    setStatus(kStatus + " Hull");
+    setStatus(kPrefix + " Hull");
   } else {
     int idx = std::distance(polygons_.begin(), polygon_selection_) - 1;
-    setStatus(kStatus + " Hole " + QString::number(idx));
+    setStatus(kPrefix + " Hole " + QString::number(idx));
   }
 }
 
@@ -312,6 +333,32 @@ void PolygonTool::removeEmptyHoles() {
                            ? polygons_.begin()
                            : std::prev(polygon_selection_);
   vertex_selection_ = polygon_selection_->vertices_begin();
+}
+
+void PolygonTool::increaseAltitude(rviz::ViewportMouseEvent& event) {
+  if (event.shift()) {
+    altitude_ += kSmallAltitudeDelta;
+  } else if (event.control()) {
+    altitude_ += kLargeAltitudeDelta;
+  } else {
+    altitude_ += kNormalAltitudeDelta;
+  }
+
+  updateStatus();
+  renderPolygons();
+}
+
+void PolygonTool::decreaseAltitude(rviz::ViewportMouseEvent& event) {
+  if (event.shift()) {
+    altitude_ -= kSmallAltitudeDelta;
+  } else if (event.control()) {
+    altitude_ -= kLargeAltitudeDelta;
+  } else {
+    altitude_ -= kNormalAltitudeDelta;
+  }
+
+  updateStatus();
+  renderPolygons();
 }
 
 }  // namespace rviz_polygon_tool

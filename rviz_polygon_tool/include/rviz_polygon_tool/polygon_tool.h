@@ -61,10 +61,13 @@ class PolygonTool : public rviz::Tool {
   void publishPolygon();
   void updateStatus();
   void removeEmptyHoles();
+  void increaseAltitude(rviz::ViewportMouseEvent& event);
+  void decreaseAltitude(rviz::ViewportMouseEvent& event);
 
   std::list<Polygon_2> polygons_;
   std::list<Polygon_2>::iterator polygon_selection_;  // 0: hull, 1..N-1: holes
   VertexIterator vertex_selection_;
+  double altitude_;
 
   // Rendering
   void renderPolygon(const Polygon_2& polygon, const Ogre::ColourValue& c);
