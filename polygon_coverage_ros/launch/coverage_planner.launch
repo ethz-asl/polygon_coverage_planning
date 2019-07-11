@@ -14,7 +14,7 @@
     clear_params="true" >
 
     <!-- Polygon, altitude, and world frame ID -->
-    <rosparam command="load" file="$(find polygon_coverage_ros)/cfg/polygons/example_polygon_epfl.yaml" />
+    <rosparam command="load" file="$(find polygon_coverage_ros)/cfg/polygons/example_polygon_piombino.yaml" />
     <!-- Sweep planner specific parameter -->
     <param name="lateral_overlap" value="0.6" />
     <param name="offset_polygons" value="true" />
@@ -37,6 +37,8 @@
     <param name="latch_topics" value="true" />
     <param name="publish_plan_on_planning_complete" value="true" />
     <param name="publish_visualization_on_planning_complete" value="true" />
+    <param name="set_start_goal_from_rviz" value="true" />
+    <param name="set_polygon_from_rviz" value="true" />
   </node>
 
 </launch>

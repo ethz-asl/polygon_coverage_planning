@@ -68,14 +68,9 @@ Visualization Manager:
       Marker Topic: /shortest_path_planner/path_markers
       Name: MarkerArray
       Namespaces:
-        "": true
-        points_end: true
-        points_end_text: true
-        points_start: true
         polygonhole_0: true
         polygonhole_1: true
         polygonhull: true
-        vertices_and_strip: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -102,6 +97,7 @@ Visualization Manager:
     - Class: rviz/PublishPoint
       Single click: true
       Topic: /clicked_point
+    - Class: rviz_polygon_tool/PolygonSelection
   Value: true
   Views:
     Current:

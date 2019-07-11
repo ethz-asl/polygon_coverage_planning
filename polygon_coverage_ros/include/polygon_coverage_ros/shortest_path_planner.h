@@ -28,12 +28,6 @@ class ShortestPathPlanner : public PolygonPlannerBase {
 
   // The library object that actually does planning.
   std::unique_ptr<visibility_graph::VisibilityGraph> planner_;
-
-  // Set start and goal by clicked point.
-  bool setFromClickedPoint(std_srvs::Empty::Request& request,
-                           std_srvs::Empty::Response& response);
-
-  ros::ServiceServer clicked_point_srv_;
 };
 
 }  // namespace polygon_coverage_planning

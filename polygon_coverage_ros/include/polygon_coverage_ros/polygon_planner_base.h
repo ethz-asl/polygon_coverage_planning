@@ -6,9 +6,11 @@
 
 #include <polygon_coverage_geometry/cgal_definitions.h>
 #include <polygon_coverage_msgs/PolygonService.h>
+#include <polygon_coverage_msgs/PolygonWithHolesStamped.h>
 #include <polygon_coverage_planners/cost_functions/path_cost_functions.h>
 #include <polygon_coverage_planners/sensor_models/sensor_model_base.h>
 
+#include <geometry_msgs/PointStamped.h>
 #include <mav_planning_msgs/PlannerService.h>
 #include <ros/ros.h>
 #include <std_srvs/Empty.h>
@@ -34,10 +36,6 @@ class PolygonPlannerBase {
     return visualization_msgs::MarkerArray();
   }
 
-  // Solve the planning problem. Stores status planning_complete_ and publishes
-  // trajectory and visualization if enabled.
-  void solve(const Point_2& start, const Point_2& goal);
-
   // Node handles
   ros::NodeHandle nh_;
   ros::NodeHandle nh_private_;
@@ -56,8 +54,16 @@ class PolygonPlannerBase {
   bool publish_visualization_on_planning_complete_;
   std::optional<double> v_max_;
   std::optional<double> a_max_;
+  bool set_start_goal_from_rviz_;
+  bool set_polygon_from_rviz_;
+  std::optional<Point_2> start_;
+  std::optional<Point_2> goal_;
 
  private:
+  // Solve the planning problem. Stores status planning_complete_ and publishes
+  // trajectory and visualization if enabled.
+  void solve(const Point_2& start, const Point_2& goal);
+
   // Initial interactions with ROS
   void getParametersFromRos();
   void advertiseTopics();
@@ -66,6 +72,12 @@ class PolygonPlannerBase {
   bool setPolygonCallback(
       polygon_coverage_msgs::PolygonService::Request& request,
       polygon_coverage_msgs::PolygonService::Response& response);
+
+  // Set start and goal from clicked point.
+  void clickPointCallback(const geometry_msgs::PointStampedConstPtr& msg);
+  // Set polygon from RVIZ polygon tool.
+  void clickPolygonCallback(
+      const polygon_coverage_msgs::PolygonWithHolesStamped& msg);
   // Solves the planning problem from start to goal.
   bool planPathCallback(mav_planning_msgs::PlannerService::Request& request,
                         mav_planning_msgs::PlannerService::Response& response);
@@ -84,6 +96,8 @@ class PolygonPlannerBase {
   // Publishers and Services
   ros::Publisher marker_pub_;
   ros::Publisher waypoint_list_pub_;
+  ros::Subscriber clicked_point_sub_;
+  ros::Subscriber polygon_sub_;
   ros::ServiceServer set_polygon_srv_;
   ros::ServiceServer plan_path_srv_;
   ros::ServiceServer publish_visualization_srv_;
