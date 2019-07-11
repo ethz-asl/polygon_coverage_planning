@@ -9,6 +9,7 @@ catkin_simple(ALL_DEPS_REQUIRED)
 #############
 cs_add_library(${PROJECT_NAME}
   src/msg_from_xml_rpc.cc
+  src/conversion.cc
 )
 target_link_libraries(${PROJECT_NAME})
 

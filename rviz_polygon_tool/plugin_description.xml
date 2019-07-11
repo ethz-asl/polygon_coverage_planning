@@ -1,0 +1,9 @@
+<library path="lib/librviz_polygon_tool">
+  <class name="rviz_polygon_tool/PolygonSelection"
+         type="rviz_polygon_tool::PolygonTool"
+         base_class_type="rviz::Tool">
+    <description>
+      Tool for drawing polygons in RVIZ.
+    </description>
+  </class>
+</library>

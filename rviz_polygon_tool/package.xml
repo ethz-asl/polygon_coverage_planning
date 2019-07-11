@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>rviz_polygon_tool</name>
+  <version>0.0.0</version>
+  <description>
+    RVIZ tool to create polygons.
+  </description>
+
+  <maintainer email="brik@ethz.ch">Rik Bähnemann</maintainer>
+  <author email="brik@ethz.ch">Rik Bähnemann</author>
+  <author email="tmarvel@student.ethz.ch">Timothy Marvel</author>
+
+  <license>GPL</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <buildtool_depend>catkin_simple</buildtool_depend>
+
+  <depend>roscpp</depend>
+  <depend>rviz</depend>
+  <depend>polygon_coverage_msgs</depend>
+  <depend>polygon_coverage_geometry</depend>
+  <depend>geometry_msgs</depend>
+  <depend>cgal_catkin</depend>
+
+  <export>
+    <rviz plugin="${prefix}/plugin_description.xml"/>
+  </export>
+</package>
