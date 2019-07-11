@@ -17,6 +17,7 @@ set(CMAKE_BUILD_TYPE Release)
 #############
 cs_add_library(${PROJECT_NAME}
   src/bcd.cc
+  src/boolean.cc
   src/cgal_comm.cc
   src/decomposition.cc
   src/offset.cc

@@ -1,6 +1,8 @@
 #include "rviz_polygon_tool/polygon_tool.h"
 
+#include <polygon_coverage_geometry/boolean.h>
 #include <polygon_coverage_msgs/PolygonWithHolesStamped.h>
+#include <polygon_coverage_msgs/conversion.h>
 
 namespace rviz_polygon_tool {
 
@@ -57,8 +59,6 @@ void PolygonTool::onInitialize() {
   // ROS.
   polygon_pub_ = nh_.advertise<polygon_coverage_msgs::PolygonWithHolesStamped>(
       "polygon", 1, true);
-
-  updateStatus();
 }
 
 void PolygonTool::activate() {
@@ -69,6 +69,7 @@ void PolygonTool::activate() {
   if (polygon_node_) {
     polygon_node_->setVisible(true);
   }
+  updateStatus();
 }
 
 void PolygonTool::deactivate() {
@@ -249,7 +250,46 @@ void PolygonTool::clearAll() {
   polygon_selection_ = polygons_.begin();
   vertex_selection_ = polygon_selection_->vertices_begin();
 }
-void PolygonTool::publishPolygon() {}
+void PolygonTool::publishPolygon() {
+  // Check simplicity.
+  for (auto p = polygons_.begin(); p != polygons_.end(); ++p) {
+    if (!p->is_simple()) {
+      ROS_WARN("All polygons need to be simple!");
+      return;
+    }
+  }
+
+  // Try to create polygon union.
+  // Sort hull counter-clockwise and holes clockwise.
+  if (polygons_.begin()->is_clockwise_oriented())
+    polygons_.begin()->reverse_orientation();
+  for (auto p = std::next(polygons_.begin()); p != polygons_.end(); ++p) {
+    if (p->is_counterclockwise_oriented()) p->reverse_orientation();
+  }
+
+  // Cut holes from hull.
+  std::list<PolygonWithHoles> res =
+      polygon_coverage_planning::computeDifference(
+          polygons_.begin(), std::next(polygons_.begin()), polygons_.end());
+
+  // Catch unexpected cases.
+  if (res.size() > 1) {
+    ROS_WARN("Polygon union results in more than one polygon. Remove holes.");
+    return;
+  }
+
+  // Create ROS message.
+  polygon_coverage_msgs::PolygonWithHolesStamped msg;
+  msg.header.stamp = ros::Time::now();
+  msg.header.frame_id = context_->getFixedFrame().toStdString();
+  if (!res.empty()) {
+    polygon_coverage_planning::convertPolygonWithHolesToMsg(res.front(), 0.0,
+                                                            &msg.polygon);
+  }
+  polygon_pub_.publish(msg);
+
+  ROS_INFO_STREAM("Publishing polygon: " << res.front());
+}
 
 void PolygonTool::updateStatus() {
   if (polygon_selection_ == polygons_.begin()) {
@@ -273,59 +313,6 @@ void PolygonTool::removeEmptyHoles() {
                            : std::prev(polygon_selection_);
   vertex_selection_ = polygon_selection_->vertices_begin();
 }
-
-// void PolygonTool::newPolyCallback(const std_msgs::Int8& new_poly_type) {
-//   if (is_active_) {
-//     if (global_planning_) {
-//       showIndividualPolygons();
-//       global_planning_ = false;
-//     }
-//     int incomming_type = new_poly_type.data;
-//     int new_current_poly = vertex_nodes_.size();
-//     setColorsLeaving();
-//     pushBackElements(incomming_type);
-//     // needs to be done here using old size (before push back!)
-//     current_polygon_ = new_current_poly;
-//   }
-// }
-//
-// void PolygonTool::deletePolyCallback(const std_msgs::Int8& delete_ind) {
-//   if (is_active_) {
-//     if (global_planning_) {
-//       showIndividualPolygons();
-//       global_planning_ = false;
-//     }
-//     int delete_location = delete_ind.data;
-//     deletePolygon(delete_location);
-//   }
-// }
-//
-// void PolygonTool::polygonPublisherCallback(const std_msgs::Bool&
-// incomming) {
-//   mav_planning_msgs::PolygonWithHoles pwh_msg;
-//
-//   for (size_t i = 0; i < main_polygon_.outer_boundary().size(); ++i) {
-//     mav_planning_msgs::Point2D local_pt;
-//     local_pt.x = main_polygon_.outer_boundary()[i][0];
-//     local_pt.y = main_polygon_.outer_boundary()[i][1];
-//     pwh_msg.hull.points.push_back(local_pt);
-//   }
-//
-//   for (Polygon_2_WH::Hole_const_iterator hi =
-//   main_polygon_.holes_begin();
-//        hi != main_polygon_.holes_end(); ++hi) {
-//     size_t pts_size = hi->size();
-//     mav_planning_msgs::Polygon2D local_poly;
-//     for (size_t i = 0; i < pts_size; ++i) {
-//       mav_planning_msgs::Point2D local_pt;
-//       local_pt.x = (*hi)[i][0];
-//       local_pt.y = (*hi)[i][1];
-//       local_poly.points.push_back(local_pt);
-//     }
-//     pwh_msg.holes.push_back(local_poly);
-//   }
-//   polygon_pub_.publish(pwh_msg);
-// }
 
 }  // namespace rviz_polygon_tool
 

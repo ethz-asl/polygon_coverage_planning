@@ -17,7 +17,6 @@
 
   <depend>roscpp</depend>
   <depend>rviz</depend>
-  <depend>cgal_catkin</depend>
   <depend>polygon_coverage_msgs</depend>
   <depend>polygon_coverage_geometry</depend>
   <depend>geometry_msgs</depend>
