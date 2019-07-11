@@ -89,8 +89,14 @@ int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent& event) {
   // Status
   const QString kLeftClick = "<b>Left-Click:</b> Insert a new vertex";
   const QString kRightClick = "<b>Right-Click:</b> Remove a vertex";
+  const QString kH = "<b>h:</b> Add hole";
+  const QString kP = "<b>p:</b> Select next polygon";
   const QString kV = "<b>v:</b> Select next vertex";
-  setStatus(kLeftClick + ", " + kRightClick + ", " + kV);
+  const QString kR = "<b>r:</b> Reset polygon";
+  const QString kC = "<b>r:</b> Clear all";
+  const QString kEnter = "<b>Enter:</b> Publish polygon";
+  setStatus(kLeftClick + ", " + kRightClick + ", " + kH + ", " + kP + ", " +
+            kV + ", " + kR + ", " + kC + ", " + kEnter);
   return Render;
 }
 
@@ -139,8 +145,9 @@ void PolygonTool::deleteVertex(const Ogre::Vector3& position) {
 
 void PolygonTool::renderPolygon(const Polygon_2& polygon,
                                 const Ogre::ColourValue& c) {
-  // Render vertices.
+  // Render vertices and edges.
   for (auto v = polygon.vertices_begin(); v != polygon.vertices_end(); ++v) {
+    // Render vertices as spheres.
     rviz::Shape* sphere =
         new rviz::Shape(rviz::Shape::Sphere, scene_manager_, polygon_node_);
     sphere->setColor(c);
@@ -148,17 +155,18 @@ void PolygonTool::renderPolygon(const Polygon_2& polygon,
     Ogre::Vector3 p(CGAL::to_double(v->x()), CGAL::to_double(v->y()), 0.0);
     sphere->setPosition(p);
     if (v == vertex_selection_) sphere->setColor(kGreen);
-  }
-  // Render edges.
-  for (auto e = polygon.edges_begin(); e != polygon.edges_end(); ++e) {
+
+    // Render edges as lines.
+    if (polygon.size() < 2) continue;
+    auto v_prev = v == polygon.vertices_begin()
+                      ? std::prev(polygon.vertices_end())
+                      : std::prev(v);
+    Ogre::Vector3 start(CGAL::to_double(v_prev->x()),
+                        CGAL::to_double(v_prev->y()), 0.0);
     rviz::Line* line = new rviz::Line(scene_manager_, polygon_node_);
     line->setColor(c);
-    Ogre::Vector3 start(CGAL::to_double(e->source().x()),
-                        CGAL::to_double(e->source().y()), 0.0);
-    Ogre::Vector3 end(CGAL::to_double(e->target().x()),
-                      CGAL::to_double(e->target().y()), 0.0);
-    line->setPoints(start, end);
-    if (e->target() == *vertex_selection_) line->setColor(kGreen);
+    line->setPoints(start, p);
+    if (v == vertex_selection_) line->setColor(kGreen);
   }
 }
 
@@ -173,19 +181,41 @@ void PolygonTool::renderPolygons() {
 }
 
 int PolygonTool::processKeyEvent(QKeyEvent* event, rviz::RenderPanel* panel) {
-  if (event->text() == 'v') {
-    punchV();
+  if (event->text() == 'h') {
+    addHole();
+  } else if (event->text() == 'p') {
+    nextPolygon();
+  } else if (event->text() == 'v') {
+    nextVertex();
+  } else if (event->text() == 'r') {
+    resetPolygon();
+  } else if (event->text() == 'c') {
+    clearAll();
+  } else if (event->matches(QKeySequence::InsertParagraphSeparator)) {
+    publishPolygon();
   }
+
+  renderPolygons();
   return Render;
 }
 
-void PolygonTool::punchV() {
+void PolygonTool::addHole() {
+  polygons_.push_back(Polygon_2());
+  polygon_selection_ = std::prev(polygons_.end());
+  vertex_selection_ = polygon_selection_->vertices_begin();
+}
+
+void PolygonTool::nextPolygon() {}
+
+void PolygonTool::nextVertex() {
   vertex_selection_ = std::next(vertex_selection_);
   if (vertex_selection_ == polygon_selection_->vertices_end())
     vertex_selection_ = polygon_selection_->vertices_begin();
-
-  renderPolygons();
 }
+
+void PolygonTool::resetPolygon() {}
+void PolygonTool::clearAll() {}
+void PolygonTool::publishPolygon() {}
 
 // void PolygonTool::newPolyCallback(const std_msgs::Int8& new_poly_type) {
 //   if (is_active_) {

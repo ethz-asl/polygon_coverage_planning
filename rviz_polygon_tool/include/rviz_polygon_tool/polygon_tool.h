@@ -28,9 +28,9 @@ namespace rviz_polygon_tool {
 // Left click: Insert a new vertex before the selected vertex.
 // Right click: Remove a vertex, select the next vertex.
 // 'h': Add hole
-// 'r': Reset currently selected polygon
-// 't': Select next polygon
+// 'p': Select next polygon
 // 'v': Select next vertex
+// 'r': Reset currently selected polygon
 // 'c': Clear all
 // Enter: Publish polygon if valid
 class PolygonTool : public rviz::Tool {
@@ -49,11 +49,16 @@ class PolygonTool : public rviz::Tool {
   // User input.
   void clickLeft(const rviz::ViewportMouseEvent& event);
   void clickRight(const rviz::ViewportMouseEvent& event);
-  void punchV();
 
   // Action.
   void createVertex(const Ogre::Vector3& position);
   void deleteVertex(const Ogre::Vector3& position);
+  void addHole();
+  void nextPolygon();
+  void nextVertex();
+  void resetPolygon();
+  void clearAll();
+  void publishPolygon();
 
   std::list<Polygon_2> polygons_;
   std::list<Polygon_2>::iterator polygon_selection_;  // 0: hull, 1..N-1: holes
@@ -71,8 +76,6 @@ class PolygonTool : public rviz::Tool {
   // ROS messaging
   ros::NodeHandle nh_;
   ros::Publisher polygon_pub_;
-
-  void polygonPublisherCallback(const std_msgs::Bool& incomming);
 };
 
 }  // namespace rviz_polygon_tool
