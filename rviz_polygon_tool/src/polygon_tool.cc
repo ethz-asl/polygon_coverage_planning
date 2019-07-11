@@ -39,13 +39,14 @@ const float kDeleteTol = 0.5;
 const double kSmallAltitudeDelta = 0.05;
 const double kNormalAltitudeDelta = 1.0;
 const double kLargeAltitudeDelta = 10.0;
+const double kDefaultAltitude = 3.0;
 
 PolygonTool::PolygonTool()
     : Tool(),
       polygons_({Polygon_2()}),
       polygon_selection_(polygons_.begin()),
       vertex_selection_(polygon_selection_->vertices_begin()),
-      altitude_(0.0),
+      altitude_(kDefaultAltitude),
       polygon_node_(nullptr),
       moving_vertex_node_(nullptr),
       sphere_(nullptr) {
@@ -268,9 +269,10 @@ void PolygonTool::clearAll() {
   polygons_ = {Polygon_2()};
   polygon_selection_ = polygons_.begin();
   vertex_selection_ = polygon_selection_->vertices_begin();
-  altitude_ = 0.0;
+  altitude_ = kDefaultAltitude;
 }
 void PolygonTool::publishPolygon() {
+  removeEmptyHoles();
   // Check simplicity.
   for (auto p = polygons_.begin(); p != polygons_.end(); ++p) {
     if (!p->is_simple()) {

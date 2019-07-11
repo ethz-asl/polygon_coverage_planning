@@ -6,6 +6,7 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
+        - /Grid1
         - /TF1
         - /TF1/Frames1
         - /TF1/Tree1
@@ -42,7 +43,7 @@ Visualization Manager:
       Cell Size: 1
       Class: rviz/Grid
       Color: 160; 160; 164
-      Enabled: false
+      Enabled: true
       Line Style:
         Line Width: 0.029999999329447746
         Value: Lines
@@ -53,9 +54,9 @@ Visualization Manager:
         Y: 0
         Z: 0
       Plane: XY
-      Plane Cell Count: 10
+      Plane Cell Count: 200
       Reference Frame: <Fixed Frame>
-      Value: false
+      Value: true
     - Class: rviz/TF
       Enabled: true
       Frame Timeout: 15
@@ -75,79 +76,7 @@ Visualization Manager:
       Marker Topic: /coverage_planner/path_markers
       Name: MarkerArray
       Namespaces:
-        "": true
-        decomposition_polygon_0hull: true
-        decomposition_polygon_10hull: true
-        decomposition_polygon_11hull: true
-        decomposition_polygon_12hull: true
-        decomposition_polygon_13hull: true
-        decomposition_polygon_14hull: true
-        decomposition_polygon_15hull: true
-        decomposition_polygon_16hull: true
-        decomposition_polygon_17hull: true
-        decomposition_polygon_18hull: true
-        decomposition_polygon_19hull: true
-        decomposition_polygon_1hull: true
-        decomposition_polygon_20hull: true
-        decomposition_polygon_21hull: true
-        decomposition_polygon_22hull: true
-        decomposition_polygon_23hull: true
-        decomposition_polygon_24hull: true
-        decomposition_polygon_25hull: true
-        decomposition_polygon_26hull: true
-        decomposition_polygon_27hull: true
-        decomposition_polygon_28hull: true
-        decomposition_polygon_29hull: true
-        decomposition_polygon_2hull: true
-        decomposition_polygon_30hull: true
-        decomposition_polygon_31hull: true
-        decomposition_polygon_32hull: true
-        decomposition_polygon_33hull: true
-        decomposition_polygon_34hull: true
-        decomposition_polygon_35hull: true
-        decomposition_polygon_36hull: true
-        decomposition_polygon_37hull: true
-        decomposition_polygon_38hull: true
-        decomposition_polygon_39hull: true
-        decomposition_polygon_3hull: true
-        decomposition_polygon_40hull: true
-        decomposition_polygon_41hull: true
-        decomposition_polygon_42hull: true
-        decomposition_polygon_43hull: true
-        decomposition_polygon_44hull: true
-        decomposition_polygon_45hull: true
-        decomposition_polygon_46hull: true
-        decomposition_polygon_47hull: true
-        decomposition_polygon_48hull: true
-        decomposition_polygon_49hull: true
-        decomposition_polygon_4hull: true
-        decomposition_polygon_50hull: true
-        decomposition_polygon_51hull: true
-        decomposition_polygon_5hull: true
-        decomposition_polygon_6hull: true
-        decomposition_polygon_7hull: true
-        decomposition_polygon_8hull: true
-        decomposition_polygon_9hull: true
-        points_end: true
-        points_end_text: true
-        points_start: true
-        polygonhole_0: true
-        polygonhole_1: true
-        polygonhole_10: true
-        polygonhole_11: true
-        polygonhole_12: true
-        polygonhole_13: true
-        polygonhole_14: true
-        polygonhole_2: true
-        polygonhole_3: true
-        polygonhole_4: true
-        polygonhole_5: true
-        polygonhole_6: true
-        polygonhole_7: true
-        polygonhole_8: true
-        polygonhole_9: true
-        polygonhull: true
-        vertices_and_strip: true
+        {}
       Queue Size: 100
       Value: true
   Enabled: true
@@ -174,6 +103,7 @@ Visualization Manager:
     - Class: rviz/PublishPoint
       Single click: true
       Topic: /clicked_point
+    - Class: rviz_polygon_tool/PolygonSelection
   Value: true
   Views:
     Current:
@@ -190,8 +120,8 @@ Visualization Manager:
       Scale: 7.314511299133301
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 54.56514358520508
-      Y: 50.239830017089844
+      X: 47.592681884765625
+      Y: 32.7403678894043
     Saved: ~
 Window Geometry:
   Displays:

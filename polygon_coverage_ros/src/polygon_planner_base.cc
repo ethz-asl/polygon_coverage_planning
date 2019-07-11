@@ -23,6 +23,8 @@ PolygonPlannerBase::PolygonPlannerBase(const ros::NodeHandle& nh,
       global_frame_id_("world"),
       publish_plan_on_planning_complete_(false),
       publish_visualization_on_planning_complete_(true),
+      set_start_goal_from_rviz_(false),
+      set_polygon_from_rviz_(true),
       planning_complete_(false) {
   // Initial interactions with ROS
   getParametersFromRos();
@@ -52,6 +54,11 @@ void PolygonPlannerBase::advertiseTopics() {
   publish_plan_points_srv_ = nh_private_.advertiseService(
       "publish_path_points",
       &PolygonPlannerBase::publishTrajectoryPointsCallback, this);
+  // Subscribe
+  clicked_point_sub_ = nh_.subscribe(
+      "/clicked_point", 1, &PolygonPlannerBase::clickPointCallback, this);
+  polygon_sub_ = nh_.subscribe("/polygon", 1,
+                               &PolygonPlannerBase::clickPolygonCallback, this);
 }
 
 void PolygonPlannerBase::getParametersFromRos() {
@@ -66,7 +73,7 @@ void PolygonPlannerBase::getParametersFromRos() {
       double temp_alt;
       if (polygonFromMsg(poly_msg, &temp_pwh, &temp_alt, &global_frame_id_)) {
         ROS_INFO_STREAM("Successfully loaded polygon.");
-        ROS_INFO_STREAM("Altiude: " << temp_alt << " m");
+        ROS_INFO_STREAM("Altitude: " << temp_alt << " m");
         ROS_INFO_STREAM("Global frame: " << global_frame_id_);
         ROS_INFO_STREAM("Polygon:" << temp_pwh);
         polygon_ = std::make_optional(temp_pwh);
@@ -165,6 +172,8 @@ void PolygonPlannerBase::getParametersFromRos() {
   nh_private_.getParam("publish_visualization_on_planning_complete",
                        publish_visualization_on_planning_complete_);
   nh_private_.getParam("global_frame_id", global_frame_id_);
+  nh_private_.getParam("set_start_goal_from_rviz", set_start_goal_from_rviz_);
+  nh_private_.getParam("set_polygon_from_rviz", set_polygon_from_rviz_);
 }
 
 void PolygonPlannerBase::solve(const Point_2& start, const Point_2& goal) {
@@ -314,7 +323,7 @@ bool PolygonPlannerBase::setPolygonCallback(
   altitude_ = std::make_optional(temp_alt);
 
   ROS_INFO_STREAM("Successfully loaded polygon.");
-  ROS_INFO_STREAM("Altiude: " << altitude_.value() << "m");
+  ROS_INFO_STREAM("Altitude: " << altitude_.value() << "m");
   ROS_INFO_STREAM("Global frame: " << global_frame_id_);
   ROS_INFO_STREAM("Polygon:" << polygon_.value());
 
@@ -362,6 +371,50 @@ bool PolygonPlannerBase::publishTrajectoryPointsCallback(
 bool PolygonPlannerBase::resetPlanner() {
   ROS_ERROR_STREAM("resetPlanner is not implemented.");
   return false;
+}
+
+void PolygonPlannerBase::clickPointCallback(
+    const geometry_msgs::PointStampedConstPtr& msg) {
+  if (!set_start_goal_from_rviz_) return;
+
+  if (!start_.has_value()) {
+    ROS_INFO("Selecting START from RVIZ PublishPoint tool.");
+    start_ = std::make_optional<Point_2>(msg->point.x, msg->point.y);
+  } else if (!goal_.has_value()) {
+    ROS_INFO("Selecting GOAL from RVIZ PublishPoint tool.");
+    goal_ = std::make_optional<Point_2>(msg->point.x, msg->point.y);
+  }
+
+  if (start_.has_value() && goal_.has_value()) {
+    solve(start_.value(), goal_.value());
+    start_.reset();
+    goal_.reset();
+  }
+
+  return;
+}
+
+void PolygonPlannerBase::clickPolygonCallback(
+    const polygon_coverage_msgs::PolygonWithHolesStamped& msg) {
+  if (!set_polygon_from_rviz_) return;
+
+  ROS_INFO("Updating polygon from RVIZ polygon tool.");
+  PolygonWithHoles temp_pwh;
+  double temp_alt;
+  if (polygonFromMsg(msg, &temp_pwh, &temp_alt, &global_frame_id_)) {
+    ROS_INFO_STREAM("Successfully loaded polygon.");
+    ROS_INFO_STREAM("Altitude: " << temp_alt << " m");
+    ROS_INFO_STREAM("Global frame: " << global_frame_id_);
+    ROS_INFO_STREAM("Polygon:" << temp_pwh);
+    polygon_ = std::make_optional(temp_pwh);
+    altitude_ = std::make_optional(temp_alt);
+  }
+
+  planning_complete_ = false;
+  resetPlanner();
+  publishVisualization();
+
+  return;
 }
 
 }  // namespace polygon_coverage_planning
