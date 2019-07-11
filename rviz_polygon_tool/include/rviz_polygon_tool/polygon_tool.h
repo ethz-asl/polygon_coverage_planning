@@ -43,11 +43,13 @@ class PolygonTool : public rviz::Tool {
   void activate() override;
   void deactivate() override;
   int processMouseEvent(rviz::ViewportMouseEvent& event) override;
+  int processKeyEvent(QKeyEvent* event, rviz::RenderPanel* panel) override;
 
  private:
   // User input.
-  void clickLeft(rviz::ViewportMouseEvent& event);
-  void clickRight(rviz::ViewportMouseEvent& event);
+  void clickLeft(const rviz::ViewportMouseEvent& event);
+  void clickRight(const rviz::ViewportMouseEvent& event);
+  void punchV();
 
   // Action.
   void createVertex(const Ogre::Vector3& position);
@@ -58,7 +60,7 @@ class PolygonTool : public rviz::Tool {
   VertexIterator vertex_selection_;
 
   // Rendering
-  void renderPolygon(const Polygon_2& polygon, const Ogre::ColourValue &c);
+  void renderPolygon(const Polygon_2& polygon, const Ogre::ColourValue& c);
   void renderPolygons();
   Ogre::SceneNode* polygon_node_;
 

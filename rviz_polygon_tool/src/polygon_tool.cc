@@ -12,8 +12,8 @@ const Ogre::ColourValue kYellow = Ogre::ColourValue(1.f, 1.f, 0.f, 1.0);
 const Ogre::ColourValue kTransparent = Ogre::ColourValue(0.f, 0.f, 0.f, 0.0);
 
 // Point scales.
-const float kPtScale = 0.8;
-const float kDeleteTol = 0.8;
+const float kPtScale = 0.5;
+const float kDeleteTol = 0.5;
 
 PolygonTool::PolygonTool()
     : Tool(),
@@ -85,10 +85,16 @@ int PolygonTool::processMouseEvent(rviz::ViewportMouseEvent& event) {
     // Don't show point if not on plane.
     moving_vertex_node_->setVisible(false);
   }
+
+  // Status
+  const QString kLeftClick = "<b>Left-Click:</b> Insert a new vertex";
+  const QString kRightClick = "<b>Right-Click:</b> Remove a vertex";
+  const QString kV = "<b>v:</b> Select next vertex";
+  setStatus(kLeftClick + ", " + kRightClick + ", " + kV);
   return Render;
 }
 
-void PolygonTool::clickLeft(rviz::ViewportMouseEvent& event) {
+void PolygonTool::clickLeft(const rviz::ViewportMouseEvent& event) {
   Ogre::Vector3 intersection;
   Ogre::Plane polygon_plane(Ogre::Vector3::UNIT_Z, 0.0f);
   if (rviz::getPointOnPlaneFromWindowXY(event.viewport, polygon_plane, event.x,
@@ -102,10 +108,9 @@ void PolygonTool::createVertex(const Ogre::Vector3& position) {
   // Add a vertex to the current polygon.
   Point_2 new_point(position.x, position.y);
   vertex_selection_ = polygon_selection_->insert(vertex_selection_, new_point);
-  ROS_INFO_STREAM("Polygon: " << *polygon_selection_);
 }
 
-void PolygonTool::clickRight(rviz::ViewportMouseEvent& event) {
+void PolygonTool::clickRight(const rviz::ViewportMouseEvent& event) {
   Ogre::Vector3 intersection;
   Ogre::Plane polygon_plane(Ogre::Vector3::UNIT_Z, 0.0f);
   if (rviz::getPointOnPlaneFromWindowXY(event.viewport, polygon_plane, event.x,
@@ -124,6 +129,8 @@ void PolygonTool::deleteVertex(const Ogre::Vector3& position) {
         polygon_selection_ = p;
         vertex_selection_ = v;
         vertex_selection_ = polygon_selection_->erase(v);
+        if (vertex_selection_ == polygon_selection_->vertices_end())
+          vertex_selection_ = polygon_selection_->vertices_begin();
         break;
       }
     }
@@ -140,6 +147,7 @@ void PolygonTool::renderPolygon(const Polygon_2& polygon,
     sphere->setScale(Ogre::Vector3(kPtScale));
     Ogre::Vector3 p(CGAL::to_double(v->x()), CGAL::to_double(v->y()), 0.0);
     sphere->setPosition(p);
+    if (v == vertex_selection_) sphere->setColor(kGreen);
   }
   // Render edges.
   for (auto e = polygon.edges_begin(); e != polygon.edges_end(); ++e) {
@@ -150,6 +158,7 @@ void PolygonTool::renderPolygon(const Polygon_2& polygon,
     Ogre::Vector3 end(CGAL::to_double(e->target().x()),
                       CGAL::to_double(e->target().y()), 0.0);
     line->setPoints(start, end);
+    if (e->target() == *vertex_selection_) line->setColor(kGreen);
   }
 }
 
@@ -163,145 +172,21 @@ void PolygonTool::renderPolygons() {
   }
 }
 
-//
-// void PolygonTool::drawPolyWithHoles(const Polygon_2_WH& to_be_painted,
-//                                     const Ogre::ColourValue color) {
-//   hideIndividualPolygons();
-//   global_planning_ = true;
-//   Polygon_2 outer_bound = to_be_painted.outer_boundary();
-//   size_t bndry_size = to_be_painted.outer_boundary().size();
-//   for (size_t i = 0; i < bndry_size; ++i) {
-//     Point local_pt = to_be_painted.outer_boundary()[i];
-//     rviz::Shape* local_sphere =
-//         new rviz::Shape(rviz::Shape::Sphere, scene_manager_);
-//     local_sphere->setColor(color);
-//     outer_boundary_.push_back(local_sphere);
-//     Ogre::Vector3 scale(kPtScale, kPtScale, kPtScale);
-//     local_sphere->setScale(scale);
-//     Ogre::Vector3 position(local_pt[0], local_pt[1], 0.0);
-//     local_sphere->setPosition(position);
-//   }
-//
-//   for (size_t i = 0; i < bndry_size; ++i) {
-//     rviz::Line* local_line =
-//         new rviz::Line(scene_manager_,
-//         scene_manager_->getRootSceneNode());
-//     local_line->setPoints(outer_boundary_[i]->getPosition(),
-//                           outer_boundary_[(i + 1) %
-//                           bndry_size]->getPosition());
-//     local_line->setColor(color);
-//     outer_boundary_lines_.push_back(local_line);
-//   }
-//   // show the real holes
-//   for (Polygon_2_WH::Hole_const_iterator hi =
-//   to_be_painted.holes_begin();
-//        hi != to_be_painted.holes_end(); ++hi) {
-//     std::vector<rviz::Shape*> local_shapes;
-//     std::vector<rviz::Line*> local_lines;
-//     size_t pts_size = hi->size();
-//     // draw the points
-//     for (size_t i = 0; i < pts_size; ++i) {
-//       rviz::Shape* local_sphere =
-//           new rviz::Shape(rviz::Shape::Sphere, scene_manager_);
-//       local_sphere->setColor(color);
-//       Ogre::Vector3 scale(kPtScale, kPtScale, kPtScale);
-//       local_sphere->setScale(scale);
-//       Point local_pt = (*hi)[i];
-//       Ogre::Vector3 position(local_pt[0], local_pt[1], 0.0);
-//       local_sphere->setPosition(position);
-//       local_shapes.push_back(local_sphere);
-//     }
-//     // draw the lines
-//     for (size_t i = 0; i < pts_size; ++i) {
-//       rviz::Line* local_line =
-//           new rviz::Line(scene_manager_,
-//           scene_manager_->getRootSceneNode());
-//       local_line->setColor(color);
-//       local_line->setPoints(local_shapes[i]->getPosition(),
-//                             local_shapes[(i + 1) %
-//                             pts_size]->getPosition());
-//       local_lines.push_back(local_line);
-//     }
-//     inner_pts_.push_back(local_shapes);
-//     inner_lines_.push_back(local_lines);
-//   }
-// }
-//
-// // called when the right mouse boutton is clicked
-// // used to delete nodes within the range of the cursor node
-// void PolygonTool::clickRight(rviz::ViewportMouseEvent& event) {
-//   // get the x y z coodinates of the click
-//   Ogre::Vector3 intersection;
-//   Ogre::Plane polygon_plane(Ogre::Vector3::UNIT_Z, 0.0f);
-//   // VertexIterator vi = polygon_[current_polygon_].vertices_begin();
-//   if (rviz::getPointOnPlaneFromWindowXY(event.viewport, polygon_plane,
-//   event.x,
-//                                         event.y, intersection)) {
-//     for (size_t i = 0; i < vertex_nodes_[current_polygon_].size(); ++i) {
-//       // compare the distance from the center of the nodes already drawn
-//       Ogre::Vector3 distance_vec =
-//           intersection -
-//           vertex_nodes_[current_polygon_][i]->getPosition();
-//       if (distance_vec.length() < kDeleteTol) {
-//         // make node dissapear
-//         vertex_nodes_[current_polygon_][i]->setVisible(false);
-//         active_spheres_[current_polygon_][i]->setColor(0.0, 0, 0, 0.0);
-//         // re arrange nodes
-//         std::vector<rviz::Shape*> new_locl_active_sphr;
-//         std::vector<Ogre::SceneNode*> new_locl_vrtx_nds;
-//         Polygon_2 new_locl_polygn;
-//         for (size_t j = i + 1; j <
-//         vertex_nodes_[current_polygon_].size();
-//              ++j) {
-//           new_locl_active_sphr.push_back(active_spheres_[current_polygon_][j]);
-//           new_locl_vrtx_nds.push_back(vertex_nodes_[current_polygon_][j]);
-//           new_locl_polygn.push_back(polygon_[current_polygon_][j]);
-//         }
-//         for (size_t j = 0; j < i; ++j) {
-//           new_locl_active_sphr.push_back(active_spheres_[current_polygon_][j]);
-//           new_locl_vrtx_nds.push_back(vertex_nodes_[current_polygon_][j]);
-//           new_locl_polygn.push_back(polygon_[current_polygon_][j]);
-//         }
-//         // swapping the new elements
-//         swap(active_spheres_[current_polygon_], new_locl_active_sphr);
-//         swap(vertex_nodes_[current_polygon_], new_locl_vrtx_nds);
-//         swap(polygon_[current_polygon_], new_locl_polygn);
-//
-//         if (current_type_ == kHull) {
-//           drawLines(kGreen);
-//         } else {
-//           drawLines(kYellow);
-//         }
-//         break;
-//       }
-//     }
-//   }
-// }
-//
-// void PolygonTool::checkStatusCallback(const std_msgs::Bool& incomming) {
-//   bool to_return = checkCGALPolygon();
-//   std_msgs::Bool to_send;
-//   to_send.data = to_return;
-//   status_update_publisher_.publish(to_send);
-//   user_warn_publisher_.publish(to_send);
-// }
-//
-// void PolygonTool::toolSelectCallback(const std_msgs::Int8& tool_num) {
-//   if (is_active_) {
-//     if (global_planning_) {
-//       showIndividualPolygons();
-//       global_planning_ = false;
-//     }
-//     size_t incomming_num = tool_num.data;
-//     if (incomming_num < vertex_nodes_.size()) {
-//       setColorsLeaving();
-//       current_polygon_ = incomming_num;
-//       current_type_ = type_of_polygons_[current_polygon_];
-//       setColorsArriving();
-//     }
-//   }
-// }
-//
+int PolygonTool::processKeyEvent(QKeyEvent* event, rviz::RenderPanel* panel) {
+  if (event->text() == 'v') {
+    punchV();
+  }
+  return Render;
+}
+
+void PolygonTool::punchV() {
+  vertex_selection_ = std::next(vertex_selection_);
+  if (vertex_selection_ == polygon_selection_->vertices_end())
+    vertex_selection_ = polygon_selection_->vertices_begin();
+
+  renderPolygons();
+}
+
 // void PolygonTool::newPolyCallback(const std_msgs::Int8& new_poly_type) {
 //   if (is_active_) {
 //     if (global_planning_) {
