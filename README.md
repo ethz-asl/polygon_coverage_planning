@@ -1,16 +1,16 @@
-# UNDER CONSTRUCTION
 # polygon_coverage_planning
-This repository accompanies our submission
+This package contains implementations to compute coverage patterns and shortest paths in general polygon with holes.
+Please cite our accompanying publication when using it.
 ```
 Bähnemann, Rik, et al.
 "Revisiting Boustrophedon Coverage Path Planning as a Generalized Traveling Salesman Problem."
-Field and Service Robotics (submitted). Springer, 2019.
+Field and Service Robotics. Springer, Cham, 2019.
 ```
-It contains implementations to compute coverage patterns and shortest paths in general polygon with holes.
-<!---
 
-## Installation
-Install [ROS](http://wiki.ros.org/kinetic/Installation/Ubuntu).
+![Coverage Planning in RVIZ](https://user-images.githubusercontent.com/11293852/61134221-70d18980-a4bf-11e9-87a7-d599b60c8dd2.gif)
+
+## Installation on Ubuntu 18.04 and ROS melodic
+Install [ROS melodic](http://wiki.ros.org/melodic/Installation/Ubuntu).
 
 Install catkin and wstool build dependencies.
 ```
@@ -42,9 +42,9 @@ sudo apt-get install libgmp-dev libmpfr-dev
 
 Install [GTSP solver's](https://csee.essex.ac.uk/staff/dkarap/?page=publications&key=Gutin2009a) [Mono](https://www.mono-project.com/download/stable/) dependency.
 ```
+sudo apt install gnupg ca-certificates
 sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
-sudo apt install apt-transport-https
-echo "deb https://download.mono-project.com/repo/ubuntu stable-xenial main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
+echo "deb https://download.mono-project.com/repo/ubuntu stable-bionic main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
 sudo apt update
 sudo apt install mono-devel
 ```
@@ -56,71 +56,36 @@ catkin build
 
 ## Getting Started
 The package has a ROS interface for shortest path planning and coverage planning.
+First source your workspace to execute any of the nodes.
+```
+source ~/catkin_ws/devel/setup.bash
+```
 
 ### Coverage Planning
 ```
-roslaunch polygon_coverage_planning_ros stripmap_planner_2d.launch  
+roslaunch polygon_coverage_ros coverage_planner.launch
 ```
 
-In another terminal call
-```
-rosservice call /stripmap_planner_2d/plan_path "start_pose:
-  header:
-    seq: 0
-    stamp: {secs: 0, nsecs: 0}
-    frame_id: ''
-  pose:
-    position: {x: 0.0, y: 0.0, z: 0.0}
-    orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
-start_velocity: {x: 0.0, y: 0.0, z: 0.0}
-goal_pose:
-  header:
-    seq: 0
-    stamp: {secs: 0, nsecs: 0}
-    frame_id: ''
-  pose:
-    position: {x: 0.0, y: 0.0, z: 0.0}
-    orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
-goal_velocity: {x: 0.0, y: 0.0, z: 0.0}
-bounding_box: {x: 0.0, y: 0.0, z: 0.0}"
-```
+The polygon can be set via
+- ROS [service](polygon_coverage_msgs/srv/PolygonService.srv) call `rosservice call /coverage_planner/set_polygon`
+- ROS [parameter](polygon_coverage_ros/launch/coverage_planner.launch) `/coverage_planner/polygon` or
+- RVIZ Polygon Tool as in the video above.
 
-![An example coverage pattern.](https://user-images.githubusercontent.com/11293852/46402230-76fc3380-c6ff-11e8-8002-f8bdd512caf3.png)
+The plan is generated via
+- ROS [service](https://github.com/ethz-asl/mav_comm/blob/master/mav_planning_msgs/srv/PlannerService.srv) call 'rosservice call /coverage_planner/plan_path' or
+- clicking start and goal points using the RVIZ clicked_point tool as in the video above.
 
 ### Euclidean Shortest Path Planning
 ```
-roslaunch polygon_coverage_planning_ros shortest_path_planner_2d.launch
+roslaunch polygon_coverage_ros shortest_path_planner.launch
 ```
 
-In another terminal call
-```
-rosservice call /shortest_path_planner_2d/plan_path "start_pose:
-  header:
-    seq: 0
-    stamp: {secs: 0, nsecs: 0}
-    frame_id: ''
-  pose:
-    position: {x: 0.0, y: 0.0, z: 0.0}
-    orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
-start_velocity: {x: 0.0, y: 0.0, z: 0.0}
-goal_pose:
-  header:
-    seq: 0
-    stamp: {secs: 0, nsecs: 0}
-    frame_id: ''
-  pose:
-    position: {x: 60.0, y: 110.0, z: 0.0}
-    orientation: {x: 0.0, y: 0.0, z: 0.0, w: 1.0}
-goal_velocity: {x: 0.0, y: 0.0, z: 0.0}
-bounding_box: {x: 0.0, y: 0.0, z: 0.0}"
-```
-
-![An example shortest path.](https://user-images.githubusercontent.com/11293852/46402328-b4f95780-c6ff-11e8-97c4-03d33a303ecd.png)
+Setting the polygon and planning the path is the same as for Coverage Planning.
 
 ## Licensing
 This repository is subject to GNU General Public License version 3 or later due to its dependencies.
 
-The underlying (exact) geometric operations rely on [CGAL](https://www.cgal.org/license.html) which is restricted at most by GNU General Public License version 3 or later.
+The underlying (exact) geometric operations rely on [CGAL](https://www.cgal.org/license.html) which is restricted by GNU General Public License version 3 or later.
 
 The underlying optimization the [memetic solver](https://csee.essex.ac.uk/staff/dkarap/?page=publications&key=Gutin2009a) presented in
 ```
@@ -129,5 +94,3 @@ Gutin, Gregory, and Daniel Karapetyan.
 Natural Computing 9.1 (2010): 47-60.
 ```
 is free of charge for non-commercial purposes only.
-
---->
