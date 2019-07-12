@@ -68,7 +68,7 @@ roslaunch polygon_coverage_ros coverage_planner.launch
 
 The polygon can be set via
 - ROS [service](polygon_coverage_msgs/srv/PolygonService.srv) call `rosservice call /coverage_planner/set_polygon`
-- ROS [parameter](polygon_coverage_ros/launch/coverage_planner.launch) or
+- ROS [parameter](polygon_coverage_ros/launch/coverage_planner.launch) `/coverage_planner/polygon` or
 - RVIZ Polygon Tool as in the video above.
 
 The plan is generated via
