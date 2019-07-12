@@ -1,0 +1,11 @@
+#!/usr/bin/python
+from polygon_coverage_benchmark.plot_results import *
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description='Plot benchmark results.')
+    parser.add_argument('csv', nargs=1, help='The input csv.')
+
+    args = parser.parse_args()
+
+    plotResults(args.csv[0])
