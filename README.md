@@ -9,8 +9,8 @@ Field and Service Robotics. Springer, Cham, 2019.
 
 ![Coverage Planning in RVIZ](https://user-images.githubusercontent.com/11293852/61134221-70d18980-a4bf-11e9-87a7-d599b60c8dd2.gif)
 
-## Installation
-Install [ROS](http://wiki.ros.org/kinetic/Installation/Ubuntu).
+## Installation on Ubuntu 18.04 and ROS melodic
+Install [ROS melodic](http://wiki.ros.org/melodic/Installation/Ubuntu).
 
 Install catkin and wstool build dependencies.
 ```
