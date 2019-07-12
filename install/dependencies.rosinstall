@@ -1,0 +1,4 @@
+- git: {local-name: catkin_simple, uri: 'git@github.com:catkin/catkin_simple.git'}
+- git: {local-name: cgal_catkin, uri: 'git@github.com:ethz-asl/cuckoo_time_translator.git', version: , version: feature/4.14}
+- git: {local-name: mav_comm, uri: 'git@github.com:ethz-asl/mav_comm.git', version: 3.3.2}
+- git: {local-name: mav_trajectory_generation, uri: 'git@github.com:ethz-asl/mav_trajectory_generation.git', version: aee40136a231db2bce0ed50f74777def09652e3f}
