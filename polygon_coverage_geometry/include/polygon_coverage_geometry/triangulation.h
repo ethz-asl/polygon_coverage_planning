@@ -30,7 +30,7 @@ void mark_domains(CDT& cdt);
 
 void triangulatePolygon(const PolygonWithHoles& pwh,
                         std::vector<std::vector<Point_2>>* faces);
-                        
+
 }  // namespace polygon_coverage_planning
 
 #endif  // POLYGON_COVERAGE_GEOMETRY_TRIANGULATION_H_
