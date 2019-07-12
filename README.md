@@ -1,10 +1,10 @@
 # UNDER CONSTRUCTION
 # polygon_coverage_planning
-This repository accompanies our submission
+This repository accompanies our publication
 ```
 Bähnemann, Rik, et al.
 "Revisiting Boustrophedon Coverage Path Planning as a Generalized Traveling Salesman Problem."
-Field and Service Robotics (submitted). Springer, 2019.
+Field and Service Robotics. Springer, Cham, 2019.
 ```
 It contains implementations to compute coverage patterns and shortest paths in general polygon with holes.
 <!---

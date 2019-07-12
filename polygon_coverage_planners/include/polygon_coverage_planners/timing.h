@@ -1,9 +1,6 @@
 /*
- * Copyright (c) 2016, Markus Achtelik, ASL, ETH Zurich, Switzerland
- * Copyright (c) 2016, Michael Burri, ASL, ETH Zurich, Switzerland
- * Copyright (c) 2016, Helen Oleynikova, ASL, ETH Zurich, Switzerland
- * Copyright (c) 2016, Rik Bähnemann, ASL, ETH Zurich, Switzerland
- * Copyright (c) 2016, Marija Popovic, ASL, ETH Zurich, Switzerland
+ * Copyright (C) 2012-2013 Simon Lynen, ASL, ETH Zurich, Switzerland
+ * You can contact the author at <slynen at ethz dot ch>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/* Adapted from Paul Furgale Schweizer Messer sm_timing */
 
 #ifndef POLYGON_COVERAGE_PLANNERS_TIMING_H_
 #define POLYGON_COVERAGE_PLANNERS_TIMING_H_
