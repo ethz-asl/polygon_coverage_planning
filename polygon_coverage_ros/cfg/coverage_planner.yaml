@@ -1,0 +1,20 @@
+decomposition_type: 0 # [0: Boustrophedon, 1: Trapezoidal]
+cost_function_type: 1 # [0: Euclidean Distance, 1: Time, 2: Number of Waypoints]
+v_max: 3.0 # Only for time optimization.
+a_max: 1.0 # Only for time optimization.
+wall_distance: 0.0
+offset_polygons: false
+sweep_single_direction: false
+
+# Sensor model.
+sensor_model_type: 1 # [0: Line, 1: Frustum]
+lateral_overlap: 0.6
+lateral_footprint: 1.0 # Only for line sensor model.
+lateral_fov: 0.84 # Only for frustum sensor model.
+
+latch_topics: true
+
+publish_plan_on_planning_complete: false
+publish_visualization_on_planning_complete: true
+set_start_goal_from_rviz: true
+set_polygon_from_rviz: true

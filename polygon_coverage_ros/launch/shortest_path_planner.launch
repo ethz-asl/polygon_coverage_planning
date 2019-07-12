@@ -1,21 +1,12 @@
 <launch>
 
-  <node name="rviz"
-    pkg="rviz"
-    type="rviz"
-    output="log"
-    args="-d $(find polygon_coverage_ros)/cfg/rviz/shortest_path.rviz" />
+  <node name="rviz" pkg="rviz" type="rviz" output="log" args="-d $(find polygon_coverage_ros)/cfg/rviz/shortest_path.rviz"/>
 
+  <node name="shortest_path_planner" pkg="polygon_coverage_ros" type="shortest_path_planner" output="screen" clear_params="true">
 
-  <node name="shortest_path_planner"
-    pkg="polygon_coverage_ros"
-    type="shortest_path_planner"
-    output="screen"
-    clear_params="true" >
-
-    <rosparam command="load" file="$(find polygon_coverage_ros)/cfg/shortest_path_planner.yaml" />
+    <rosparam command="load" file="$(find polygon_coverage_ros)/cfg/shortest_path_planner.yaml"/>
     <!-- Polygon, altitude, and world frame ID -->
-    <rosparam command="load" file="$(find polygon_coverage_ros)/cfg/polygons/example_rectangle_with_hole.yaml" />
+    <rosparam command="load" file="$(find polygon_coverage_ros)/cfg/polygons/example_rectangle_with_hole.yaml"/>
   </node>
 
 </launch>
