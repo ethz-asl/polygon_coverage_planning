@@ -1,14 +1,15 @@
-#ifndef MAV_2D_COVERAGE_PLANNING_GEOMETRY_POLYGON_TRIANGULATION_H_
-#define MAV_2D_COVERAGE_PLANNING_GEOMETRY_POLYGON_TRIANGULATION_H_
+#ifndef POLYGON_COVERAGE_GEOMETRY_TRIANGULATION_H_
+#define POLYGON_COVERAGE_GEOMETRY_TRIANGULATION_H_
 
 #include <CGAL/Constrained_Delaunay_triangulation_2.h>
 #include <CGAL/Triangulation_face_base_with_info_2.h>
-#include <mav_coverage_planning_comm/cgal_definitions.h>
+#include "polygon_coverage_geometry/cgal_definitions.h"
 
 // See
 // https://doc.cgal.org/latest/Triangulation_2/index.html#Section_2D_Triangulations_Constrained_Delaunay
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
+
 struct FaceInfo2 {
   FaceInfo2() {}
   int nesting_level;
@@ -29,6 +30,7 @@ void mark_domains(CDT& cdt);
 
 void triangulatePolygon(const PolygonWithHoles& pwh,
                         std::vector<std::vector<Point_2>>* faces);
-}  // namespace mav_coverage_planning
 
-#endif  // MAV_2D_COVERAGE_PLANNING_GEOMETRY_POLYGON_TRIANGULATION_H_
+}  // namespace polygon_coverage_planning
+
+#endif  // POLYGON_COVERAGE_GEOMETRY_TRIANGULATION_H_

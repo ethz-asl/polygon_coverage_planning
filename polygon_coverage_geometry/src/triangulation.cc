@@ -1,8 +1,8 @@
-#include "mav_2d_coverage_planning/geometry/polygon_triangulation.h"
+#include "polygon_coverage_geometry/triangulation.h"
 
-#include <glog/logging.h>
+#include <ros/assert.h>
 
-namespace mav_coverage_planning {
+namespace polygon_coverage_planning {
 
 void mark_domains(CDT& ct, CDT::Face_handle start, int index,
                   std::list<CDT::Edge>& border) {
@@ -49,7 +49,7 @@ void mark_domains(CDT& cdt) {
 
 void triangulatePolygon(const PolygonWithHoles& pwh,
                         std::vector<std::vector<Point_2>>* faces) {
-  CHECK_NOTNULL(faces);
+  ROS_ASSERT(faces);
   faces->clear();
 
   CDT cdt;
@@ -75,4 +75,4 @@ void triangulatePolygon(const PolygonWithHoles& pwh,
   }
 }
 
-}  // namespace mav_coverage_planning
+}  // namespace polygon_coverage_planning
