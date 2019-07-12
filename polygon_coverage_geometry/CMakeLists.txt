@@ -21,11 +21,12 @@ cs_add_library(${PROJECT_NAME}
   src/cgal_comm.cc
   src/decomposition.cc
   src/offset.cc
+  src/sweep.cc
+  src/tcd.cc
+  src/triangulation.cc
   src/visibility_graph.cc
   src/visibility_polygon.cc
   src/weakly_monotone.cc
-  src/sweep.cc
-  src/tcd.cc
 )
 target_link_libraries(${PROJECT_NAME} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES})
 
