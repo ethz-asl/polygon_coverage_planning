@@ -21,11 +21,8 @@
   <depend>geometry_msgs</depend>
   <depend>trajectory_msgs</depend>
   <depend>visualization_msgs</depend>
-  <depend>mav_visualization</depend>
   <depend>std_srvs</depend>
   <depend>eigen_conversions</depend>
-
-  <depend>mav_trajectory_generation_ros</depend>
 
   <depend>polygon_coverage_msgs</depend>
   <depend>polygon_coverage_geometry</depend>

@@ -135,8 +135,7 @@ class CoveragePlanner : public PolygonPlannerBase {
       const double kPolygonLineSize = 0.4;
       createPolygonMarkers(PolygonWithHoles(decomposition[i]),
                            altitude_.value(), global_frame_id_, name,
-                           mav_visualization::Color::Gray(),
-                           mav_visualization::Color::Gray(), kPolygonLineSize,
+                           Color::Gray(), Color::Gray(), kPolygonLineSize,
                            kPolygonLineSize, &decomposition_markers);
       markers.markers.insert(markers.markers.end(),
                              decomposition_markers.markers.begin(),
