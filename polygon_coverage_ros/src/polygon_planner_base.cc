@@ -252,9 +252,9 @@ bool PolygonPlannerBase::publishVisualization() {
         "Cannot send solution visualization because plan has not been made.");
   } else {
     createMarkers(solution_, altitude_.value(), global_frame_id_,
-                  "vertices_and_strip", mav_visualization::Color::Gray(),
-                  mav_visualization::Color::Gray(), kPathLineSize,
-                  kPathPointSize, &path_points, &path_line_strips);
+                  "vertices_and_strip", Color::Gray(), Color::Gray(),
+                  kPathLineSize, kPathPointSize, &path_points,
+                  &path_line_strips);
     markers_.markers.push_back(path_points);
     markers_.markers.push_back(path_line_strips);
 
@@ -283,9 +283,8 @@ bool PolygonPlannerBase::publishVisualization() {
     return false;
   }
   createPolygonMarkers(polygon_.value(), altitude_.value(), global_frame_id_,
-                       "polygon", mav_visualization::Color::Black(),
-                       mav_visualization::Color::Black(), kPolygonLineSize,
-                       kPolygonLineSize, &polygon);
+                       "polygon", Color::Black(), Color::Black(),
+                       kPolygonLineSize, kPolygonLineSize, &polygon);
   markers_.markers.insert(markers_.markers.end(), polygon.markers.begin(),
                           polygon.markers.end());
 

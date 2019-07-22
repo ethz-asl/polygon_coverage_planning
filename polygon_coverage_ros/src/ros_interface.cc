@@ -88,8 +88,7 @@ void msgMultiDofJointTrajectoryFromPath(
 
 void createMarkers(const std::vector<Point_2>& vertices, double altitude,
                    const std::string& frame_id, const std::string& ns,
-                   const mav_visualization::Color& points_color,
-                   const mav_visualization::Color& lines_color,
+                   const Color& points_color, const Color& lines_color,
                    const double line_size, const double point_size,
                    visualization_msgs::Marker* points,
                    visualization_msgs::Marker* line_strip) {
@@ -130,8 +129,7 @@ void createMarkers(const std::vector<Point_2>& vertices, double altitude,
 
 void createPolygonMarkers(const PolygonWithHoles& polygon, double altitude,
                           const std::string& frame_id, const std::string& ns,
-                          const mav_visualization::Color& polygon_color,
-                          const mav_visualization::Color& hole_color,
+                          const Color& polygon_color, const Color& hole_color,
                           const double line_size, const double point_size,
                           visualization_msgs::MarkerArray* array) {
   ROS_ASSERT(array);
@@ -213,10 +211,10 @@ void createStartAndEndPointMarkers(const mav_msgs::EigenTrajectoryPoint& start,
   start_point->scale.y = end_point->scale.y = 1.0;
   start_point->scale.z = end_point->scale.z = 1.0;
 
-  start_point->color = mav_visualization::Color::Green();
+  start_point->color = Color::Green();
   start_point->color.a = 0.5;
 
-  end_point->color = mav_visualization::Color::Red();
+  end_point->color = Color::Red();
   end_point->color.a = 0.5;
 }
 
@@ -266,10 +264,10 @@ void createStartAndEndTextMarkers(const mav_msgs::EigenTrajectoryPoint& start,
   start_text->pose.orientation.w = end_text->pose.orientation.w = 1.0;
 
   start_text->text = "S";
-  start_text->color = mav_visualization::Color::Black();
+  start_text->color = Color::Black();
 
   end_text->text = "G";
-  end_text->color = mav_visualization::Color::Black();
+  end_text->color = Color::Black();
 
   start_text->scale.z = end_text->scale.z = 1.0;
 }

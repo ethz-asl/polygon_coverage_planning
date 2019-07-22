@@ -30,13 +30,38 @@
 #include <polygon_coverage_msgs/PolygonWithHolesStamped.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 #include <visualization_msgs/Marker.h>
+#include <visualization_msgs/MarkerArray.h>
 
 #include <mav_msgs/eigen_mav_msgs.h>
-#include <mav_visualization/helpers.h>
 
 #include <polygon_coverage_geometry/cgal_definitions.h>
 
 namespace polygon_coverage_planning {
+
+class Color : public std_msgs::ColorRGBA {
+ public:
+  Color() : std_msgs::ColorRGBA() {}
+  Color(double red, double green, double blue) : Color(red, green, blue, 1.0) {}
+  Color(double red, double green, double blue, double alpha) : Color() {
+    r = red;
+    g = green;
+    b = blue;
+    a = alpha;
+  }
+
+  static const Color White() { return Color(1.0, 1.0, 1.0); }
+  static const Color Black() { return Color(0.0, 0.0, 0.0); }
+  static const Color Gray() { return Color(0.5, 0.5, 0.5); }
+  static const Color Red() { return Color(1.0, 0.0, 0.0); }
+  static const Color Green() { return Color(0.0, 1.0, 0.0); }
+  static const Color Blue() { return Color(0.0, 0.0, 1.0); }
+  static const Color Yellow() { return Color(1.0, 1.0, 0.0); }
+  static const Color Orange() { return Color(1.0, 0.5, 0.0); }
+  static const Color Purple() { return Color(0.5, 0.0, 1.0); }
+  static const Color Chartreuse() { return Color(0.5, 1.0, 0.0); }
+  static const Color Teal() { return Color(0.0, 1.0, 1.0); }
+  static const Color Pink() { return Color(1.0, 0.0, 0.5); }
+};
 
 // Warning: Does not set frame or time stamps or orientation.
 void eigenTrajectoryPointVectorFromPath(
@@ -59,16 +84,14 @@ void msgMultiDofJointTrajectoryFromPath(
 
 void createMarkers(const std::vector<Point_2>& vertices, double altitude,
                    const std::string& frame_id, const std::string& ns,
-                   const mav_visualization::Color& points_color,
-                   const mav_visualization::Color& lines_color,
+                   const Color& points_color, const Color& lines_color,
                    const double line_size, const double point_size,
                    visualization_msgs::Marker* points,
                    visualization_msgs::Marker* line_strip);
 
 void createPolygonMarkers(const PolygonWithHoles& polygon, double altitude,
                           const std::string& frame_id, const std::string& ns,
-                          const mav_visualization::Color& polygon_color,
-                          const mav_visualization::Color& hole_color,
+                          const Color& polygon_color, const Color& hole_color,
                           const double line_size, const double point_size,
                           visualization_msgs::MarkerArray* array);
 

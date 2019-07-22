@@ -61,8 +61,8 @@ int main(int argc, char** argv) {
   const double kPolygonLineSize = 0.8;
   const double kPolygonPointSize = 0.8;
   createPolygonMarkers(poly, altitude, global_frame_id, "polygon",
-                       mav_visualization::Color::Black(),
-                       mav_visualization::Color::Black(), kPolygonLineSize,
+                       Color::Black(),
+                       Color::Black(), kPolygonLineSize,
                        kPolygonPointSize, &polygon_markers);
 
   // Publish waypoint list.
@@ -88,8 +88,8 @@ int main(int argc, char** argv) {
     const double kPathLineSize = 0.4;
     const double kPathPointSize = 0.8;
     createMarkers(waypoints[i], altitude, global_frame_id, "vertices_and_strip",
-                  mav_visualization::Color::Gray(),
-                  mav_visualization::Color::Gray(), kPathLineSize,
+                  Color::Gray(),
+                  Color::Gray(), kPathLineSize,
                   kPathPointSize, &path_points, &path_line_strips);
     all_markers.markers.push_back(path_points);
     all_markers.markers.push_back(path_line_strips);
@@ -120,7 +120,7 @@ int main(int argc, char** argv) {
     end.y = CGAL::to_double(std::next(waypoints[i].begin())->y());
     end.z = altitude;
     start_arrow.points.push_back(end);
-    start_arrow.color = mav_visualization::Color::Red();
+    start_arrow.color = Color::Red();
     start_arrow.scale.x = 1.6;
     start_arrow.scale.y = 4.0;
     start_arrow.scale.z = 6.0;
