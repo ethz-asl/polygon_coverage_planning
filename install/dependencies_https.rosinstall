@@ -1,0 +1,4 @@
+- git: {local-name: catkin_simple, uri: 'https://github.com/catkin/catkin_simple.git'}
+- git: {local-name: cgal_catkin, uri: 'https://github.com/ethz-asl/cgal_catkin.git', version: feature/4.14}
+- git: {local-name: mav_comm, uri: 'https://github.com/ethz-asl/mav_comm.git', version: 3.3.2}
+- git: {local-name: polygon_coverage_planning, uri: 'https://github.com/ethz-asl/polygon_coverage_planning.git'}

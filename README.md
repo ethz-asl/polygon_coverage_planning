@@ -1,11 +1,13 @@
 # polygon_coverage_planning
 This package contains implementations to compute coverage patterns and shortest paths in general polygon with holes.
-Please cite our accompanying publication when using it.
+Please cite our [accompanying publication](https://arxiv.org/pdf/1907.09224) when using it.
 ```
 Bähnemann, Rik, et al.
 "Revisiting Boustrophedon Coverage Path Planning as a Generalized Traveling Salesman Problem."
 Field and Service Robotics. Springer, Cham, 2019.
 ```
+Video: [](https://youtu.be/u1UOqdJoK9s)
+
 
 ![Coverage Planning in RVIZ](https://user-images.githubusercontent.com/11293852/61134221-70d18980-a4bf-11e9-87a7-d599b60c8dd2.gif)
 
@@ -27,6 +29,7 @@ catkin config --extend /opt/ros/melodic
 ```
 
 Download package dependencies from [dependencies.rosinstall](install/dependencies.rosinstall).
+**Note**: If you have not setup [SSH keys in GitHub](https://help.github.com/en/enterprise/2.16/user/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) use [dependencies_https.rosinstall](install/dependencies_https.rosinstall).
 ```
 cd ~/catkin_ws/src
 git clone git@github.com:ethz-asl/polygon_coverage_planning.git
