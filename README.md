@@ -14,7 +14,7 @@ Install [ROS melodic](http://wiki.ros.org/melodic/Installation/Ubuntu).
 
 Install catkin and wstool build dependencies.
 ```
-sudo apt-get install python-wstool python-catkin-tools ros-kinetic-cmake-modules
+sudo apt-get install python-wstool python-catkin-tools ros-melodic-cmake-modules
 ```
 
 Create a workspace.
@@ -23,7 +23,7 @@ cd ~
 mkdir -p catkin_ws/src
 cd catkin_ws
 catkin init
-catkin config --extend /opt/ros/kinetic
+catkin config --extend /opt/ros/melodic
 ```
 
 Download package dependencies from [dependencies.rosinstall](install/dependencies.rosinstall).
