@@ -4,6 +4,7 @@ ROS_VERSION=`rosversion -d`
 echo "ROS version: ${ROS_VERSION}"
 
 # Build dependencies.
+sudo apt-get update
 sudo apt-get install -y python-wstool python-catkin-tools ros-${ROS_VERSION}-cmake-modules
 
 # Package dependencies.
