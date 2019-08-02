@@ -4,10 +4,10 @@ ROS_VERSION=`rosversion -d`
 echo "ROS version: ${ROS_VERSION}"
 
 # Build dependencies.
-sudo apt install -y python-wstool python-catkin-tools ros-${ROS_VERSION}-cmake-modules
+sudo apt-get install -y python-wstool python-catkin-tools ros-${ROS_VERSION}-cmake-modules
 
 # Package dependencies.
 echo "Installing CGAL dependencies."
-sudo apt install -y libgmp-dev libmpfr-dev
+sudo apt-get install -y libgmp-dev libmpfr-dev
 echo "Installing MONO dependencies."
-sudo apt install -y mono-devel
+sudo apt-get install -y mono-devel
