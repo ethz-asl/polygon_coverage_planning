@@ -18,7 +18,7 @@ set(GKMA_INCLUDE_DIR ${CMAKE_BINARY_DIR}/gk_ma-prefix/src/gk_ma)
 include(ExternalProject)
 ExternalProject_Add(
   gk_ma
-  URL http://www.cs.nott.ac.uk/~dxk/gtsp_ma_source_codes.zip
+  URL https://polybox.ethz.ch/index.php/s/WRKOqMhr94DlWPU/download
   URL_MD5 765fad8e3746fa3dd9b81be0afb34d35
   PATCH_COMMAND \\
     patch GkMa/OurHeuristic/Algorithm.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Algorithm.patch && \\
