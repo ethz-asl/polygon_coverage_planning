@@ -54,7 +54,7 @@ ExternalProject_Add(
 include(ExternalProject)
 ExternalProject_Add(
   gtsp_instances
-  URL http://www.cs.nott.ac.uk/~dxk/gtsplib/InstancesBinary.zip
+  URL https://polybox.ethz.ch/index.php/s/nsL3KHW9KuttAeb/download
   URL_MD5 255831bd47de71df8419a54741f0a6be
   UPDATE_COMMAND ""
   CONFIGURE_COMMAND ""
