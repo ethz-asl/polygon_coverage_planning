@@ -1,2 +1,2 @@
-# mav_2d_coverage_planning
-Solve 2D coverage planning problems in non-convex polygon worlds.
+# polygon_coverage_planners
+Planner instances to solve the coverage planning using exact polygon decomposition.

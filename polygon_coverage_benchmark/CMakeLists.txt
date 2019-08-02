@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(mav_2d_coverage_planning_benchmark)
+project(polygon_coverage_benchmark)
 
 add_definitions(-std=c++11)
 
