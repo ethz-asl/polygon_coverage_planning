@@ -13,3 +13,7 @@ echo "Installing CGAL dependencies."
 sudo apt-get install -y libgmp-dev libmpfr-dev
 echo "Installing MONO dependencies."
 sudo apt-get install -y mono-devel
+
+cd ~/polygon_coverage_planning/ws/src/install/
+csc hello.cs
+mono hello.exe
