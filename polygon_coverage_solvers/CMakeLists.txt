@@ -47,7 +47,8 @@ ExternalProject_Add(
   BUILD_COMMAND \\
     $(MAKE) -f MakefileCs BUILD_PATH="${CMAKE_LIBRARY_OUTPUT_DIRECTORY}" \\
     COMMAND $(MAKE) -f MakefileCpp BUILD_PATH="${CMAKE_LIBRARY_OUTPUT_DIRECTORY}"
-  INSTALL_COMMAND ""
+  INSTALL_COMMAND \\
+    COMMAND ${CMAKE_COMMAND} -E create_symlink /usr/lib/libmono-native.so ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/System.Native
 )
 
 # Download GTSP test instances.
