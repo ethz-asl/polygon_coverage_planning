@@ -65,7 +65,6 @@ GkMa::GkMa() {
   ROS_ASSERT(domain_);
   MonoAssembly* assembly =
       mono_domain_assembly_open(domain_, kExecutablePath.c_str());
-  ROS_INFO_STREAM_ONCE("Creating GkMa instance from " << kExecutablePath);
   ROS_ASSERT(assembly);
 
   // Load OurSolver class.
