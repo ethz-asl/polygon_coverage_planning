@@ -62,6 +62,7 @@ bool Task::mIsSymmetric() const {
 
 GkMa::GkMa() {
   domain_ = mono_jit_init(kFile.c_str());
+  ROS_ASSERT(domain_);
   MonoAssembly* assembly =
       mono_domain_assembly_open(domain_, kExecutablePath.c_str());
   ROS_ASSERT(assembly);
@@ -95,6 +96,11 @@ void GkMa::setSolver(const std::string& file, bool binary) {
   }
 
   mono_runtime_invoke(ctor, solver_, args, NULL);
+  MonoObject* exception = nullptr;
+  mono_runtime_invoke(ctor, solver_, args, &exception);
+  if (exception) {
+    mono_print_unhandled_exception(exception);
+  }
 }
 
 void GkMa::setSolver(const Task& task) {

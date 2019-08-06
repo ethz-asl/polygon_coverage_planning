@@ -18,7 +18,7 @@ set(GKMA_INCLUDE_DIR ${CMAKE_BINARY_DIR}/gk_ma-prefix/src/gk_ma)
 include(ExternalProject)
 ExternalProject_Add(
   gk_ma
-  URL http://www.cs.nott.ac.uk/~dxk/gtsp_ma_source_codes.zip
+  URL https://polybox.ethz.ch/index.php/s/WRKOqMhr94DlWPU/download
   URL_MD5 765fad8e3746fa3dd9b81be0afb34d35
   PATCH_COMMAND \\
     patch GkMa/OurHeuristic/Algorithm.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Algorithm.patch && \\
@@ -47,14 +47,15 @@ ExternalProject_Add(
   BUILD_COMMAND \\
     $(MAKE) -f MakefileCs BUILD_PATH="${CMAKE_LIBRARY_OUTPUT_DIRECTORY}" \\
     COMMAND $(MAKE) -f MakefileCpp BUILD_PATH="${CMAKE_LIBRARY_OUTPUT_DIRECTORY}"
-  INSTALL_COMMAND ""
+  INSTALL_COMMAND \\
+    COMMAND ${CMAKE_COMMAND} -E create_symlink /usr/lib/libmono-native.so ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/System.Native
 )
 
 # Download GTSP test instances.
 include(ExternalProject)
 ExternalProject_Add(
   gtsp_instances
-  URL http://www.cs.nott.ac.uk/~dxk/gtsplib/InstancesBinary.zip
+  URL https://polybox.ethz.ch/index.php/s/nsL3KHW9KuttAeb/download
   URL_MD5 255831bd47de71df8419a54741f0a6be
   UPDATE_COMMAND ""
   CONFIGURE_COMMAND ""

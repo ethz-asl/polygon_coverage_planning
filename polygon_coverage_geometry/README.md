@@ -1,2 +1,2 @@
-# mav_2d_coverage_planning
-Solve 2D coverage planning problems in non-convex polygon worlds.
+# polygon_coverage_geometry
+CGAL algorithms to perform geometric operations on general polygon with holes.
