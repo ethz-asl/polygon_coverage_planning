@@ -13,11 +13,7 @@ Video: [https://youtu.be/u1UOqdJoK9s](https://youtu.be/u1UOqdJoK9s)
 
 ## Installation on Ubuntu 18.04 and ROS melodic
 Install [ROS melodic](http://wiki.ros.org/melodic/Installation/Ubuntu).
-
-Install catkin and wstool build dependencies.
-```
-sudo apt-get install python-wstool python-catkin-tools ros-melodic-cmake-modules
-```
+Install [mono](https://www.mono-project.com/download/stable/#download-lin-ubuntu).
 
 Create a workspace.
 ```
@@ -38,21 +34,14 @@ wstool merge polygon_coverage_planning/install/dependencies.rosinstall
 wstool update
 ```
 
-Install [CGAL](https://www.cgal.org/) dependencies for catkinized package [cgal_catkin](https://www.github.com/ethz-asl/cgal_catkin.git).
+
+Install all [remaining dependencies](https://github.com/ethz-asl/polygon_coverage_planning/blob/master/install/prepare-jenkins-slave.sh):
 ```
-sudo apt-get install libgmp-dev libmpfr-dev
+cd ~/catkin_ws/polygon_coverage_planning/install
+./prepare-jeknins-slave.sh
 ```
 
-Install [GTSP solver's](https://csee.essex.ac.uk/staff/dkarap/?page=publications&key=Gutin2009a) [Mono](https://www.mono-project.com/download/stable/) dependency.
-```
-sudo apt install gnupg ca-certificates
-sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 3FA7E0328081BFF6A14DA29AA6A19B38D3D831EF
-echo "deb https://download.mono-project.com/repo/ubuntu stable-bionic main" | sudo tee /etc/apt/sources.list.d/mono-official-stable.list
-sudo apt update
-sudo apt install mono-devel
-```
-
-After installing all dependencies, build the workspace.
+Finally, build the workspace.
 ```
 catkin build
 ```
