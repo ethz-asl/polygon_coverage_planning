@@ -34,7 +34,7 @@ std::vector<Polygon_2> computeTCD(const PolygonWithHoles& polygon_in,
   // TCD
   std::vector<Polygon_2> traps;
   CGAL::Polygon_vertical_decomposition_2<K> decom;
-  decom(polygon_in, std::back_inserter(traps));
+  decom(rotated_polygon, std::back_inserter(traps));
 
   // Rotate back all polygons.
   for (auto& p : traps) {
