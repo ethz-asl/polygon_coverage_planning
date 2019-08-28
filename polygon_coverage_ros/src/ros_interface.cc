@@ -148,21 +148,12 @@ void createPolygonMarkers(const PolygonWithHoles& polygon, double altitude,
   array->markers.push_back(hull_vertices);
 
   // Hole markers:
-  std::vector<std::vector<Point_2>> holes = getHoleVertices(polygon);
   size_t i = 0;
-  for (std::vector<Point_2>& hole : holes) {
-    visualization_msgs::Marker hole_points, hole_vertices, hole_tris;
-    hole.push_back(hole.front());
-    createMarkers(hole, altitude, frame_id, ns + "hole_" + std::to_string(i++),
-                  hole_color, hole_color, line_size, point_size, &hole_points,
-                  &hole_vertices);
-    array->markers.push_back(hole_points);
-    array->markers.push_back(hole_vertices);
-
+  for (auto h = polygon.holes_begin(); h != polygon.holes_end(); ++h) {
+    visualization_msgs::Marker hole_tris;
     // Faces.
     std::vector<std::vector<Point_2>> triangles;
-    triangulatePolygon(PolygonWithHoles(Polygon_2(hole.begin(), hole.end())),
-                       &triangles);
+    triangulatePolygon(PolygonWithHoles(*h), &triangles);
     createTriangles(triangles, frame_id,
                     ns + "hole_mesh_" + std::to_string(i++), hole_color,
                     altitude, &hole_tris);
