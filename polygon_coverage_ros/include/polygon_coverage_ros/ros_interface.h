@@ -89,6 +89,11 @@ void createMarkers(const std::vector<Point_2>& vertices, double altitude,
                    visualization_msgs::Marker* points,
                    visualization_msgs::Marker* line_strip);
 
+void createTriangles(const std::vector<std::vector<Point_2>>& triangles,
+                     const std::string& frame_id, const std::string& ns,
+                     const Color& color, const double altitude,
+                     visualization_msgs::Marker* markers);
+
 void createPolygonMarkers(const PolygonWithHoles& polygon, double altitude,
                           const std::string& frame_id, const std::string& ns,
                           const Color& polygon_color, const Color& hole_color,

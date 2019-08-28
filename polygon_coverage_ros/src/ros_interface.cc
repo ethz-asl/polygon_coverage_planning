@@ -27,6 +27,7 @@
 #include <mav_msgs/eigen_mav_msgs.h>
 #include <polygon_coverage_geometry/cgal_comm.h>
 #include <polygon_coverage_geometry/cgal_definitions.h>
+#include <polygon_coverage_geometry/triangulation.h>
 #include <ros/assert.h>
 #include <ros/ros.h>
 #include <Eigen/Core>
@@ -150,13 +151,22 @@ void createPolygonMarkers(const PolygonWithHoles& polygon, double altitude,
   std::vector<std::vector<Point_2>> holes = getHoleVertices(polygon);
   size_t i = 0;
   for (std::vector<Point_2>& hole : holes) {
-    visualization_msgs::Marker hole_points, hole_vertices;
+    visualization_msgs::Marker hole_points, hole_vertices, hole_tris;
     hole.push_back(hole.front());
     createMarkers(hole, altitude, frame_id, ns + "hole_" + std::to_string(i++),
                   hole_color, hole_color, line_size, point_size, &hole_points,
                   &hole_vertices);
     array->markers.push_back(hole_points);
     array->markers.push_back(hole_vertices);
+
+    // Faces.
+    std::vector<std::vector<Point_2>> triangles;
+    triangulatePolygon(PolygonWithHoles(Polygon_2(hole.begin(), hole.end())),
+                       &triangles);
+    createTriangles(triangles, frame_id,
+                    ns + "hole_mesh_" + std::to_string(i++), hole_color,
+                    altitude, &hole_tris);
+    array->markers.push_back(hole_tris);
   }
 }
 
@@ -319,6 +329,39 @@ bool polygonFromMsg(const polygon_coverage_msgs::PolygonWithHolesStamped& msg,
     return false;
   }
   return true;
+}
+void createTriangles(const std::vector<std::vector<Point_2>>& triangles,
+                     const std::string& frame_id, const std::string& ns,
+                     const Color& color, const double altitude,
+                     visualization_msgs::Marker* markers) {
+  ROS_ASSERT(markers);
+
+  markers->points.clear();
+
+  markers->header.frame_id = frame_id;
+  markers->header.stamp = ros::Time::now();
+  markers->ns = ns;
+  markers->action = visualization_msgs::Marker::ADD;
+  markers->pose.orientation.w = 1.0;
+  markers->scale.x = 1.0;
+  markers->scale.y = 1.0;
+  markers->scale.z = 1.0;
+
+  markers->id = 0;
+  markers->type = visualization_msgs::Marker::TRIANGLE_LIST;
+
+  markers->color = color;
+  for (const auto& t : triangles) {
+    ROS_ASSERT(t.size() == 3);
+    for (const auto& v : t) {
+      geometry_msgs::Point p;
+      p.x = CGAL::to_double(v.x());
+      p.y = CGAL::to_double(v.y());
+      p.z = altitude;
+
+      markers->points.push_back(p);
+    }
+  }
 }
 
 }  // namespace polygon_coverage_planning
