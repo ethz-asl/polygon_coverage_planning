@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # polygon_coverage_planning implements algorithms for coverage planning in
 # general polygons with holes. Copyright (C) 2019, Rik Bähnemann, Autonomous
 # Systems Lab, ETH Zürich
