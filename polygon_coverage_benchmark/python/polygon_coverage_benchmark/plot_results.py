@@ -96,9 +96,9 @@ def createCostFits(df):
     our_bcd_fit['x'], our_bcd_fit['y'] = linFit(df, 'our_bcd')
     our_bcd_fit['planner'] = 'our_bcd'
 
-    #our_tcd_fit = pd.DataFrame()
-    #our_tcd_fit['x'], our_tcd_fit['y'] = linFit(df, 'our_tcd')
-    #our_tcd_fit['planner'] = 'our_tcd'
+    our_tcd_fit = pd.DataFrame()
+    our_tcd_fit['x'], our_tcd_fit['y'] = linFit(df, 'our_tcd')
+    our_tcd_fit['planner'] = 'our_tcd'
 
     one_dir_gk_fit = pd.DataFrame()
     one_dir_gk_fit['x'], one_dir_gk_fit['y'] = linFit(df, 'one_dir_gk', uniform_weight=False)
