@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 # polygon_coverage_planning implements algorithms for coverage planning in
 # general polygons with holes. Copyright (C) 2019, Rik Bähnemann, Autonomous
 # Systems Lab, ETH Zürich
@@ -30,6 +33,23 @@ mmToInch = 0.0393701
 width = 117 * mmToInch
 aspect = 3
 
+def linFit(df, planner, uniform_weight=False):
+    is_planner = df['planner'] == planner
+    df_filtered = df[is_planner]
+    df_cost = df_filtered[['planner', 'num_hole_vertices', 'cost']]
+    x = df_cost['num_hole_vertices'].values
+    y = df_cost['cost'].values
+    if uniform_weight:
+        popt = np.polyfit(x, y, 1)
+    else:
+        w = np.ones(len(y))
+        w[1] = 1000
+        popt = np.polyfit(x, y, 1, w=w)
+    x = np.arange(x.min(), x.max() + 1)
+    yy = popt[0] * x + popt[1]
+
+    return x, yy
+
 def expFit(df, planner, uniform_weight=False):
     is_planner = df['planner'] == planner
     df_filtered = df[is_planner]
@@ -50,15 +70,15 @@ def expFit(df, planner, uniform_weight=False):
 
 def createFits(df):
     our_bcd_fit = pd.DataFrame()
-    our_bcd_fit['x'], our_bcd_fit['y'] = expFit(df, 'our_bcd')
+    our_bcd_fit['x'], our_bcd_fit['y'] = expFit(df, 'our_bcd', uniform_weight=False)
     our_bcd_fit['planner'] = 'our_bcd'
 
     our_tcd_fit = pd.DataFrame()
-    our_tcd_fit['x'], our_tcd_fit['y'] = expFit(df, 'our_tcd')
+    our_tcd_fit['x'], our_tcd_fit['y'] = expFit(df, 'our_tcd', uniform_weight=False)
     our_tcd_fit['planner'] = 'our_tcd'
 
     one_dir_gk_fit = pd.DataFrame()
-    one_dir_gk_fit['x'], one_dir_gk_fit['y'] = expFit(df, 'one_dir_gk')
+    one_dir_gk_fit['x'], one_dir_gk_fit['y'] = expFit(df, 'one_dir_gk', uniform_weight=False)
     one_dir_gk_fit['planner'] = 'one_dir_gk'
 
     gtsp_exact_fit = pd.DataFrame()
@@ -70,6 +90,30 @@ def createFits(df):
     one_dir_exact_fit['planner'] = 'one_dir_exact'
 
     return pd.concat([our_bcd_fit, our_tcd_fit, one_dir_gk_fit, gtsp_exact_fit, one_dir_exact_fit])
+
+def createCostFits(df):
+    our_bcd_fit = pd.DataFrame()
+    our_bcd_fit['x'], our_bcd_fit['y'] = linFit(df, 'our_bcd', uniform_weight=False)
+    our_bcd_fit['planner'] = 'our_bcd'
+
+    our_tcd_fit = pd.DataFrame()
+    our_tcd_fit['x'], our_tcd_fit['y'] = linFit(df, 'our_tcd', uniform_weight=False)
+    our_tcd_fit['planner'] = 'our_tcd'
+
+    one_dir_gk_fit = pd.DataFrame()
+    one_dir_gk_fit['x'], one_dir_gk_fit['y'] = linFit(df, 'one_dir_gk', uniform_weight=False)
+    one_dir_gk_fit['planner'] = 'one_dir_gk'
+
+    gtsp_exact_fit = pd.DataFrame()
+    gtsp_exact_fit['x'], gtsp_exact_fit['y'] = linFit(df, 'gtsp_exact', uniform_weight=False)
+    gtsp_exact_fit['planner'] = 'gtsp_exact'
+
+    one_dir_exact_fit = pd.DataFrame()
+    one_dir_exact_fit['x'], one_dir_exact_fit['y'] = linFit(df, 'one_dir_exact', uniform_weight=False)
+    one_dir_exact_fit['planner'] = 'one_dir_exact'
+
+    return pd.concat([our_bcd_fit, our_tcd_fit, one_dir_gk_fit, gtsp_exact_fit, one_dir_exact_fit])
+
 
 def plotResults(file):
     # Open CSV.
@@ -125,6 +169,21 @@ def plotCosts(df):
     g.set(ylabel="Cost [s]")
     g.ax.legend(loc="upper left")
     g.savefig("./data/cost.pdf", bbox_inches='tight')
+
+    # Linear fit.
+    df_fit = createCostFits(df)
+    min = df['cost'].min()
+    max = df['cost'].max()
+    is_smaller = df_fit['y'] < max
+    df_fit = df_fit[is_smaller]
+
+    sns.lineplot('x', 'y', data=df_fit, hue='planner', ax=g.axes[0, 0], legend=False)
+    g.set(xlim=(df['num_hole_vertices'].min() - 10, df['num_hole_vertices'].max() + 10))
+    g.set(ylim=(df['cost'].min() - 10, df['cost'].max() + 10))
+    g.set(xlabel="Number of Hole Vertices [1]")
+    g.set(ylabel="Cost [s]")
+    g.savefig("./data/cost.pdf", bbox_inches='tight')
+
 
 def plotCostDiff(df):
     # Baseline

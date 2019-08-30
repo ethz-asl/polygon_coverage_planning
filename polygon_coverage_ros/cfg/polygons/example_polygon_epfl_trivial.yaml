@@ -1,0 +1,16 @@
+# A mav_planning_msgs/PolygonWithHoles.msg to describe a forest.
+# The planner always picks the largest z as the fixed altitude it plans in.
+polygon:
+  header:
+    seq: 0
+    stamp:
+      secs: 0
+      nsecs: 0
+    frame_id: 'world'
+  polygon:
+    hull:
+      points:
+      - {x: 0.0, y: 0.0, z: 4.0}
+      - {x: 100.0, y: 0.0, z: 4.0}
+      - {x: 100.0, y: 100.0, z: 4.0}
+      - {x: 0.0, y: 100.0, z: 4.0}

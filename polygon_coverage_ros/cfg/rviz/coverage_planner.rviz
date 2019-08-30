@@ -11,6 +11,7 @@ Panels:
         - /TF1/Frames1
         - /TF1/Tree1
         - /MarkerArray1
+        - /MarkerArray1/Namespaces1
       Splitter Ratio: 0.4285714328289032
     Tree Height: 799
   - Class: rviz/Selection
@@ -76,7 +77,10 @@ Visualization Manager:
       Marker Topic: /coverage_planner/path_markers
       Name: MarkerArray
       Namespaces:
-        {}
+        polygonhole_0: true
+        polygonhole_1: true
+        polygonhole_2: true
+        polygonhull: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -117,11 +121,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 7.314511299133301
+      Scale: 9.043198585510254
       Target Frame: <Fixed Frame>
       Value: TopDownOrtho (rviz)
-      X: 47.592681884765625
-      Y: 32.7403678894043
+      X: 50.20177459716797
+      Y: 50.37466049194336
     Saved: ~
 Window Geometry:
   Displays:
