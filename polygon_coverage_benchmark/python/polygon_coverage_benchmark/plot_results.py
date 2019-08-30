@@ -78,7 +78,7 @@ def createFits(df):
     our_tcd_fit['planner'] = 'our_tcd'
 
     one_dir_gk_fit = pd.DataFrame()
-    one_dir_gk_fit['x'], one_dir_gk_fit['y'] = expFit(df, 'one_dir_gk', uniform_weight=True)
+    one_dir_gk_fit['x'], one_dir_gk_fit['y'] = expFit(df, 'one_dir_gk', uniform_weight=False)
     one_dir_gk_fit['planner'] = 'one_dir_gk'
 
     gtsp_exact_fit = pd.DataFrame()
