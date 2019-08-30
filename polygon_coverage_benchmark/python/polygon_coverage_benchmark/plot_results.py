@@ -70,15 +70,15 @@ def expFit(df, planner, uniform_weight=False):
 
 def createFits(df):
     our_bcd_fit = pd.DataFrame()
-    our_bcd_fit['x'], our_bcd_fit['y'] = expFit(df, 'our_bcd')
+    our_bcd_fit['x'], our_bcd_fit['y'] = expFit(df, 'our_bcd', uniform_weight=False)
     our_bcd_fit['planner'] = 'our_bcd'
 
     our_tcd_fit = pd.DataFrame()
-    our_tcd_fit['x'], our_tcd_fit['y'] = expFit(df, 'our_tcd')
+    our_tcd_fit['x'], our_tcd_fit['y'] = expFit(df, 'our_tcd', uniform_weight=False)
     our_tcd_fit['planner'] = 'our_tcd'
 
     one_dir_gk_fit = pd.DataFrame()
-    one_dir_gk_fit['x'], one_dir_gk_fit['y'] = expFit(df, 'one_dir_gk')
+    one_dir_gk_fit['x'], one_dir_gk_fit['y'] = expFit(df, 'one_dir_gk', uniform_weight=True)
     one_dir_gk_fit['planner'] = 'one_dir_gk'
 
     gtsp_exact_fit = pd.DataFrame()
@@ -93,11 +93,11 @@ def createFits(df):
 
 def createCostFits(df):
     our_bcd_fit = pd.DataFrame()
-    our_bcd_fit['x'], our_bcd_fit['y'] = linFit(df, 'our_bcd')
+    our_bcd_fit['x'], our_bcd_fit['y'] = linFit(df, 'our_bcd', uniform_weight=False)
     our_bcd_fit['planner'] = 'our_bcd'
 
     our_tcd_fit = pd.DataFrame()
-    our_tcd_fit['x'], our_tcd_fit['y'] = linFit(df, 'our_tcd')
+    our_tcd_fit['x'], our_tcd_fit['y'] = linFit(df, 'our_tcd', uniform_weight=False)
     our_tcd_fit['planner'] = 'our_tcd'
 
     one_dir_gk_fit = pd.DataFrame()
@@ -112,7 +112,7 @@ def createCostFits(df):
     one_dir_exact_fit['x'], one_dir_exact_fit['y'] = linFit(df, 'one_dir_exact', uniform_weight=False)
     one_dir_exact_fit['planner'] = 'one_dir_exact'
 
-    return pd.concat([our_bcd_fit, one_dir_gk_fit, gtsp_exact_fit, one_dir_exact_fit])
+    return pd.concat([our_bcd_fit, our_tcd_fit, one_dir_gk_fit, gtsp_exact_fit, one_dir_exact_fit])
 
 
 def plotResults(file):
