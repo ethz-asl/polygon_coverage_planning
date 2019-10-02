@@ -18,7 +18,7 @@ set(GKMA_INCLUDE_DIR ${CMAKE_BINARY_DIR}/gk_ma-prefix/src/gk_ma)
 include(ExternalProject)
 ExternalProject_Add(
   gk_ma
-  URL https://polybox.ethz.ch/index.php/s/WRKOqMhr94DlWPU/download
+  URL https://csee.essex.ac.uk/staff/dkarap/gtsp_ma_source_codes.zip
   URL_MD5 765fad8e3746fa3dd9b81be0afb34d35
   PATCH_COMMAND \\
     patch GkMa/OurHeuristic/Algorithm.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Algorithm.patch && \\
@@ -55,7 +55,7 @@ ExternalProject_Add(
 include(ExternalProject)
 ExternalProject_Add(
   gtsp_instances
-  URL https://polybox.ethz.ch/index.php/s/nsL3KHW9KuttAeb/download
+  URL https://csee.essex.ac.uk/staff/dkarap/gtsplib/InstancesBinary.zip
   URL_MD5 255831bd47de71df8419a54741f0a6be
   UPDATE_COMMAND ""
   CONFIGURE_COMMAND ""
