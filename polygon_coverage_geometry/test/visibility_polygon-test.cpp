@@ -70,13 +70,13 @@ TEST(VisibilityPolygonTest, computeVisibilityPolygon) {
   // Result manually checked.
   vit = visibility_polygon.vertices_begin();
   EXPECT_EQ(static_cast<size_t>(7), visibility_polygon.size());
-  EXPECT_EQ(Point_2(1, 1.25), *vit++);
-  EXPECT_EQ(Point_2(0.5, 1.25), *vit++);
-  EXPECT_EQ(Point_2(0, 2), *vit++);
   EXPECT_EQ(Point_2(0, 0), *vit++);
   EXPECT_EQ(Point_2(2, 0), *vit++);
   EXPECT_EQ(Point_2(2, 2), *vit++);
   EXPECT_EQ(Point_2(1, 2), *vit++);
+  EXPECT_EQ(Point_2(1, 1.25), *vit++);
+  EXPECT_EQ(Point_2(0.5, 1.25), *vit++);
+  EXPECT_EQ(Point_2(0, 2), *vit++);
 
   // Query on polygon halfedge.
   query = Point_2(1.0, 0.0);
