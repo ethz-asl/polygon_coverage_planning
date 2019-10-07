@@ -47,6 +47,8 @@ void computeOffsetPolygon(const PolygonWithHoles& pwh, FT max_offset,
     *offset_polygon = *result.front();
     return;
   } else {
+    ROS_WARN(
+        "Polygon offsetting changes topology. Reducing offsetting distance.");
     result = {boost::make_shared<PolygonWithHoles>(sorted_pwh)};
   }
 
