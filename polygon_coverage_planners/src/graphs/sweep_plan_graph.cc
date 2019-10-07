@@ -77,22 +77,10 @@ bool NodeProperty::isNonOptimal(
 void SweepPlanGraph::offsetPolygonFromWalls() {
   if (settings_.wall_distance <= 0.0) return;
 
-  std::vector<boost::shared_ptr<PolygonWithHoles>> result =
-      CGAL::create_interior_skeleton_and_offset_polygons_with_holes_2(
-          settings_.wall_distance, settings_.polygon);
-
-  ROS_ASSERT(!result.empty());
-  ROS_WARN_COND(
-      result.size() > 1,
-      "Offsetting the polygon by %.2f m from the wall resulted in multiple "
-      "polygons with holes. Only considering the first polygon.",
-      CGAL::to_double(settings_.wall_distance));
-
-  if (result.empty()) {
-    ROS_WARN("No polygon left after offsetting from wall. Cancel offsetting.");
-  } else {
-    settings_.polygon = *(result.front());
-  }
+  PolygonWithHoles temp_poly = settings_.polygon;
+  computeOffsetPolygon(temp_poly, settings_.wall_distance, &settings_.polygon);
+  // Update visibility graph.
+  visibility_graph_ = visibility_graph::VisibilityGraph(settings_.polygon);
 }
 
 bool SweepPlanGraph::create() {

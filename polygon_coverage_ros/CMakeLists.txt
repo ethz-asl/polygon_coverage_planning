@@ -7,6 +7,7 @@ catkin_simple(ALL_DEPS_REQUIRED)
 add_definitions(-std=c++17)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set(CMAKE_BUILD_TYPE Release)
 
 find_package(CGAL QUIET COMPONENTS Core)
 include(${CGAL_USE_FILE})
