@@ -31,10 +31,17 @@ std::list<PolygonWithHoles> computeDifference(
     const std::list<Polygon_2>::const_iterator& hull,
     const std::list<Polygon_2>::const_iterator& holes_begin,
     const std::list<Polygon_2>::const_iterator& holes_end) {
+  return computeDifference(*hull, holes_begin, holes_end);
+}
+
+std::list<PolygonWithHoles> computeDifference(
+    const Polygon_2& hull,
+    const std::list<Polygon_2>::const_iterator& holes_begin,
+    const std::list<Polygon_2>::const_iterator& holes_end) {
   typedef CGAL::Gps_segment_traits_2<K> Traits_2;
   typedef CGAL::General_polygon_set_2<Traits_2> Polygon_set_2;
 
-  Polygon_set_2 gps(*hull);
+  Polygon_set_2 gps(hull);
   for (auto h = holes_begin; h != holes_end; ++h) {
     gps.difference(*h);
   }
