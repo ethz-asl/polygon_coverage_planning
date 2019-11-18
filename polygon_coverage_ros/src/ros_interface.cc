@@ -25,6 +25,7 @@
 #include <geometry_msgs/Point.h>
 #include <mav_msgs/conversions.h>
 #include <mav_msgs/eigen_mav_msgs.h>
+#include <polygon_coverage_geometry/boolean.h>
 #include <polygon_coverage_geometry/cgal_comm.h>
 #include <polygon_coverage_geometry/cgal_definitions.h>
 #include <polygon_coverage_geometry/triangulation.h>
@@ -304,13 +305,24 @@ bool polygonFromMsg(const polygon_coverage_msgs::PolygonWithHolesStamped& msg,
 
   Polygon_2 hull;
   polygon2FromPolygonMsg(msg.polygon.hull, &hull);
-  *polygon = PolygonWithHoles(hull);
+  if (hull.is_clockwise_oriented()) hull.reverse_orientation();
 
+  std::list<Polygon_2> holes(msg.polygon.holes.size());
   for (size_t i = 0; i < msg.polygon.holes.size(); ++i) {
-    Polygon_2 hole;
-    polygon2FromPolygonMsg(msg.polygon.holes[i], &hole);
-    polygon->add_hole(hole);
+    auto hole = std::next(holes.begin(), i);
+    polygon2FromPolygonMsg(msg.polygon.holes[i], &(*hole));
+    if (hole->is_counterclockwise_oriented()) hole->reverse_orientation();
   }
+
+  // Cut holes from hull.
+  std::list<PolygonWithHoles> res =
+      polygon_coverage_planning::computeDifference(hull, holes.begin(),
+                                                   holes.end());
+  if (res.empty()) {
+    ROS_ERROR("Failed to create polygon with holes from msg.");
+    return false;
+  }
+  *polygon = res.front();
 
   if (polygon->outer_boundary().size() < 3) {
     ROS_ERROR_STREAM("Input polygon is not valid.");
@@ -318,7 +330,13 @@ bool polygonFromMsg(const polygon_coverage_msgs::PolygonWithHolesStamped& msg,
   } else if (!isStrictlySimple(*polygon)) {
     ROS_ERROR_STREAM("Input polygon is not simple.");
     return false;
+  } else if (res.size() > 1) {
+    ROS_ERROR(
+        "Failed to create polygon from message. More than two input polygons "
+        "after cropping holes from hull.");
+    return false;
   }
+
   return true;
 }
 void createTriangles(const std::vector<std::vector<Point_2>>& triangles,

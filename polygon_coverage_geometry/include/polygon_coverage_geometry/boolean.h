@@ -31,6 +31,11 @@ std::list<PolygonWithHoles> computeDifference(
     const std::list<Polygon_2>::const_iterator& holes_begin,
     const std::list<Polygon_2>::const_iterator& holes_end);
 
+std::list<PolygonWithHoles> computeDifference(
+    const Polygon_2& hull,
+    const std::list<Polygon_2>::const_iterator& holes_begin,
+    const std::list<Polygon_2>::const_iterator& holes_end);
+
 }  // namespace polygon_coverage_planning
 
 #endif  // POLYGON_COVERAGE_GEOMETRY_BOOLEAN_H_
