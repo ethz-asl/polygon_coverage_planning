@@ -353,6 +353,11 @@ bool PolygonPlannerBase::planPathCallback(
     mav_planning_msgs::PlannerService::Request& request,
     mav_planning_msgs::PlannerService::Response& response) {
   planning_complete_ = false;
+  if (!polygon_.has_value()) {
+    ROS_WARN("Polygon not set. Cannot plan path.");
+    response.success = planning_complete_;
+    return true;
+  }
   const Point_2 start(request.start_pose.pose.position.x,
                       request.start_pose.pose.position.y);
   const Point_2 goal(request.goal_pose.pose.position.x,
