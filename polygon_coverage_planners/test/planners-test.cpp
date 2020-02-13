@@ -108,8 +108,8 @@ void runPlanners(const std::vector<PolygonWithHoles>& polygons) {
     EXPECT_GT(settings.cost_function(waypoints_exact), 0.0);
     EXPECT_EQ(settings.cost_function(waypoints_exact),
               settings.cost_function(waypoints_exact_preprocessed));
-    EXPECT_NEAR(settings.cost_function(waypoints_gk_ma),
-                settings.cost_function(waypoints_exact), kNear);
+    EXPECT_GE(settings.cost_function(waypoints_gk_ma) + kNear,
+              settings.cost_function(waypoints_exact));
   }
 }
 
