@@ -1,0 +1,10 @@
+<launch>
+  <!-- Coverage planner. -->
+  <include file="$(find polygon_coverage_ros)/launch/coverage_planner.launch">
+    <arg name="rviz_config" value="$(find polygon_coverage_ros)/cfg/rviz/coverage_planner_satellite.rviz" /> 
+  </include>
+
+  <!-- Send a static GPS fix to center the map. Edit latitude and longitude in cfg/rviz/home.gps to use your own position. -->
+  <node pkg="rostopic" type="rostopic" name="home_gps_fix" args="pub /rviz_satellite/home_gps sensor_msgs/NavSatFix --latch --file=$(find polygon_coverage_ros)/cfg/rviz/home.gps" output="screen"/>
+
+</launch>
