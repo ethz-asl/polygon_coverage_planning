@@ -1,0 +1,14 @@
+header:
+  seq: 28
+  stamp:
+    secs: 1550757135
+    nsecs: 803256034
+  frame_id: "piksi"
+status:
+  status: 2
+  service: 1
+latitude: 47.405298
+longitude: 8.638944
+altitude: 0.0
+position_covariance: [0.0049, 0.0, 0.0, 0.0, 0.0049, 0.0, 0.0, 0.0, 0.01]
+position_covariance_type: 1

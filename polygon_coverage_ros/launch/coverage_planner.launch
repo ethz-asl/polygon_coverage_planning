@@ -1,5 +1,7 @@
 <launch>
-  <node name="rviz" pkg="rviz" type="rviz" output="log" args="-d $(find polygon_coverage_ros)/cfg/rviz/coverage_planner.rviz"/>
+  <arg name="rviz_config" default="$(find polygon_coverage_ros)/cfg/rviz/coverage_planner.rviz"/>
+
+  <node name="rviz" pkg="rviz" type="rviz" output="log" args="-d $(arg rviz_config)"/>
 
   <node name="coverage_planner" pkg="polygon_coverage_ros" type="coverage_planner" output="screen" clear_params="true">
 
