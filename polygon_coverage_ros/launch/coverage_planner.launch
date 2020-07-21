@@ -7,7 +7,7 @@
 
     <rosparam command="load" file="$(find polygon_coverage_ros)/cfg/coverage_planner.yaml"/>
     <!-- Polygon, altitude, and world frame ID -->
-    <rosparam command="load" file="$(find polygon_coverage_ros)/cfg/polygons/example_polygon_epfl_simple.yaml"/>
+    <rosparam command="load" file="$(find polygon_coverage_ros)/cfg/polygons/shiraishi.yaml"/>
 
   </node>
 
