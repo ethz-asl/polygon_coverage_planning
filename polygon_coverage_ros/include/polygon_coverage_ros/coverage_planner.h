@@ -215,8 +215,8 @@ class CoveragePlanner : public PolygonPlannerBase {
           break;
         }
         if (!altitude_.has_value()) {
-          ROS_ERROR("No altitude specified. Cannot set sensor model.");
-          break;
+          ROS_WARN("No altitude specified. Creating default altitude 1m.");
+          altitude_ = std::make_optional(1.0);
         }
         sensor_model_ = std::make_shared<Frustum>(
             altitude_.value(), lateral_fov_.value(), lateral_overlap_.value());
