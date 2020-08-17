@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(rviz_polygon_tool)
 
-add_definitions(-std=c++14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+set(CMAKE_CXX_STANDARD 17)
 
 find_package(catkin_simple REQUIRED)
 catkin_simple(ALL_DEPS_REQUIRED)
