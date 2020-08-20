@@ -9,7 +9,7 @@ Field and Service Robotics. Springer, Cham, 2019.
 
 ![Coverage Planning in RVIZ](https://user-images.githubusercontent.com/11293852/61134221-70d18980-a4bf-11e9-87a7-d599b60c8dd2.gif)
 
-Application video:
+[Watch the application video](https://youtu.be/u1UOqdJoK9s):
 
 [![Watch the video](https://img.youtube.com/vi/u1UOqdJoK9s/sddefault.jpg)](https://youtu.be/u1UOqdJoK9s)
 
