@@ -40,7 +40,7 @@ wstool update
 Install all [remaining dependencies](https://github.com/ethz-asl/polygon_coverage_planning/blob/master/install/prepare-jenkins-slave.sh):
 ```
 cd ~/catkin_ws/polygon_coverage_planning/install
-./prepare-jeknins-slave.sh
+./prepare-jenkins-slave.sh
 ```
 
 Finally, build the workspace.
