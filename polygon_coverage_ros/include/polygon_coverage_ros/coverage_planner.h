@@ -215,7 +215,13 @@ class CoveragePlanner : public PolygonPlannerBase {
           break;
         }
         if (!altitude_.has_value()) {
-          ROS_WARN("No altitude specified. Creating default altitude 1m.");
+          ROS_WARN("No altitude specified. Creating default altitude of 1m.");
+          altitude_ = std::make_optional(1.0);
+        } else if (altitude_.value() < std::numeric_limits<double>::epsilon()) {
+          ROS_WARN(
+              "Altitude to small %.3fm. Please set altitude through first "
+              "z-value of polygon. Setting default altitude of 1m.",
+              altitude_.value());
           altitude_ = std::make_optional(1.0);
         }
         sensor_model_ = std::make_shared<Frustum>(
