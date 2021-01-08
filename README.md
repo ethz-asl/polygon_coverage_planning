@@ -11,7 +11,7 @@ Field and Service Robotics. Springer, Cham, 2019.
 
 [Watch the application video](https://youtu.be/u1UOqdJoK9s):
 
-[![Watch the video](https://img.youtube.com/vi/u1UOqdJoK9s/sddefault.jpg)](https://youtu.be/u1UOqdJoK9s)
+![Watch the video](https://img.youtube.com/vi/u1UOqdJoK9s/sddefault.jpg)](https://youtu.be/u1UOqdJoK9s)
 
 ## Installation on Ubuntu 18.04 and ROS melodic
 Install [ROS melodic](http://wiki.ros.org/melodic/Installation/Ubuntu).
