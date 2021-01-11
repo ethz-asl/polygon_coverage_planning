@@ -79,12 +79,23 @@ Setting the polygon and planning the path is the same as for Coverage Planning.
 ## Licensing
 This repository is subject to GNU General Public License version 3 or later due to its dependencies.
 
-The underlying (exact) geometric operations rely on [CGAL](https://www.cgal.org/license.html) which is restricted by GNU General Public License version 3 or later.
+# CGAL dependencies
+The underlying (exact) geometric operations rely on [CGAL 5.0.3](https://www.cgal.org/license.html) which is restricted by GNU General Public License version 3 or later.
+In particular the dependencies are:
+- Algebraic Foundations (LGPL)
+- 2D and 3D Linear Geometry Kernel (LPGL)
+- 2D Polygon (LPGL)
+- Geometric Object Generators (LPGL)
+- STL Extensions (LGPL)
+- 2D Triangulation (GPL)
+- 2D Regularized Boolean Set-Operations (GPL)
+- 2D Straight Skeleton and Polygon Offsetting (GPL)
 
-The underlying optimization the [memetic solver](https://csee.essex.ac.uk/staff/dkarap/?page=publications&key=Gutin2009a) presented in
+# GTSP solver
+The underlying optimization uses the [memetic solver](https://csee.essex.ac.uk/staff/dkarap/?page=publications&key=Gutin2009a) presented in
 ```
 Gutin, Gregory, and Daniel Karapetyan.
 "A memetic algorithm for the generalized traveling salesman problem."
 Natural Computing 9.1 (2010): 47-60.
 ```
-is free of charge for non-commercial purposes only.
+It is free of charge for non-commercial purposes only.
