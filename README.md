@@ -17,12 +17,19 @@ Field and Service Robotics. Springer, Cham, 2019.
 Install [ROS melodic](http://wiki.ros.org/melodic/Installation/Ubuntu).
 Install [mono](https://www.mono-project.com/download/stable/#download-lin-ubuntu).
 
+Install all [remaining dependencies](https://github.com/ethz-asl/polygon_coverage_planning/blob/master/install/prepare-jenkins-slave.sh):
+```
+cd ~/catkin_ws/polygon_coverage_planning/install
+./prepare-jenkins-slave.sh
+```
+
 Create a workspace.
 ```
 cd ~
 mkdir -p catkin_ws/src
 cd catkin_ws
 catkin init
+catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
 catkin config --extend /opt/ros/melodic
 ```
 
@@ -32,15 +39,10 @@ Download package dependencies from [dependencies.rosinstall](install/dependencie
 cd ~/catkin_ws/src
 git clone git@github.com:ethz-asl/polygon_coverage_planning.git
 wstool init
+wstool set --git polygon_coverage_planning git@github.com:ethz-asl/polygon_coverage_planning.git
+wstool update
 wstool merge polygon_coverage_planning/install/dependencies.rosinstall
 wstool update
-```
-
-
-Install all [remaining dependencies](https://github.com/ethz-asl/polygon_coverage_planning/blob/master/install/prepare-jenkins-slave.sh):
-```
-cd ~/catkin_ws/polygon_coverage_planning/install
-./prepare-jenkins-slave.sh
 ```
 
 Finally, build the workspace.
@@ -79,7 +81,7 @@ Setting the polygon and planning the path is the same as for Coverage Planning.
 ## Licensing
 This repository is subject to GNU General Public License version 3 or later due to its dependencies.
 
-# CGAL dependencies
+### CGAL dependencies
 The underlying (exact) geometric operations rely on [CGAL 5.0.3](https://www.cgal.org/license.html) which is restricted by GNU General Public License version 3 or later.
 In particular the dependencies are:
 - Algebraic Foundations (LGPL)
@@ -91,8 +93,7 @@ In particular the dependencies are:
 - 2D Regularized Boolean Set-Operations (GPL)
 - 2D Straight Skeleton and Polygon Offsetting (GPL)
 
-# GTSP solver
-The underlying optimization uses the [memetic solver](https://csee.essex.ac.uk/staff/dkarap/?page=publications&key=Gutin2009a) presented in
+### GTSP solver
 ```
 Gutin, Gregory, and Daniel Karapetyan.
 "A memetic algorithm for the generalized traveling salesman problem."
