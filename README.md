@@ -94,6 +94,7 @@ In particular the dependencies are:
 - 2D Straight Skeleton and Polygon Offsetting (GPL)
 
 ### GTSP solver
+The underlying optimization uses the [memetic solver](http://www.cs.nott.ac.uk/~pszdk/?page=publications&key=Gutin2009a) presented in
 ```
 Gutin, Gregory, and Daniel Karapetyan.
 "A memetic algorithm for the generalized traveling salesman problem."
