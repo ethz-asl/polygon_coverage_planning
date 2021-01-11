@@ -37,7 +37,6 @@ Download package dependencies from [dependencies.rosinstall](install/dependencie
 **Note**: If you have not setup [SSH keys in GitHub](https://help.github.com/en/enterprise/2.16/user/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) use [dependencies_https.rosinstall](install/dependencies_https.rosinstall).
 ```
 cd ~/catkin_ws/src
-git clone git@github.com:ethz-asl/polygon_coverage_planning.git
 wstool init
 wstool set --git polygon_coverage_planning git@github.com:ethz-asl/polygon_coverage_planning.git -v v1.0.0
 wstool update
