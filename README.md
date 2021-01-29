@@ -33,7 +33,7 @@ catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
 catkin config --extend /opt/ros/melodic
 ```
 
-Download package dependencies from [dependencies.rosinstall](install/dependencies.rosinstall).
+Download package dependencies from [dependencies.rosinstall](install/dependencies.rosinstall).<br>
 **Note**: If you have not setup [SSH keys in GitHub](https://help.github.com/en/enterprise/2.16/user/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) use [dependencies_https.rosinstall](install/dependencies_https.rosinstall).
 ```
 cd ~/catkin_ws/src
