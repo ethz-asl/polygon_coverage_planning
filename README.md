@@ -37,7 +37,6 @@ Download package dependencies from [dependencies.rosinstall](install/dependencie
 **Note**: If you have not setup [SSH keys in GitHub](https://help.github.com/en/enterprise/2.16/user/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) use [dependencies_https.rosinstall](install/dependencies_https.rosinstall).
 ```
 cd ~/catkin_ws/src
-git clone git@github.com:ethz-asl/polygon_coverage_planning.git
 wstool init
 wstool set --git polygon_coverage_planning git@github.com:ethz-asl/polygon_coverage_planning.git -v v2.0.0
 wstool update
@@ -92,6 +91,9 @@ In particular the dependencies are:
 - 2D Triangulation (GPL)
 - 2D Regularized Boolean Set-Operations (GPL)
 - 2D Straight Skeleton and Polygon Offsetting (GPL)
+- 2D Arrangement (GPL), see also
+
+```Fogel, Efi, Dan Halperin, and Ron Wein. CGAL arrangements and their applications: A step-by-step guide. Vol. 7. Springer Science & Business Media, 2012.```
 
 ### GTSP solver
 The underlying optimization uses the [memetic solver](http://www.cs.nott.ac.uk/~pszdk/?page=publications&key=Gutin2009a) presented in
