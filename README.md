@@ -38,7 +38,7 @@ Download package dependencies from [dependencies.rosinstall](install/dependencie
 ```
 cd ~/catkin_ws/src
 wstool init
-wstool set --git polygon_coverage_planning git@github.com:ethz-asl/polygon_coverage_planning.git -v v2.0.0
+wstool set --git polygon_coverage_planning git@github.com:ethz-asl/polygon_coverage_planning.git -v v2.0.1
 wstool update
 wstool merge polygon_coverage_planning/install/dependencies.rosinstall
 wstool update
