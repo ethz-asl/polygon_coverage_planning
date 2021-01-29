@@ -14,4 +14,4 @@ sudo apt-get install -y libgmp-dev libmpfr-dev
 echo "Installing MONO dependencies."
 sudo apt-get install -y mono-devel
 echo "Installig GLOG dependencices."
-sudo apt-get install -y libgoogle-glog
+sudo apt-get install -y libgoogle-glog-dev
