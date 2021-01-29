@@ -1,4 +1,4 @@
-# A mav_planning_msgs/PolygonWithHoles.msg to describe a forest.
+# A polygon_coverage_msgs/PolygonWithHoles.msg to describe a forest.
 # The planner always picks the largest z as the fixed altitude it plans in.
 polygon:
   header:

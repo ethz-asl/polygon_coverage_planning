@@ -68,7 +68,7 @@ The polygon can be set via
 - RVIZ Polygon Tool as in the video above.
 
 The plan is generated via
-- ROS [service](https://github.com/ethz-asl/mav_comm/blob/master/mav_planning_msgs/srv/PlannerService.srv) call 'rosservice call /coverage_planner/plan_path' or
+- ROS [service](polygon_coverage_msgs/srv/PlannerService.srv) call 'rosservice call /coverage_planner/plan_path' or
 - clicking start and goal points using the RVIZ clicked_point tool as in the video above.
 
 ### Euclidean Shortest Path Planning

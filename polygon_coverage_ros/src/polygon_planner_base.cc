@@ -350,8 +350,8 @@ bool PolygonPlannerBase::setPolygonCallback(
 }
 
 bool PolygonPlannerBase::planPathCallback(
-    mav_planning_msgs::PlannerService::Request& request,
-    mav_planning_msgs::PlannerService::Response& response) {
+    polygon_coverage_msgs::PlannerService::Request& request,
+    polygon_coverage_msgs::PlannerService::Response& response) {
   planning_complete_ = false;
   if (!polygon_.has_value()) {
     ROS_WARN("Polygon not set. Cannot plan path.");

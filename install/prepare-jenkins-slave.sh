@@ -8,7 +8,7 @@ sudo apt-get install -y python-wstool python-catkin-tools
 
 # Package dependencies.
 echo "Installing MAV_COMM dependencies."
-sudo apt-get install -y ros-${ROS_VERSION}-mav-msgs ros-${ROS_VERSION}-mav-planning-msgs
+sudo apt-get install -y ros-${ROS_VERSION}-mav-msgs
 echo "Installing CGAL dependencies."
 sudo apt-get install -y libgmp-dev libmpfr-dev
 echo "Installing MONO dependencies."
