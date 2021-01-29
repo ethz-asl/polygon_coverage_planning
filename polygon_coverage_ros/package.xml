@@ -28,4 +28,6 @@
   <depend>polygon_coverage_planners</depend>
   <depend>cgal_catkin</depend>
 
+  <exec_depend>rviz_polygon_tool</exec_depend>
+
 </package>

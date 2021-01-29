@@ -44,11 +44,11 @@ const QString kR = "<b>r:</b> Reset polygon";
 const QString kC = "<b>c:</b> Clear all";
 const QString kEnter = "<b>Enter:</b> Publish polygon";
 const QString kMouse = "<b>Mouse wheel (+shift/ctrl):</b> Change altitude";
+const QString kInfo = kLeftClick + ", " + kRightClick + ", " + kH + ", " + kP +
+                      ", " + kV + ", " + kR + ", " + kC + ", " + kEnter + ", " +
+                      kMouse;
 const QString kAltitude = "Altitude: ";
 const QString kSelection = "Current Selection: ";
-const QString kStatus = kLeftClick + ", " + kRightClick + ", " + kH + ", " +
-                        kP + ", " + kV + ", " + kR + ", " + kC + ", " + kEnter +
-                        ", " + kMouse + ", " + kAltitude;
 
 // Point scales.
 const float kPtScale = 0.5;
@@ -332,14 +332,15 @@ void PolygonTool::publishPolygon() {
 }
 
 void PolygonTool::updateStatus() {
-  const QString kPrefix =
-      kStatus + QString::number(altitude_) + "m, " + kSelection;
+  QString status = kAltitude + QString::number(altitude_) + "m, " + kSelection;
   if (polygon_selection_ == polygons_.begin()) {
-    setStatus(kPrefix + " Hull");
+    status += " Hull";
   } else {
     int idx = std::distance(polygons_.begin(), polygon_selection_) - 1;
-    setStatus(kPrefix + " Hole " + QString::number(idx));
+    status += " Hole " + QString::number(idx);
   }
+  status += ", " + kInfo;
+  setStatus(status);
 }
 
 void PolygonTool::removeEmptyHoles() {
