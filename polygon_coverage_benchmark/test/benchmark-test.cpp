@@ -27,7 +27,7 @@
 #include <ros/ros.h>
 #include <yaml-cpp/yaml.h>
 
-#include <mav_planning_msgs/PolygonWithHoles.h>
+#include <polygon_coverage_msgs/PolygonWithHoles.h>
 
 #include <polygon_coverage_geometry/cgal_definitions.h>
 #include <polygon_coverage_planners/cost_functions/path_cost_functions.h>

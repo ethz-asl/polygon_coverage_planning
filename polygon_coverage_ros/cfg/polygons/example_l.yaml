@@ -1,4 +1,4 @@
-# A mav_planning_msgs/PolygonWithHoles.msg to describe a rectangle.
+# A polygon_coverage_msgs/PolygonWithHoles.msg to describe a rectangle.
 polygon:
   header:
     seq: 0

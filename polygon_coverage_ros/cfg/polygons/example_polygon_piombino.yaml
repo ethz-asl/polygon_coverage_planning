@@ -1,4 +1,4 @@
-# A mav_planning_msgs/PolygonWithHoles.msg to describe a simple environment that
+# A polygon_coverage_msgs/PolygonWithHoles.msg to describe a simple environment that
 # resambles the ERL arena in Piombino.
 polygon:
   header:

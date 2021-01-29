@@ -30,7 +30,7 @@
 #include <polygon_coverage_planners/sensor_models/sensor_model_base.h>
 
 #include <geometry_msgs/PointStamped.h>
-#include <mav_planning_msgs/PlannerService.h>
+#include <polygon_coverage_msgs/PlannerService.h>
 #include <ros/ros.h>
 #include <std_srvs/Empty.h>
 #include <visualization_msgs/MarkerArray.h>
@@ -98,8 +98,9 @@ class PolygonPlannerBase {
   void clickPolygonCallback(
       const polygon_coverage_msgs::PolygonWithHolesStamped& msg);
   // Solves the planning problem from start to goal.
-  bool planPathCallback(mav_planning_msgs::PlannerService::Request& request,
-                        mav_planning_msgs::PlannerService::Response& response);
+  bool planPathCallback(
+      polygon_coverage_msgs::PlannerService::Request& request,
+      polygon_coverage_msgs::PlannerService::Response& response);
   bool publishAllCallback(std_srvs::Empty::Request& request,
                           std_srvs::Empty::Response& response);
   bool publishVisualizationCallback(std_srvs::Empty::Request& request,

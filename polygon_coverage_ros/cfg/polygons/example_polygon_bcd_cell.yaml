@@ -1,4 +1,4 @@
-# A mav_planning_msgs/PolygonWithHoles.msg to describe a typical BCD cell.
+# A polygon_coverage_msgs/PolygonWithHoles.msg to describe a typical BCD cell.
 polygon:
   header:
     seq: 0

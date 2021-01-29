@@ -33,12 +33,12 @@ catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
 catkin config --extend /opt/ros/melodic
 ```
 
-Download package dependencies from [dependencies.rosinstall](install/dependencies.rosinstall).
+Download package dependencies from [dependencies.rosinstall](install/dependencies.rosinstall).<br>
 **Note**: If you have not setup [SSH keys in GitHub](https://help.github.com/en/enterprise/2.16/user/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) use [dependencies_https.rosinstall](install/dependencies_https.rosinstall).
 ```
 cd ~/catkin_ws/src
 wstool init
-wstool set --git polygon_coverage_planning git@github.com:ethz-asl/polygon_coverage_planning.git -v v1.0.0
+wstool set --git polygon_coverage_planning git@github.com:ethz-asl/polygon_coverage_planning.git -v v2.0.0
 wstool update
 wstool merge polygon_coverage_planning/install/dependencies.rosinstall
 wstool update
@@ -67,7 +67,7 @@ The polygon can be set via
 - RVIZ Polygon Tool as in the video above.
 
 The plan is generated via
-- ROS [service](https://github.com/ethz-asl/mav_comm/blob/master/mav_planning_msgs/srv/PlannerService.srv) call 'rosservice call /coverage_planner/plan_path' or
+- ROS [service](polygon_coverage_msgs/srv/PlannerService.srv) call 'rosservice call /coverage_planner/plan_path' or
 - clicking start and goal points using the RVIZ clicked_point tool as in the video above.
 
 ### Euclidean Shortest Path Planning
