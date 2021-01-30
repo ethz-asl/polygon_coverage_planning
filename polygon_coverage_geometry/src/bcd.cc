@@ -29,10 +29,129 @@
 namespace polygon_coverage_planning {
 
 
+void calculateSortedVertexIndicators(const PolygonWithHoles & pwh, std::vector<PWHIndicator> & sorted_vertex_indicator) {
+    for (int j = 0; j < (int)pwh.outer_boundary().size(); ++j) {
+        sorted_vertex_indicator.emplace_back(&pwh, 0, j);
+    }
+    for (int j = 0; j < (int)pwh.number_of_holes(); ++j) {
+        for (int k = 0; k < (int)pwh.holes()[j].size(); ++k) {
+            sorted_vertex_indicator.emplace_back(&pwh, j+1, k);
+        }
+    }
+    Polygon_2::Traits::Less_xy_2 less_xy_2;
+    std::sort(sorted_vertex_indicator.begin(), sorted_vertex_indicator.end(),
+              [&less_xy_2](const PWHIndicator & a,
+                           const PWHIndicator & b) -> bool {
+                  return less_xy_2(a.getVertex(), b.getVertex());
+              });
+}
 
 
 
+int getIntersectionsWithSweepLine(const std::list<PWHIndicator> & current_edge_list, const PWHIndicator & v,
+                                     std::vector<Point_2> & intersection_points) {
+    intersection_points.reserve(current_edge_list.size());
+    auto v_point = v.getVertex();
+    Line_2 l(v_point, Direction_2(0, 1));
 
+    size_t cnt = 0;
+    size_t range_index = 0;
+    bool range_found_flag = false;
+    for (auto & edge_i : current_edge_list) {
+        auto edge = edge_i.getEdge();
+        auto result = CGAL::intersection(edge, l);
+        Point_2 inter_point;
+        
+        if(result) {
+          if (boost::get<Segment_2>(&*result)) {
+              inter_point = (edge.target().x() > edge.source().x()) ? (edge.target()) : (edge.source());
+          } else {
+              inter_point = *(boost::get<Point_2>(&*result));
+          }
+        } else {
+          // It is imposible that the current edge has no intersection with the sweep line.
+          return -1;
+        }
+        intersection_points.push_back(inter_point);
+        if(!range_found_flag && inter_point.y() > v_point.y())  {
+            range_found_flag = true;
+            range_index = cnt;
+        }
+        cnt++;
+    }
+    if(range_found_flag) {
+        return (int)range_index;
+    } else {
+        return (int)cnt;
+    }
+}
+
+
+void closeOpenPolygon(std::list<Point_2> & open_polygon, Polygon_2 & closed_polygon, const Point_2& up_point,
+                      const Point_2& down_point) {
+    Segment_2 close_edge(down_point, up_point);
+    auto close_line = close_edge.supporting_line();
+    if(!close_line.has_on(open_polygon.front())) {
+        open_polygon.push_front(up_point);
+    }
+    if(!close_line.has_on(open_polygon.back())) {
+        open_polygon.push_back(down_point);
+    }
+    for(auto & open_polygon_point : open_polygon) {
+        closed_polygon.push_back(open_polygon_point);
+    }
+}
+
+void closeOpenPolygon(std::list<Point_2> & open_polygon, Polygon_2 & closed_polygon, const Point_2& point) {
+    Segment_2 close_edge(open_polygon.front(), open_polygon.back());
+    auto close_line = close_edge.supporting_line();
+    if(!close_line.has_on(point)) {
+        open_polygon.push_front(point);
+    }
+    for(auto & open_polygon_point : open_polygon) {
+        closed_polygon.push_back(open_polygon_point);
+    }
+}
+
+void openPolygonAddPointUp(std::list<Point_2> & open_polygon, const Point_2 & point) {
+    auto begin = open_polygon.begin();
+    auto end = open_polygon.end();
+    if(begin == end) {
+        open_polygon.push_front(point);
+    } else {
+        auto next_begin = std::next(begin);
+        if (next_begin == end) {
+            open_polygon.push_front(point);
+        } else {
+            Line_2 line(*next_begin, *begin);
+            if(line.has_on(point)) {
+                *begin = point;
+            } else {
+                open_polygon.push_front(point);
+            }
+        }
+    }
+}
+
+void openPolygonAddPointDown(std::list<Point_2> & open_polygon, const Point_2 & point) {
+    auto begin = open_polygon.rbegin();
+    auto end = open_polygon.rend();
+    if(begin == end) {
+        open_polygon.push_back(point);
+    } else {
+        auto next_begin = std::next(begin);
+        if (next_begin == end) {
+            open_polygon.push_back(point);
+        } else {
+            Line_2 line(*next_begin, *begin);
+            if(line.has_on(point)) {
+                *begin = point;
+            } else {
+                open_polygon.push_back(point);
+            }
+        }
+    }
+}
 
 
 std::vector<Polygon_2> computeBCD(const PolygonWithHoles& polygon_in,
