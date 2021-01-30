@@ -24,8 +24,16 @@
 
 #include "polygon_coverage_geometry/bcd.h"
 #include "polygon_coverage_geometry/cgal_comm.h"
+#include "polygon_coverage_geometry/pwh_indicator.h"
 
 namespace polygon_coverage_planning {
+
+
+
+
+
+
+
 
 std::vector<Polygon_2> computeBCD(const PolygonWithHoles& polygon_in,
                                   const Direction_2& dir) {
