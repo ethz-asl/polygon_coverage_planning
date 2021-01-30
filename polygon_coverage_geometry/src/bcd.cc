@@ -87,7 +87,7 @@ int getIntersectionsWithSweepLine(const std::list<PWHIndicator> & current_edge_l
 }
 
 
-void closeOpenPolygon(std::list<Point_2> & open_polygon, Polygon_2 & closed_polygon, const Point_2& up_point,
+bool closeOpenPolygon(std::list<Point_2> & open_polygon, Polygon_2 & closed_polygon, const Point_2& up_point,
                       const Point_2& down_point) {
     Segment_2 close_edge(down_point, up_point);
     auto close_line = close_edge.supporting_line();
@@ -97,20 +97,28 @@ void closeOpenPolygon(std::list<Point_2> & open_polygon, Polygon_2 & closed_poly
     if(!close_line.has_on(open_polygon.back())) {
         open_polygon.push_back(down_point);
     }
+    if(open_polygon.size() < 3) {
+        return false;
+    }
     for(auto & open_polygon_point : open_polygon) {
         closed_polygon.push_back(open_polygon_point);
     }
+    return true;
 }
 
-void closeOpenPolygon(std::list<Point_2> & open_polygon, Polygon_2 & closed_polygon, const Point_2& point) {
+bool closeOpenPolygon(std::list<Point_2> & open_polygon, Polygon_2 & closed_polygon, const Point_2& point) {
     Segment_2 close_edge(open_polygon.front(), open_polygon.back());
     auto close_line = close_edge.supporting_line();
     if(!close_line.has_on(point)) {
         open_polygon.push_front(point);
     }
+    if(open_polygon.size() < 3) {
+        return false;
+    }
     for(auto & open_polygon_point : open_polygon) {
         closed_polygon.push_back(open_polygon_point);
     }
+    return true;
 }
 
 void openPolygonAddPointUp(std::list<Point_2> & open_polygon, const Point_2 & point) {
@@ -152,7 +160,6 @@ void openPolygonAddPointDown(std::list<Point_2> & open_polygon, const Point_2 & 
         }
     }
 }
-
 
 void processEvent(const PWHIndicator & v, std::list<PWHIndicator> & current_edge_list,
                   std::list<std::list<Point_2>>& open_polygons,
@@ -199,10 +206,14 @@ void processEvent(const PWHIndicator & v, std::list<PWHIndicator> & current_edge
             auto down_open_polygon_iter = std::next(open_polygons.begin(), (min_index-1)/2);
             auto up_open_polygon_iter = std::next(down_open_polygon_iter);
 
-            closed_polygons.emplace_back();
-            closeOpenPolygon(*down_open_polygon_iter, closed_polygons.back(), v_point, intersection_points.front());
-            closed_polygons.emplace_back();
-            closeOpenPolygon(*up_open_polygon_iter, closed_polygons.back(), intersection_points.back(), v_point);
+            Polygon_2 new_closed_polygon_down;
+            if(closeOpenPolygon(*down_open_polygon_iter, new_closed_polygon_down, v_point, intersection_points.front())) {
+                closed_polygons.emplace_back(std::move(new_closed_polygon_down));
+            }
+            Polygon_2 new_closed_polygon_up;
+            if(closeOpenPolygon(*up_open_polygon_iter, new_closed_polygon_up, intersection_points.back(), v_point)) {
+                closed_polygons.emplace_back(std::move(new_closed_polygon_up));
+            }
 
             // remove from the open polygons.
             down_open_polygon_iter = open_polygons.erase(down_open_polygon_iter);
@@ -219,8 +230,10 @@ void processEvent(const PWHIndicator & v, std::list<PWHIndicator> & current_edge
             // update old open polygon vertex.
             auto open_polygon_iter = std::next(open_polygons.begin(), min_index/2);
             // add old open polygon to close polygons' container.
-            closed_polygons.emplace_back();
-            closeOpenPolygon(*open_polygon_iter, closed_polygons.back(), v_point);
+            Polygon_2 new_closed_polygon;
+            if(closeOpenPolygon(*open_polygon_iter, new_closed_polygon, v_point)) {
+                closed_polygons.emplace_back(std::move(new_closed_polygon));
+            }
             open_polygons.erase(open_polygon_iter);
         }
         start_iter = current_edge_list.erase(start_iter);
@@ -263,9 +276,11 @@ void processEvent(const PWHIndicator & v, std::list<PWHIndicator> & current_edge
             auto start_point = intersection_points[range_index];
             auto end_point = intersection_points[range_index-1];
             auto open_polygon_iter = std::next(open_polygons.begin(), (range_index-1)/2);
-            closed_polygons.emplace_back();
             // add old open polygon to close polygons' container.
-            closeOpenPolygon(*open_polygon_iter, closed_polygons.back(), start_point, end_point);
+            Polygon_2 new_closed_polygon;
+            if(closeOpenPolygon(*open_polygon_iter, new_closed_polygon, start_point, end_point)) {
+                closed_polygons.emplace_back(std::move(new_closed_polygon));
+            }
             // remove the old open polygons.
             open_polygon_iter = open_polygons.erase(open_polygon_iter);
             // config two new open polygon
