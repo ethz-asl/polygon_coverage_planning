@@ -17,12 +17,6 @@ Field and Service Robotics. Springer, Cham, 2019.
 Install [ROS melodic](http://wiki.ros.org/melodic/Installation/Ubuntu).
 Install [mono](https://www.mono-project.com/download/stable/#download-lin-ubuntu).
 
-Install all [remaining dependencies](https://github.com/ethz-asl/polygon_coverage_planning/blob/master/install/prepare-jenkins-slave.sh):
-```
-cd ~/catkin_ws/polygon_coverage_planning/install
-./prepare-jenkins-slave.sh
-```
-
 Create a workspace.
 ```
 cd ~
@@ -42,6 +36,12 @@ wstool set --git polygon_coverage_planning git@github.com:ethz-asl/polygon_cover
 wstool update
 wstool merge polygon_coverage_planning/install/dependencies.rosinstall
 wstool update
+```
+
+Install all [remaining dependencies](install/prepare-jenkins-slave.sh):
+```
+cd polygon_coverage_planning/install
+./prepare-jenkins-slave.sh
 ```
 
 Finally, build the workspace.
