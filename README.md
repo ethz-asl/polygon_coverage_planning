@@ -94,6 +94,7 @@ In particular the dependencies are:
 - 2D Arrangement (GPL), see also
 
 ```Fogel, Efi, Dan Halperin, and Ron Wein. CGAL arrangements and their applications: A step-by-step guide. Vol. 7. Springer Science & Business Media, 2012.```
+```Bungiu, Francisc, et al. "Efficient computation of visibility polygons." arXiv preprint arXiv:1403.3905 (2014).```
 
 ### GTSP solver
 The underlying optimization uses the [memetic solver](http://www.cs.nott.ac.uk/~pszdk/?page=publications&key=Gutin2009a) presented in
