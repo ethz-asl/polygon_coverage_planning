@@ -22,34 +22,34 @@ ExternalProject_Add(
   URL https://polybox.ethz.ch/index.php/s/H4NXeaNPWo6VBrf/download
   DOWNLOAD_NAME gtsp_ma_source_codes.zip
   URL_MD5 765fad8e3746fa3dd9b81be0afb34d35
-  PATCH_COMMAND \\
-    patch GkMa/OurHeuristic/Algorithm.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Algorithm.patch && \\
-    patch NativeHelper/ClusterOptimisation.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/ClusterOptimisationCpp.patch && \\
-    patch GkMa/OurHeuristic/Types/Generation.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Generation.patch && \\
-    patch GkMa/OurHeuristic/GeneticAlgorithm.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/GeneticAlgorithm.patch && \\
-    patch GkMa/Helper.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Helper.patch && \\
-    patch NativeHelper/ClusterOptimisation.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/ClusterOptimisationH.patch && \\
-    patch NativeHelper/ImprovementManager.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/ImprovementManagerH.patch && \\
-    patch NativeHelper/Insert.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/InsertCpp.patch && \\
-    patch NativeHelper/Insert.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/InsertH.patch && \\
-    patch NativeHelper/NativeHelper.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/NativeHelperCpp.patch && \\
-    patch NativeHelper/Swap.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/SwapCpp.patch && \\
-    patch NativeHelper/NativeHelper.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/NativeHelperH.patch && \\
-    patch GkMa/OurHeuristic/NativeHelper.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/NativeHelper.patch && \\
-    patch GkMa/OurSolver.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/OurSolver.patch && \\
-    patch GkMa/OurHeuristic/Types/Permutation.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Permutation.patch && \\
-    patch GkMa/Program.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Program.patch && \\
-    patch GkMa/Solver.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Solver.patch && \\
-    patch GkMa/Loader/Task.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Task.patch && \\
-    patch GkMa/OurHeuristic/Types/Tour.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Tour.patch
+  PATCH_COMMAND
+    COMMAND patch GkMa/OurHeuristic/Algorithm.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Algorithm.patch
+    COMMAND patch NativeHelper/ClusterOptimisation.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/ClusterOptimisationCpp.patch
+    COMMAND patch GkMa/OurHeuristic/Types/Generation.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Generation.patch
+    COMMAND patch GkMa/OurHeuristic/GeneticAlgorithm.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/GeneticAlgorithm.patch
+    COMMAND patch GkMa/Helper.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Helper.patch
+    COMMAND patch NativeHelper/ClusterOptimisation.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/ClusterOptimisationH.patch
+    COMMAND patch NativeHelper/ImprovementManager.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/ImprovementManagerH.patch
+    COMMAND patch NativeHelper/Insert.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/InsertCpp.patch
+    COMMAND patch NativeHelper/Insert.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/InsertH.patch
+    COMMAND patch NativeHelper/NativeHelper.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/NativeHelperCpp.patch
+    COMMAND patch NativeHelper/Swap.cpp ${CMAKE_CURRENT_SOURCE_DIR}/patches/SwapCpp.patch
+    COMMAND patch NativeHelper/NativeHelper.h ${CMAKE_CURRENT_SOURCE_DIR}/patches/NativeHelperH.patch
+    COMMAND patch GkMa/OurHeuristic/NativeHelper.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/NativeHelper.patch
+    COMMAND patch GkMa/OurSolver.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/OurSolver.patch
+    COMMAND patch GkMa/OurHeuristic/Types/Permutation.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Permutation.patch
+    COMMAND patch GkMa/Program.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Program.patch
+    COMMAND patch GkMa/Solver.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Solver.patch
+    COMMAND patch GkMa/Loader/Task.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Task.patch
+    COMMAND patch GkMa/OurHeuristic/Types/Tour.cs ${CMAKE_CURRENT_SOURCE_DIR}/patches/Tour.patch
   UPDATE_COMMAND ""
-  CONFIGURE_COMMAND \\
-    cp ${PROJECT_SOURCE_DIR}/patches/MakefileCpp ./MakefileCpp && \\
-    cp ${PROJECT_SOURCE_DIR}/patches/MakefileCs ./MakefileCs
-  BUILD_COMMAND \\
-    $(MAKE) -f MakefileCs BUILD_PATH="${CMAKE_LIBRARY_OUTPUT_DIRECTORY}" \\
+  CONFIGURE_COMMAND
+    COMMAND cp ${PROJECT_SOURCE_DIR}/patches/MakefileCpp ./MakefileCpp
+    COMMAND cp ${PROJECT_SOURCE_DIR}/patches/MakefileCs ./MakefileCs
+  BUILD_COMMAND
+    COMMAND $(MAKE) -f MakefileCs BUILD_PATH="${CMAKE_LIBRARY_OUTPUT_DIRECTORY}"
     COMMAND $(MAKE) -f MakefileCpp BUILD_PATH="${CMAKE_LIBRARY_OUTPUT_DIRECTORY}"
-  INSTALL_COMMAND \\
+  INSTALL_COMMAND
     COMMAND ${CMAKE_COMMAND} -E create_symlink /usr/lib/libmono-native.so ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/System.Native
 )
 
