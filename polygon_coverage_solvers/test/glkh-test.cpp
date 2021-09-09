@@ -20,16 +20,61 @@
 #include <limits>
 #include <random>
 #include <vector>
+#include <fstream>
 
 #include <gtest/gtest.h>
 #include <ros/package.h>
 
 #include "polygon_coverage_solvers/glkh.h"
 
+
 using namespace polygon_coverage_planning;
 using namespace glkh;
 
 const std::string kPackageName = "polygon_coverage_solvers";
+
+int32_t read_int_from_stream(std::ifstream &stream)
+{
+  int32_t num;
+  stream.read((char*)&num, sizeof(num));
+  return num;
+}
+
+Task read_binary_gtsp(const std::string& file) {
+  // Read GTSP file (binary format)
+  std::ifstream input(file, std::ios::binary);
+
+  int dimension = read_int_from_stream(input);
+  std::cout << dimension << std::endl;
+  int num_clusters = read_int_from_stream(input);
+  // 3 if symmetric and triangle, 2 if asymmetric and triangle, 1 if symmetric and non-triangle and 0 otherwise.
+  // bool is_symmetric = read_int_from_stream(input) % 2 == 1;
+  read_int_from_stream(input);
+
+  std::vector<std::vector<int>> clusters(num_clusters);
+  for (int i = 0; i < num_clusters; i++)
+  {
+    int32_t cluster_size;
+    cluster_size = read_int_from_stream(input);
+    clusters[i].resize(cluster_size);
+    for (int j = 0; j < cluster_size; j++)
+    {
+      clusters[i][j] = read_int_from_stream(input);
+    }
+  }
+
+  std::vector<std::vector<int>> m(dimension);
+  for (int i = 0; i < dimension; i++)
+  {
+    m[i].resize(dimension);
+    for (int j = 0; j < dimension; j++)
+    {
+      m[i][j] = read_int_from_stream(input);
+    }
+  }
+
+  return Task(m, clusters);
+}
 
 TEST(Glkh, LoadFromFile) {
   Glkh& instance = Glkh::getInstance();
@@ -46,7 +91,8 @@ TEST(Glkh, LoadFromFile) {
                                              "40d198.gtsp", "65rbg323.gtsp"};
   for (const std::string& instance_name : instance_names) {
     std::string file = instances_path + instance_name;
-    instance.setSolver(file, true);
+    Task task = read_binary_gtsp(file);
+    instance.setSolver(task);
     EXPECT_TRUE(instance.solve());
     EXPECT_FALSE(instance.getSolution().empty());
   }
@@ -61,7 +107,7 @@ TEST(Glkh, LoadFromTask) {
   for (size_t i = 0; i < m.size(); ++i) {
     for (size_t j = 0; j < m[i].size(); ++j) {
       if (i == j) {
-        m[i][j] = std::numeric_limits<int>::max();
+        m[i][j] = std::numeric_limits<int>::max(); // TODO: overflow!
       } else {
         m[i][j] = rand() % 100;
       }
