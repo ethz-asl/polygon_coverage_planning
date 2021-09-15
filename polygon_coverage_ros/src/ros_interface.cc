@@ -44,9 +44,8 @@ void poseArrayMsgFromPath(const std::vector<Point_2>& waypoints,
   pose_array->poses.clear();
   pose_array->poses.resize(waypoints.size());
   for (size_t i = 0; i < waypoints.size(); i++) {
-    pose_array->poses[i].position.x = CGAL::to_double(waypoints[i].x());
-    pose_array->poses[i].position.y = CGAL::to_double(waypoints[i].y());
-    pose_array->poses[i].position.z = altitude;
+    msgPointFromWaypoint(waypoints[i], altitude,
+                         &pose_array->poses[i].position);
   }
 }
 
@@ -77,6 +76,15 @@ void msgMultiDofJointTrajectoryFromPath(
 
     msg->points.push_back(point_msg);
   }
+}
+
+void msgPointFromWaypoint(const Point_2& waypoint, double altitude,
+                          geometry_msgs::Point* point) {
+  ROS_ASSERT(point);
+
+  point->x = CGAL::to_double(waypoint.x());
+  point->y = CGAL::to_double(waypoint.y());
+  point->z = altitude;
 }
 
 void createMarkers(const std::vector<Point_2>& vertices, double altitude,
@@ -111,9 +119,7 @@ void createMarkers(const std::vector<Point_2>& vertices, double altitude,
 
   for (size_t i = 0; i < vertices.size(); i++) {
     geometry_msgs::Point p;
-    p.x = CGAL::to_double(vertices[i].x());
-    p.y = CGAL::to_double(vertices[i].y());
-    p.z = altitude;
+    msgPointFromWaypoint(vertices[i], altitude, &p);
 
     points->points.push_back(p);
     line_strip->points.push_back(p);
@@ -158,15 +164,14 @@ void createStartAndEndPointMarkers(const Point_2& start, const Point_2& end,
                                    const std::string& ns,
                                    visualization_msgs::Marker* start_point,
                                    visualization_msgs::Marker* end_point) {
+  ROS_ASSERT(start_point);
+  ROS_ASSERT(end_point);
+
   geometry_msgs::Pose start_pose;
-  start_pose.position.x = CGAL::to_double(start.x());
-  start_pose.position.y = CGAL::to_double(start.y());
-  start_pose.position.z = altitude;
+  msgPointFromWaypoint(start, altitude, &start_pose.position);
 
   geometry_msgs::Pose end_pose;
-  end_pose.position.x = CGAL::to_double(end.x());
-  end_pose.position.y = CGAL::to_double(end.y());
-  end_pose.position.z = altitude;
+  msgPointFromWaypoint(end, altitude, &end_pose.position);
 
   return createStartAndEndPointMarkers(start_pose, end_pose, frame_id, ns,
                                        start_point, end_point);
@@ -212,15 +217,14 @@ void createStartAndEndTextMarkers(const Point_2& start, const Point_2& end,
                                   const std::string& ns,
                                   visualization_msgs::Marker* start_text,
                                   visualization_msgs::Marker* end_text) {
+  ROS_ASSERT(start_text);
+  ROS_ASSERT(end_text);
+
   geometry_msgs::Pose start_pose;
-  start_pose.position.x = CGAL::to_double(start.x());
-  start_pose.position.y = CGAL::to_double(start.y());
-  start_pose.position.z = altitude;
+  msgPointFromWaypoint(start, altitude, &start_pose.position);
 
   geometry_msgs::Pose end_pose;
-  end_pose.position.x = CGAL::to_double(end.x());
-  end_pose.position.y = CGAL::to_double(end.y());
-  end_pose.position.z = altitude;
+  msgPointFromWaypoint(end, altitude, &end_pose.position);
 
   return createStartAndEndTextMarkers(start_pose, end_pose, frame_id, ns,
                                       start_text, end_text);
@@ -347,9 +351,7 @@ void createTriangles(const std::vector<std::vector<Point_2>>& triangles,
     ROS_ASSERT(t.size() == 3);
     for (const auto& v : t) {
       geometry_msgs::Point p;
-      p.x = CGAL::to_double(v.x());
-      p.y = CGAL::to_double(v.y());
-      p.z = altitude;
+      msgPointFromWaypoint(v, altitude, &p);
 
       markers->points.push_back(p);
     }

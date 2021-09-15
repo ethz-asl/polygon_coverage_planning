@@ -71,6 +71,9 @@ void msgMultiDofJointTrajectoryFromPath(
     const std::vector<Point_2>& waypoints, double altitude,
     trajectory_msgs::MultiDOFJointTrajectory* msg);
 
+void msgPointFromWaypoint(const Point_2& waypoint, double altitude,
+                          geometry_msgs::Point* point);
+
 void createMarkers(const std::vector<Point_2>& vertices, double altitude,
                    const std::string& frame_id, const std::string& ns,
                    const Color& points_color, const Color& lines_color,
