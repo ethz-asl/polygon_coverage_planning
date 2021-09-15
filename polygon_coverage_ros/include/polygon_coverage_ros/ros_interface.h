@@ -25,14 +25,12 @@
 
 #include <eigen_conversions/eigen_msg.h>
 #include <geometry_msgs/Polygon.h>
+#include <geometry_msgs/Pose.h>
 #include <geometry_msgs/PoseArray.h>
-#include <mav_msgs/conversions.h>
 #include <polygon_coverage_msgs/PolygonWithHolesStamped.h>
 #include <trajectory_msgs/MultiDOFJointTrajectory.h>
 #include <visualization_msgs/Marker.h>
 #include <visualization_msgs/MarkerArray.h>
-
-#include <mav_msgs/eigen_mav_msgs.h>
 
 #include <polygon_coverage_geometry/cgal_definitions.h>
 
@@ -64,15 +62,6 @@ class Color : public std_msgs::ColorRGBA {
 };
 
 // Warning: Does not set frame or time stamps or orientation.
-void eigenTrajectoryPointVectorFromPath(
-    const std::vector<Point_2>& waypoints, double altitude,
-    mav_msgs::EigenTrajectoryPointVector* traj_points);
-
-void poseArrayMsgFromEigenTrajectoryPointVector(
-    const mav_msgs::EigenTrajectoryPointVector& trajectory_points,
-    const std::string& frame_id,
-    geometry_msgs::PoseArray* trajectory_points_pose_array);
-
 void poseArrayMsgFromPath(
     const std::vector<Point_2>& waypoints, double altitude,
     const std::string& frame_id,
@@ -81,6 +70,9 @@ void poseArrayMsgFromPath(
 void msgMultiDofJointTrajectoryFromPath(
     const std::vector<Point_2>& waypoints, double altitude,
     trajectory_msgs::MultiDOFJointTrajectory* msg);
+
+void msgPointFromWaypoint(const Point_2& waypoint, double altitude,
+                          geometry_msgs::Point* point);
 
 void createMarkers(const std::vector<Point_2>& vertices, double altitude,
                    const std::string& frame_id, const std::string& ns,
@@ -106,8 +98,8 @@ void createStartAndEndPointMarkers(const Point_2& start, const Point_2& end,
                                    visualization_msgs::Marker* start_point,
                                    visualization_msgs::Marker* end_point);
 
-void createStartAndEndPointMarkers(const mav_msgs::EigenTrajectoryPoint& start,
-                                   const mav_msgs::EigenTrajectoryPoint& end,
+void createStartAndEndPointMarkers(const geometry_msgs::Pose& start,
+                                   const geometry_msgs::Pose& end,
                                    const std::string& frame_id,
                                    const std::string& ns,
                                    visualization_msgs::Marker* start_point,
@@ -119,8 +111,8 @@ void createStartAndEndTextMarkers(const Point_2& start, const Point_2& end,
                                   visualization_msgs::Marker* start_text,
                                   visualization_msgs::Marker* end_text);
 
-void createStartAndEndTextMarkers(const mav_msgs::EigenTrajectoryPoint& start,
-                                  const mav_msgs::EigenTrajectoryPoint& end,
+void createStartAndEndTextMarkers(const geometry_msgs::Pose& start,
+                                  const geometry_msgs::Pose& end,
                                   const std::string& frame_id,
                                   const std::string& ns,
                                   visualization_msgs::Marker* start_text,

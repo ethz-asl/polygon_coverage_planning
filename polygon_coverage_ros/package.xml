@@ -16,7 +16,6 @@
   <depend>roscpp</depend>
 
   <depend>nav_msgs</depend>
-  <depend>mav_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>trajectory_msgs</depend>
   <depend>visualization_msgs</depend>
