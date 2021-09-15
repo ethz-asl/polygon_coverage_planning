@@ -35,47 +35,19 @@
 
 namespace polygon_coverage_planning {
 
-void eigenTrajectoryPointVectorFromPath(
-    const std::vector<Point_2>& waypoints, double altitude,
-    mav_msgs::EigenTrajectoryPointVector* traj_points) {
-  ROS_ASSERT(traj_points);
+void poseArrayMsgFromPath(const std::vector<Point_2>& waypoints,
+                          double altitude, const std::string& frame_id,
+                          geometry_msgs::PoseArray* pose_array) {
+  ROS_ASSERT(pose_array);
 
-  traj_points->clear();
-  traj_points->resize(waypoints.size());
+  pose_array->header.frame_id = frame_id;
+  pose_array->poses.clear();
+  pose_array->poses.resize(waypoints.size());
   for (size_t i = 0; i < waypoints.size(); i++) {
-    (*traj_points)[i].position_W =
-        Eigen::Vector3d(CGAL::to_double(waypoints[i].x()),
-                        CGAL::to_double(waypoints[i].y()), altitude);
+    pose_array->poses[i].position.x = CGAL::to_double(waypoints[i].x());
+    pose_array->poses[i].position.y = CGAL::to_double(waypoints[i].y());
+    pose_array->poses[i].position.z = altitude;
   }
-}
-
-void poseArrayMsgFromEigenTrajectoryPointVector(
-    const mav_msgs::EigenTrajectoryPointVector& trajectory_points,
-    const std::string& frame_id,
-    geometry_msgs::PoseArray* trajectory_points_pose_array) {
-  ROS_ASSERT(trajectory_points_pose_array);
-
-  // Header
-  trajectory_points_pose_array->header.frame_id = frame_id;
-  // Converting and populating the message with all points
-  for (const mav_msgs::EigenTrajectoryPoint& trajectory_point :
-       trajectory_points) {
-    geometry_msgs::PoseStamped msg;
-    mav_msgs::msgPoseStampedFromEigenTrajectoryPoint(trajectory_point, &msg);
-    trajectory_points_pose_array->poses.push_back(msg.pose);
-  }
-}
-
-void poseArrayMsgFromPath(
-    const std::vector<Point_2>& waypoints, double altitude,
-    const std::string& frame_id,
-    geometry_msgs::PoseArray* trajectory_points_pose_array) {
-  ROS_ASSERT(trajectory_points_pose_array);
-
-  mav_msgs::EigenTrajectoryPointVector eigen_traj;
-  eigenTrajectoryPointVectorFromPath(waypoints, altitude, &eigen_traj);
-  poseArrayMsgFromEigenTrajectoryPointVector(eigen_traj, frame_id,
-                                             trajectory_points_pose_array);
 }
 
 void msgMultiDofJointTrajectoryFromPath(
@@ -83,9 +55,28 @@ void msgMultiDofJointTrajectoryFromPath(
     trajectory_msgs::MultiDOFJointTrajectory* msg) {
   ROS_ASSERT(msg);
 
-  mav_msgs::EigenTrajectoryPointVector eigen_traj;
-  eigenTrajectoryPointVectorFromPath(waypoints, altitude, &eigen_traj);
-  mav_msgs::msgMultiDofJointTrajectoryFromEigen(eigen_traj, msg);
+  geometry_msgs::PoseArray pose_array;
+  poseArrayMsgFromPath(waypoints, altitude, "", &pose_array);
+
+  msg->header = pose_array.header;
+  msg->joint_names.clear();
+  msg->joint_names.push_back("base_link");
+  msg->points.clear();
+
+  for (const auto& pose : pose_array.poses) {
+    trajectory_msgs::MultiDOFJointTrajectoryPoint point_msg;
+    point_msg.transforms.resize(1);
+    point_msg.velocities.resize(1);
+    point_msg.accelerations.resize(1);
+
+    point_msg.transforms[0].translation.x = pose.position.x;
+    point_msg.transforms[0].translation.y = pose.position.y;
+    point_msg.transforms[0].translation.z = pose.position.z;
+
+    point_msg.transforms[0].rotation.w = 1.0;
+
+    msg->points.push_back(point_msg);
+  }
 }
 
 void createMarkers(const std::vector<Point_2>& vertices, double altitude,
@@ -167,22 +158,22 @@ void createStartAndEndPointMarkers(const Point_2& start, const Point_2& end,
                                    const std::string& ns,
                                    visualization_msgs::Marker* start_point,
                                    visualization_msgs::Marker* end_point) {
-  mav_msgs::EigenTrajectoryPoint eigen_start;
-  eigen_start.position_W.x() = CGAL::to_double(start.x());
-  eigen_start.position_W.y() = CGAL::to_double(start.y());
-  eigen_start.position_W.z() = altitude;
+  geometry_msgs::Pose start_pose;
+  start_pose.position.x = CGAL::to_double(start.x());
+  start_pose.position.y = CGAL::to_double(start.y());
+  start_pose.position.z = altitude;
 
-  mav_msgs::EigenTrajectoryPoint eigen_end;
-  eigen_end.position_W.x() = CGAL::to_double(end.x());
-  eigen_end.position_W.y() = CGAL::to_double(end.y());
-  eigen_end.position_W.z() = altitude;
+  geometry_msgs::Pose end_pose;
+  end_pose.position.x = CGAL::to_double(end.x());
+  end_pose.position.y = CGAL::to_double(end.y());
+  end_pose.position.z = altitude;
 
-  return createStartAndEndPointMarkers(eigen_start, eigen_end, frame_id, ns,
+  return createStartAndEndPointMarkers(start_pose, end_pose, frame_id, ns,
                                        start_point, end_point);
 }
 
-void createStartAndEndPointMarkers(const mav_msgs::EigenTrajectoryPoint& start,
-                                   const mav_msgs::EigenTrajectoryPoint& end,
+void createStartAndEndPointMarkers(const geometry_msgs::Pose& start,
+                                   const geometry_msgs::Pose& end,
                                    const std::string& frame_id,
                                    const std::string& ns,
                                    visualization_msgs::Marker* start_point,
@@ -196,12 +187,8 @@ void createStartAndEndPointMarkers(const mav_msgs::EigenTrajectoryPoint& start,
   end_point->ns = ns + "_end";
   start_point->action = end_point->action = visualization_msgs::Marker::ADD;
 
-  geometry_msgs::PoseStamped start_stamped, end_stamped;
-  msgPoseStampedFromEigenTrajectoryPoint(start, &start_stamped);
-  msgPoseStampedFromEigenTrajectoryPoint(end, &end_stamped);
-
-  start_point->pose = start_stamped.pose;
-  end_point->pose = end_stamped.pose;
+  start_point->pose = start;
+  end_point->pose = end;
 
   start_point->pose.orientation.w = end_point->pose.orientation.w = 1.0;
 
@@ -225,22 +212,22 @@ void createStartAndEndTextMarkers(const Point_2& start, const Point_2& end,
                                   const std::string& ns,
                                   visualization_msgs::Marker* start_text,
                                   visualization_msgs::Marker* end_text) {
-  mav_msgs::EigenTrajectoryPoint eigen_start;
-  eigen_start.position_W.x() = CGAL::to_double(start.x());
-  eigen_start.position_W.y() = CGAL::to_double(start.y());
-  eigen_start.position_W.z() = altitude;
+  geometry_msgs::Pose start_pose;
+  start_pose.position.x = CGAL::to_double(start.x());
+  start_pose.position.y = CGAL::to_double(start.y());
+  start_pose.position.z = altitude;
 
-  mav_msgs::EigenTrajectoryPoint eigen_end;
-  eigen_end.position_W.x() = CGAL::to_double(end.x());
-  eigen_end.position_W.y() = CGAL::to_double(end.y());
-  eigen_end.position_W.z() = altitude;
+  geometry_msgs::Pose end_pose;
+  end_pose.position.x = CGAL::to_double(end.x());
+  end_pose.position.y = CGAL::to_double(end.y());
+  end_pose.position.z = altitude;
 
-  return createStartAndEndTextMarkers(eigen_start, eigen_end, frame_id, ns,
+  return createStartAndEndTextMarkers(start_pose, end_pose, frame_id, ns,
                                       start_text, end_text);
 }
 
-void createStartAndEndTextMarkers(const mav_msgs::EigenTrajectoryPoint& start,
-                                  const mav_msgs::EigenTrajectoryPoint& end,
+void createStartAndEndTextMarkers(const geometry_msgs::Pose& start,
+                                  const geometry_msgs::Pose& end,
                                   const std::string& frame_id,
                                   const std::string& ns,
                                   visualization_msgs::Marker* start_text,
@@ -256,12 +243,8 @@ void createStartAndEndTextMarkers(const mav_msgs::EigenTrajectoryPoint& start,
   start_text->type = end_text->type =
       visualization_msgs::Marker::TEXT_VIEW_FACING;
 
-  geometry_msgs::PoseStamped start_stamped, end_stamped;
-  msgPoseStampedFromEigenTrajectoryPoint(start, &start_stamped);
-  msgPoseStampedFromEigenTrajectoryPoint(end, &end_stamped);
-
-  start_text->pose = start_stamped.pose;
-  end_text->pose = end_stamped.pose;
+  start_text->pose = start;
+  end_text->pose = end;
 
   start_text->pose.orientation.w = end_text->pose.orientation.w = 1.0;
 
