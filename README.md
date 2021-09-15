@@ -2,8 +2,8 @@
 This package contains implementations to compute coverage patterns and shortest paths in general polygon with holes.
 Please cite our [accompanying publication](https://arxiv.org/pdf/1907.09224) when using it.
 ```
-Bähnemann, Rik, et al. 
-"Revisiting boustrophedon coverage path planning as a generalized traveling salesman problem." 
+Bähnemann, Rik, et al.
+"Revisiting boustrophedon coverage path planning as a generalized traveling salesman problem."
 Field and Service Robotics. Springer, Singapore, 2021.
 ```
 
@@ -32,7 +32,7 @@ Download package dependencies from [dependencies.rosinstall](install/dependencie
 ```
 cd ~/catkin_ws/src
 wstool init
-wstool set --git polygon_coverage_planning git@github.com:ethz-asl/polygon_coverage_planning.git -v v2.0.1
+wstool set --git polygon_coverage_planning git@github.com:ethz-asl/polygon_coverage_planning.git
 wstool update
 wstool merge polygon_coverage_planning/install/dependencies.rosinstall
 wstool update
