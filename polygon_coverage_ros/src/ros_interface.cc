@@ -23,8 +23,6 @@
 #include <limits>
 
 #include <geometry_msgs/Point.h>
-#include <mav_msgs/conversions.h>
-#include <mav_msgs/eigen_mav_msgs.h>
 #include <polygon_coverage_geometry/boolean.h>
 #include <polygon_coverage_geometry/cgal_comm.h>
 #include <polygon_coverage_geometry/cgal_definitions.h>
