@@ -34,7 +34,7 @@ TEST(VisibilityPolygonTest, computeVisibilityPolygon) {
   Polygon_2 visibility_polygon;
 
   // Query on polygon vertex.
-  Point_2 query(0.0, 0.0);
+  Point_2 query(0, 0);
   EXPECT_TRUE(computeVisibilityPolygon(rectangle_in_rectangle, query,
                                        &visibility_polygon));
   // Result manually checked.
@@ -44,12 +44,12 @@ TEST(VisibilityPolygonTest, computeVisibilityPolygon) {
   auto inter_1 = CGAL::intersection(ray_1, line);
   auto inter_2 = CGAL::intersection(ray_2, line);
 
-  Point_2 points_1[] = {{0.0, 2.0},
-                        {0.0, 0.0},
-                        {2.0, 0.0},
-                        {2.0, 2.0},
+  Point_2 points_1[] = {{0, 2},
+                        {0, 0},
+                        {2, 0},
+                        {2, 2},
                         *boost::get<Point_2>(&*inter_2),
-                        {1.0, 1.25},
+                        {1, 1.25},
                         {0.5, 1.25},
                         {0.5, 1.75},
                         *boost::get<Point_2>(&*inter_1)};
@@ -58,7 +58,7 @@ TEST(VisibilityPolygonTest, computeVisibilityPolygon) {
   EXPECT_EQ(visibility_polygon_expected_1, visibility_polygon);
 
   // Query on hole vertex.
-  query = Point_2(1.0, 1.25);
+  query = Point_2(1, 1.25);
   EXPECT_TRUE(computeVisibilityPolygon(rectangle_in_rectangle, query,
                                        &visibility_polygon));
   Point_2 points_2[] = {{0, 0}, {2, 0}, {2, 2}, {1, 2}, {1, 1.25}, {0, 1.25}};
@@ -67,7 +67,7 @@ TEST(VisibilityPolygonTest, computeVisibilityPolygon) {
   EXPECT_EQ(visibility_polygon_expected_2, visibility_polygon);
 
   // Query in face.
-  query = Point_2(1.0, 0.5);
+  query = Point_2(1, 0.5);
   EXPECT_TRUE(computeVisibilityPolygon(rectangle_in_rectangle, query,
                                        &visibility_polygon));
   // Result manually checked.
@@ -78,7 +78,7 @@ TEST(VisibilityPolygonTest, computeVisibilityPolygon) {
   EXPECT_EQ(visibility_polygon_expected_3, visibility_polygon);
 
   // Query on polygon halfedge.
-  query = Point_2(1.0, 0.0);
+  query = Point_2(1, 0);
   EXPECT_TRUE(computeVisibilityPolygon(rectangle_in_rectangle, query,
                                        &visibility_polygon));
   // Result manually checked.
