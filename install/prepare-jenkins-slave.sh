@@ -13,7 +13,7 @@ fi
 
 # Package dependencies.
 echo "Installing CGAL dependencies."
-sudo apt install -y libgmp-dev libmpfr-dev
+sudo apt install -y libcgal-dev
 echo "Installing MONO dependencies."
 sudo apt install -y mono-devel
 echo "Installig GLOG dependencices."
