@@ -11,10 +11,10 @@
   <license>GPL</license>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <buildtool_depend>catkin_simple</buildtool_depend>
 
   <depend>rosconsole</depend>
   <depend>roslib</depend>
+  <depend>rosunit</depend>
   <depend>polygon_coverage_solvers</depend>
 
 </package>
