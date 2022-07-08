@@ -13,8 +13,8 @@ Field and Service Robotics. Springer, Singapore, 2021.
 
 [![Watch the video](https://img.youtube.com/vi/u1UOqdJoK9s/sddefault.jpg)](https://youtu.be/u1UOqdJoK9s)
 
-## Installation on Ubuntu 18.04 and ROS melodic
-Install [ROS melodic](http://wiki.ros.org/melodic/Installation/Ubuntu).
+## Installation on Ubuntu 20.04 and ROS noetic
+Install [ROS noetic](http://wiki.ros.org/noetic/Installation/Ubuntu).
 Install [mono](https://www.mono-project.com/download/stable/#download-lin-ubuntu).
 
 Create a workspace.
@@ -24,7 +24,7 @@ mkdir -p catkin_ws/src
 cd catkin_ws
 catkin init
 catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
-catkin config --extend /opt/ros/melodic
+catkin config --extend /opt/ros/noetic
 ```
 
 Download package dependencies from [dependencies.rosinstall](install/dependencies.rosinstall).<br>
