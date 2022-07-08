@@ -28,6 +28,7 @@ typedef CGAL::Exact_predicates_exact_constructions_kernel K;
 typedef K::FT FT;
 typedef K::Point_2 Point_2;
 typedef K::Point_3 Point_3;
+typedef K::Ray_2 Ray_2;
 typedef K::Vector_2 Vector_2;
 typedef K::Direction_2 Direction_2;
 typedef K::Line_2 Line_2;
