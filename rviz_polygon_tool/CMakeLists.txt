@@ -4,8 +4,17 @@ project(rviz_polygon_tool)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
 set(CMAKE_CXX_STANDARD 17)
 
-find_package(catkin_simple REQUIRED)
-catkin_simple(ALL_DEPS_REQUIRED)
+find_package(catkin REQUIRED COMPONENTS
+        roscpp
+        rviz
+        polygon_coverage_msgs
+        polygon_coverage_geometry
+        geometry_msgs)
+catkin_package(
+        INCLUDE_DIRS include ${catkin_INCLUDE_DIRS}
+        LIBRARIES ${PROJECT_NAME}
+)
+include_directories(include ${catkin_INCLUDE_DIRS})
 
 ######
 # QT #
@@ -34,8 +43,11 @@ set(HEADER_FILES
 set(SRC_FILES
   src/polygon_tool.cc
 )
-cs_add_library(${PROJECT_NAME} ${SRC_FILES} ${HEADER_FILES})
-target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES})
+add_library(${PROJECT_NAME} ${SRC_FILES} ${HEADER_FILES})
+target_link_libraries(${PROJECT_NAME} ${QT_LIBRARIES} ${catkin_LIBRARIES})
 
-cs_install()
-cs_export()
+install(TARGETS ${PROJECT_NAME}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        )
