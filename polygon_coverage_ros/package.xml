@@ -11,7 +11,6 @@
   <license>GPL</license>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <buildtool_depend>catkin_simple</buildtool_depend>
 
   <depend>roscpp</depend>
 
@@ -25,6 +24,7 @@
   <depend>polygon_coverage_msgs</depend>
   <depend>polygon_coverage_geometry</depend>
   <depend>polygon_coverage_planners</depend>
+  <depend>polygon_coverage_solvers</depend>
 
   <exec_depend>rviz_polygon_tool</exec_depend>
 
