@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.4)
+cmake_minimum_required(VERSION 3.16.3)
 project(polygon_coverage_planners)
 
 find_package(catkin REQUIRED COMPONENTS rosconsole roslib polygon_coverage_solvers polygon_coverage_geometry)
