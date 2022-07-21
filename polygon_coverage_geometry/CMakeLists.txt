@@ -70,7 +70,7 @@ target_link_libraries(test_visibility_polygon ${PROJECT_NAME} ${catkin_LIBRARIES
 ##########
 # EXPORT #
 ##########
-install(TARGETS polygon_coverage_geometry
+install(TARGETS ${PROJECT_NAME}
         ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
         RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

@@ -1,12 +1,17 @@
-cmake_minimum_required(VERSION 2.8.4)
+cmake_minimum_required(VERSION 3.16.3)
 project(polygon_coverage_solvers)
 
-find_package(catkin_simple REQUIRED)
-catkin_simple(ALL_DEPS_REQUIRED)
+find_package(catkin REQUIRED COMPONENTS rosconsole roslib)
 
 set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
+
+catkin_package(
+        INCLUDE_DIRS include ${catkin_INCLUDE_DIRS}
+        LIBRARIES ${PROJECT_NAME}
+)
+include_directories(include ${catkin_INCLUDE_DIRS})
 
 # Add mono to invoke gk_ma.
 find_package(PkgConfig)
@@ -70,31 +75,33 @@ ExternalProject_Add(
 #############
 # LIBRARIES #
 #############
-cs_add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME}
   src/gk_ma.cc
   src/combinatorics.cc
   src/boolean_lattice.cc
 )
-target_link_libraries(${PROJECT_NAME} ${MONO_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${MONO_LIBRARIES} ${catkin_LIBRARIES})
 
 #########
 # TESTS #
 #########
-catkin_add_gtest(test_combinatorics
-  test/combinatorics-test.cpp
-)
-target_link_libraries(test_combinatorics
-                      ${PROJECT_NAME})
+catkin_add_gtest(test_combinatorics test/combinatorics-test.cpp)
+target_link_libraries(test_combinatorics ${PROJECT_NAME} ${catkin_LIBRARIES})
 
-catkin_add_gtest(test_gk_ma
-  test/gk_ma-test.cpp
-)
-target_link_libraries(test_gk_ma
-                      ${PROJECT_NAME})
+catkin_add_gtest(test_gk_ma test/gk_ma-test.cpp)
+target_link_libraries(test_gk_ma ${PROJECT_NAME} ${catkin_LIBRARIES})
 
 
 ##########
 # EXPORT #
 ##########
-cs_install()
-cs_export()
+install(TARGETS ${PROJECT_NAME}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        )
+
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+        FILES_MATCHING PATTERN "*.h"
+        )

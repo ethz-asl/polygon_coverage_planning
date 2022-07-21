@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.4)
+cmake_minimum_required(VERSION 3.16.3)
 project(polygon_coverage_ros)
 
 find_package(catkin REQUIRED COMPONENTS
