@@ -17,7 +17,7 @@ Field and Service Robotics. Springer, Singapore, 2021.
 Install [ROS noetic](http://wiki.ros.org/noetic/Installation/Ubuntu).
 Install [mono](https://www.mono-project.com/download/stable/#download-lin-ubuntu).
 
-Create a workspace.
+Create a workspace and download the package.
 ```
 cd ~
 mkdir -p catkin_ws/src
@@ -25,17 +25,8 @@ cd catkin_ws
 catkin init
 catkin config --cmake-args -DCMAKE_BUILD_TYPE=Release
 catkin config --extend /opt/ros/noetic
-```
-
-Download package dependencies from [dependencies.rosinstall](install/dependencies.rosinstall).<br>
-**Note**: If you have not setup [SSH keys in GitHub](https://help.github.com/en/enterprise/2.16/user/articles/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) use [dependencies_https.rosinstall](install/dependencies_https.rosinstall).
-```
-cd ~/catkin_ws/src
-wstool init
-wstool set --git polygon_coverage_planning git@github.com:ethz-asl/polygon_coverage_planning.git
-wstool update
-wstool merge polygon_coverage_planning/install/dependencies.rosinstall
-wstool update
+cd src
+git clone git@github.com:ethz-asl/polygon_coverage_planning.git
 ```
 
 Install all [remaining dependencies](install/prepare-jenkins-slave.sh):

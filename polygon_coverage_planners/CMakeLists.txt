@@ -1,8 +1,7 @@
-cmake_minimum_required(VERSION 2.8.4)
+cmake_minimum_required(VERSION 3.16.3)
 project(polygon_coverage_planners)
 
-find_package(catkin_simple REQUIRED)
-catkin_simple(ALL_DEPS_REQUIRED)
+find_package(catkin REQUIRED COMPONENTS rosconsole roslib polygon_coverage_solvers polygon_coverage_geometry)
 
 find_package(CGAL QUIET COMPONENTS Core)
 include(${CGAL_USE_FILE})
@@ -17,10 +16,16 @@ find_package(PkgConfig)
 pkg_check_modules(MONO mono-2 REQUIRED)
 include_directories(${MONO_INCLUDE_DIRS})
 
+catkin_package(
+        INCLUDE_DIRS include ${catkin_INCLUDE_DIRS}
+        LIBRARIES ${PROJECT_NAME}
+)
+include_directories(include ${catkin_INCLUDE_DIRS})
+
 #############
 # LIBRARIES #
 #############
-cs_add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME}
   src/cost_functions/path_cost_functions.cc
   src/graphs/gtspp_product_graph.cc
   src/graphs/sweep_plan_graph.cc
@@ -29,7 +34,7 @@ cs_add_library(${PROJECT_NAME}
   src/planners/polygon_stripmap_planner_exact.cc
   src/planners/polygon_stripmap_planner_exact_preprocessed.cc
 )
-target_link_libraries(${PROJECT_NAME} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARIES} ${catkin_LIBRARIES})
 
 #########
 # TESTS #
@@ -37,10 +42,19 @@ target_link_libraries(${PROJECT_NAME} ${CGAL_LIBRARIES} ${CGAL_3RD_PARTY_LIBRARI
 catkin_add_gtest(test_planners
   test/planners-test.cpp
 )
-target_link_libraries(test_planners ${PROJECT_NAME})
+target_link_libraries(test_planners ${PROJECT_NAME} ${catkin_LIBRARIES})
 
 ##########
 # EXPORT #
 ##########
-cs_install()
-cs_export()
+install(TARGETS ${PROJECT_NAME}
+        ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+        RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+        )
+
+install(DIRECTORY include/${PROJECT_NAME}/
+        DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+        FILES_MATCHING PATTERN "*.h"
+        )
+

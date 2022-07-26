@@ -15,7 +15,6 @@
   <url type="bugtracker">https://github.com/ethz-asl/polygon_coverage_planning/issues</url>
 
   <buildtool_depend>catkin</buildtool_depend>
-  <buildtool_depend>catkin_simple</buildtool_depend>
 
   <depend>message_generation</depend>
   <depend>message_runtime</depend>
