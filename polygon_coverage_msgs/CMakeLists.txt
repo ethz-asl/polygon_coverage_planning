@@ -22,6 +22,7 @@ add_library(${PROJECT_NAME}
   src/conversion.cc
 )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+add_dependencies(${PROJECT_NAME} ${PROJECT_NAME}_generate_messages_cpp)
 
 ##########
 # EXPORT #
