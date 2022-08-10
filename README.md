@@ -58,8 +58,10 @@ The polygon can be set via
 - RVIZ Polygon Tool as in the video above.
 
 The plan is generated via
-- ROS [service](polygon_coverage_msgs/srv/PlannerService.srv) call 'rosservice call /coverage_planner/plan_path' or
+- ROS [service](polygon_coverage_msgs/srv/PlannerService.srv) call `rosservice call /coverage_planner/plan_path` or
 - clicking start and goal points using the RVIZ clicked_point tool as in the video above.
+
+The resulting waypointlist is published as [geometry_msgs/PoseArray](http://docs.ros.org/en/lunar/api/geometry_msgs/html/msg/PoseArray.html) on topic `/waypoint_list`.
 
 ### Euclidean Shortest Path Planning
 ```
