@@ -32,12 +32,11 @@
 #include <polygon_coverage_geometry/cgal_definitions.h>
 #include <polygon_coverage_planners/cost_functions/path_cost_functions.h>
 #include <polygon_coverage_planners/planners/polygon_stripmap_planner.h>
-#include <polygon_coverage_planners/graphs/gtspp_product_graph.h>
 #include <polygon_coverage_planners/planners/polygon_stripmap_planner_exact.h>
 #include <polygon_coverage_planners/sensor_models/line.h>
 #include <polygon_coverage_planners/timing.h>
 
-const std::string kPackageName = "mav_coverage_planning_ros";
+const std::string kPackageName = "polygon_coverage_ros";
 const std::string kResultsFile = "/tmp/coverage_results.txt";
 const size_t kMaxNoObstacles = 15;
 const size_t kNthObstacle = 1;
@@ -269,7 +268,7 @@ bool runPlanner(StripmapPlanner* planner, Result* result) {
 TEST(BenchmarkTest, Benchmark) {
   std::vector<PolygonWithHoles> polys;
   std::vector<std::string> names;
-  /*
+
   // Load polygons.
   ROS_INFO_STREAM("Loading " << kObstacleBins * kNoInstances
                              << " test instances.");
@@ -325,22 +324,26 @@ TEST(BenchmarkTest, Benchmark) {
     PolygonStripmapPlanner our_bcd(our_bcd_settings);
     PolygonStripmapPlanner our_tcd(our_tcd_settings);
     PolygonStripmapPlanner one_dir_gkma(one_dir_gkma_settings);
-    PolygonStripmapPlannerExact gtsp_exact(gtsp_exact_settings);
-    PolygonStripmapPlannerExact one_dir_exact(one_dir_exact_settings);
+    // HERE IT BREAKS!
+    //PolygonStripmapPlannerExact gtsp_exact(gtsp_exact_settings);
+    //PolygonStripmapPlannerExact one_dir_exact(one_dir_exact_settings);
+
     // Run planners.
     EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>(&our_bcd, &our_bcd_result));
     EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>(&our_tcd, &our_tcd_result));
     EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>(&one_dir_gkma,
                                                    &one_dir_gkma_result));
-    // why different interface for those two?
+    // TODO(stlucas): why different interface for those two?
     bool success_gtsp_exact = false;
     bool success_one_dir_exact = false;
+
     if (num_holes < 3) {
-      success_gtsp_exact = runPlanner<PolygonStripmapPlannerExact>(
-          &gtsp_exact, &gtsp_exact_result);
-      success_one_dir_exact = runPlanner<PolygonStripmapPlannerExact>(
-          &one_dir_exact, &one_dir_exact_result);
+      //success_gtsp_exact = runPlanner<PolygonStripmapPlannerExact>(
+      //    &gtsp_exact, &gtsp_exact_result);
+      //success_one_dir_exact = runPlanner<PolygonStripmapPlannerExact>(
+      //    &one_dir_exact, &one_dir_exact_result);
     }
+
 
     // Save results.
     if (i == 0) EXPECT_TRUE(initCsv(kResultsFile, our_bcd_result));
@@ -354,7 +357,7 @@ TEST(BenchmarkTest, Benchmark) {
     if (success_one_dir_exact)
       EXPECT_TRUE(resultToCsv(kResultsFile, one_dir_exact_result));
   }
-  */
+
 }
 
 int main(int argc, char** argv) {
