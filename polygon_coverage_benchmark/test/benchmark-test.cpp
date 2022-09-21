@@ -31,6 +31,7 @@
 
 #include <polygon_coverage_geometry/cgal_definitions.h>
 #include <polygon_coverage_planners/cost_functions/path_cost_functions.h>
+#include "polygon_coverage_planners/graphs/sweep_plan_graph.h"
 #include <polygon_coverage_planners/planners/polygon_stripmap_planner.h>
 #include <polygon_coverage_planners/planners/polygon_stripmap_planner_exact.h>
 #include <polygon_coverage_planners/sensor_models/line.h>
@@ -255,9 +256,10 @@ bool runPlanner(StripmapPlanner* planner, Result* result) {
   // Save results.
   result->cost = computeVelocityRampPathCost(solution, kVMax, kAMax);
   saveTimes(result);
-  //result->num_cells = planner->getDecompositionSize();
-  //result->num_nodes = planner->getNumberOfNodes();
-  //result->num_edges = planner->getNumberOfEdges();
+  //TODO(stlucas): may change protection of these stats
+  //result->num_cells = planner->settings_.getDecompositionSize();
+  //result->num_nodes = planner->sweep_plan_graph_.size();
+  //result->num_edges = planner->sweep_plan_graph_.getNumberOfEdges();
 
   // Get times.
   timing::Timing::Print(std::cout);
@@ -324,24 +326,23 @@ TEST(BenchmarkTest, Benchmark) {
     PolygonStripmapPlanner our_bcd(our_bcd_settings);
     PolygonStripmapPlanner our_tcd(our_tcd_settings);
     PolygonStripmapPlanner one_dir_gkma(one_dir_gkma_settings);
-    // HERE IT BREAKS!
-    //PolygonStripmapPlannerExact gtsp_exact(gtsp_exact_settings);
-    //PolygonStripmapPlannerExact one_dir_exact(one_dir_exact_settings);
+    PolygonStripmapPlannerExact gtsp_exact(gtsp_exact_settings);
+    PolygonStripmapPlannerExact one_dir_exact(one_dir_exact_settings);
 
     // Run planners.
     EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>(&our_bcd, &our_bcd_result));
     EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>(&our_tcd, &our_tcd_result));
     EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>(&one_dir_gkma,
                                                    &one_dir_gkma_result));
-    // TODO(stlucas): why different interface for those two?
+
     bool success_gtsp_exact = false;
     bool success_one_dir_exact = false;
 
     if (num_holes < 3) {
-      //success_gtsp_exact = runPlanner<PolygonStripmapPlannerExact>(
-      //    &gtsp_exact, &gtsp_exact_result);
-      //success_one_dir_exact = runPlanner<PolygonStripmapPlannerExact>(
-      //    &one_dir_exact, &one_dir_exact_result);
+      success_gtsp_exact = runPlanner<PolygonStripmapPlannerExact>(
+         &gtsp_exact, &gtsp_exact_result);
+      success_one_dir_exact = runPlanner<PolygonStripmapPlannerExact>(
+         &one_dir_exact, &one_dir_exact_result);
     }
 
 

@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
             polygon_coverage_msgs
             polygon_coverage_geometry
             polygon_coverage_planners
+            polygon_coverage_solvers
             )
 
 
@@ -31,7 +32,5 @@ include_directories(include ${CGAL_INCLUDE_DIRS}
 
 catkin_add_gtest(test_benchmark test/benchmark-test.cpp)
 target_link_libraries(test_benchmark ${CGAL_LIBRARIES} ${YAML_CPP_LIBRARIES} ${glog_LIBRARIES} ${catkin_LIBRARIES} )
-
-message(${catkin_LIBRARIES})
 
 catkin_python_setup()
