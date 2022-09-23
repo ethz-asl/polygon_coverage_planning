@@ -26,7 +26,7 @@
 
 using namespace polygon_coverage_planning;
 
-TEST(BctTest, computeBCD) {
+TEST(BcdTest, computeBCD) {
   // Diamond.
   PolygonWithHoles diamond(createDiamond<Polygon_2>());
   FT expected_area = diamond.outer_boundary().area();
