@@ -343,7 +343,8 @@ GraphBase<NodeProperty, EdgeProperty>::getAdjacencyMatrix() const {
   }
   sort(sorted_cost.begin(), sorted_cost.end());
   const double equality = 0.000001;  // Min. considered cost difference.
-  auto min_diff = sorted_cost.back();
+  const double min_diff_desired = 1.1; // To distinguish integer value costs.
+  auto min_diff = min_diff_desired;
   if (sorted_cost.back() == 0.0) {
     ROS_ERROR("Adjacency matrix invalid. Greatest cost is 0.0.");
     min_diff = std::numeric_limits<double>::max();
@@ -353,13 +354,11 @@ GraphBase<NodeProperty, EdgeProperty>::getAdjacencyMatrix() const {
     if (diff > equality && diff < min_diff) min_diff = diff;
   }
 
-  // Only scale with min_diff if this does not blow up the cost.
+  // Only scale with min_diff if this does not overflow the cost.
   // Maximum expected cost is number of clusters times max. cost per cluster.
   // TODO(rikba): Find a tighter upper bound.
   double total_cost_upper_bound = sorted_cost.back() * graph_.size();
-  // Add 0.1 to make sure that min_diff * max_scale > 1.0 to avoid rounding
-  // errors.
-  double max_scale = 1.1 / min_diff;
+  double max_scale = min_diff_desired / min_diff;
   double min_scale =
       std::numeric_limits<int>::max() / (total_cost_upper_bound + 1.0);
   double scale = 1.0;
