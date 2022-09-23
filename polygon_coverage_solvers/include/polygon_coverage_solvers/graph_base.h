@@ -108,14 +108,6 @@ class GraphBase {
   // transforming cost into milli int.
   std::vector<std::vector<int>> getAdjacencyMatrix() const;
 
-  // Preserving three decimal digits.
-  inline int doubleToMilliInt(double in) const {
-    return static_cast<int>(std::round(in * kToMilli));
-  }
-  inline double milliIntToDouble(int in) const {
-    return static_cast<double>(in) * kFromMilli;
-  }
-
  protected:
   // Called from addNode. Creates all edges to the node at the back of the
   // graph.
@@ -138,6 +130,27 @@ class GraphBase {
   size_t goal_idx_;
   bool is_created_;
 };
+
+// Recursive function to search for largest x between lower and upper bound.
+inline double searchLargestFeasibleScale(const double low, const double high,
+                                         const double condition,
+                                         const double eps = 0.1) {
+  // Early abort.
+  if (high < low) return low;
+  // Terminate recursion.
+  if ((high - low) < eps) return low;
+
+  const double mid = (high + low) / 2.0;
+
+  if (mid < condition) {
+    // mid satisfies condition. Find even higher scale.
+    return searchLargestFeasibleScale(mid, high, condition, eps);
+  } else {
+    // mid does not satisfy condition. Find smaller scale that does.
+    return searchLargestFeasibleScale(low, mid, condition, eps);
+  }
+}
+
 }  // namespace polygon_coverage_planning
 
 #include "polygon_coverage_solvers/impl/graph_base_impl.h"
