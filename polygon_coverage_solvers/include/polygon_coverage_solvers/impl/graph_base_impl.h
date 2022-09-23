@@ -20,11 +20,11 @@
 #ifndef POLYGON_COVERAGE_SOLVERS_GRAPH_BASE_IMPL_H_
 #define POLYGON_COVERAGE_SOLVERS_GRAPH_BASE_IMPL_H_
 
-#include <algorithm>
-#include <set>
-
 #include <ros/assert.h>
 #include <ros/console.h>
+
+#include <algorithm>
+#include <set>
 
 namespace polygon_coverage_planning {
 
@@ -324,15 +324,69 @@ Solution GraphBase<NodeProperty, EdgeProperty>::reconstructSolution(
 template <class NodeProperty, class EdgeProperty>
 std::vector<std::vector<int>>
 GraphBase<NodeProperty, EdgeProperty>::getAdjacencyMatrix() const {
+  ROS_DEBUG("Create adjacency matrix.");
+  // First scale the matrix such that when converting the cost to integers two
+  // costs can always be differentiated (except for if they are the same). Find
+  // the minimum absolute difference between any two values to normalize the
+  // adjacency matrix.
+  // https://afteracademy.com/blog/minimum-absolute-difference-in-an-array
+  std::vector<double> sorted_cost;
+  sorted_cost.reserve(graph_.size() * graph_.size());
+  for (size_t i = 0; i < graph_.size(); ++i) {
+    for (size_t j = 0; j < graph_[i].size(); ++j) {
+      const EdgeId edge(i, j);
+      double cost;
+      if (edgeExists(edge) && getEdgeCost(edge, &cost)) {
+        sorted_cost.push_back(cost);
+      }
+    }
+  }
+  sort(sorted_cost.begin(), sorted_cost.end());
+  const double equality = 0.000001;  // Min. considered cost difference.
+  const double min_diff_desired = 1.1; // To distinguish integer value costs.
+  auto min_diff = min_diff_desired;
+  if (sorted_cost.back() == 0.0) {
+    ROS_ERROR("Adjacency matrix invalid. Greatest cost is 0.0.");
+    min_diff = std::numeric_limits<double>::max();
+  }
+  for (size_t i = 0; i < sorted_cost.size() - 1; i++) {
+    auto diff = std::fabs(sorted_cost[i + 1] - sorted_cost[i]);
+    if (diff > equality && diff < min_diff) min_diff = diff;
+  }
+
+  // Only scale with min_diff if this does not overflow the cost.
+  // Maximum expected cost is number of clusters times max. cost per cluster.
+  // TODO(rikba): Find a tighter upper bound.
+  double total_cost_upper_bound = sorted_cost.back() * graph_.size();
+  double max_scale = min_diff_desired / min_diff;
+  double min_scale =
+      std::numeric_limits<int>::max() / (total_cost_upper_bound + 1.0);
+  double scale = 1.0;
+  if (max_scale * total_cost_upper_bound < std::numeric_limits<int>::max()) {
+    ROS_DEBUG("Optimal scale %.9f applied.", max_scale);
+    scale = max_scale;
+  } else {
+    ROS_DEBUG("Minimum scale %.9f applied.", min_scale);
+    scale = min_scale;
+    ROS_WARN_COND(
+        min_diff < 1.0,
+        "The adjacency matrix is ill conditioned. Consider removing small "
+        "details in the polygon to have even decomposition sizes. Loss of "
+        "optimality!");
+  }
+
+  ROS_DEBUG("The minimum cost difference is: %.9f", min_diff);
+  ROS_INFO("The adjacency matrix scale is: %.9f", scale);
+
+  // Create scale adjacency matrix.
   std::vector<std::vector<int>> m(graph_.size(),
                                   std::vector<int>(graph_.size()));
-
   for (size_t i = 0; i < m.size(); ++i) {
     for (size_t j = 0; j < m[i].size(); ++j) {
       const EdgeId edge(i, j);
       double cost;
       if (edgeExists(edge) && getEdgeCost(edge, &cost)) {
-        m[i][j] = doubleToMilliInt(cost);
+        m[i][j] = static_cast<int>(cost * scale);
       } else {
         m[i][j] = std::numeric_limits<int>::max();
       }

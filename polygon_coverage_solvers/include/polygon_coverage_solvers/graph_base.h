@@ -108,14 +108,6 @@ class GraphBase {
   // transforming cost into milli int.
   std::vector<std::vector<int>> getAdjacencyMatrix() const;
 
-  // Preserving three decimal digits.
-  inline int doubleToMilliInt(double in) const {
-    return static_cast<int>(std::round(in * kToMilli));
-  }
-  inline double milliIntToDouble(int in) const {
-    return static_cast<double>(in) * kFromMilli;
-  }
-
  protected:
   // Called from addNode. Creates all edges to the node at the back of the
   // graph.
@@ -138,6 +130,7 @@ class GraphBase {
   size_t goal_idx_;
   bool is_created_;
 };
+
 }  // namespace polygon_coverage_planning
 
 #include "polygon_coverage_solvers/impl/graph_base_impl.h"
