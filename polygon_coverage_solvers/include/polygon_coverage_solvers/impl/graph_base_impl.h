@@ -344,34 +344,31 @@ GraphBase<NodeProperty, EdgeProperty>::getAdjacencyMatrix() const {
   auto min_diff = std::numeric_limits<double>::max();
   for (size_t i = 0; i < sorted_cost.size() - 2; i++) {
     auto diff = std::fabs(sorted_cost[i + 1] - sorted_cost[i]);
-    if (diff > std::numeric_limits<double>::epsilon() && diff < min_diff)
+    const double equality = 0.000001; // Min. considered cost difference.
+    if (diff > equality && diff < min_diff)
       min_diff = diff;
   }
 
   // Only scale with min_diff if this does not blow up the cost.
+  // Maximum expected cost is number of clusters times max. cost per cluster.
   // TODO(rikba): Find a tighter upper bound.
   double total_cost_upper_bound = sorted_cost.back() * graph_.size();
+  // Add 0.1 to make sure that min_diff * max_scale > 1.0 to avoid rounding
+  // errors.
   double max_scale = 1.1 / min_diff;
   double min_scale =
       std::numeric_limits<int>::max() / (total_cost_upper_bound + 1.0);
   double scale = 1.0;
   if (max_scale * total_cost_upper_bound < std::numeric_limits<int>::max()) {
-    ROS_DEBUG("Optimal scale applied.");
+    ROS_DEBUG("Optimal scale %.9f applied.", max_scale);
     scale = max_scale;
-  } else if (min_scale * total_cost_upper_bound + 1 >
-             std::numeric_limits<int>::max()) {
-    // Recursive search for largest scale between min_scale and max_scale.
-    ROS_WARN(
-        "The adjacency matrix is ill conditioned. Adjacency matrix "
-        "coefficients are reduced to guarantee upper cost bound. Consider "
-        "removing small details in the polygon to have even decomposition "
-        "size.");
-    ROS_WARN("Recursively searching for best scale.");
-    scale = searchLargestFeasibleScale(
-        min_scale, max_scale,
-        std::numeric_limits<int>::max() / total_cost_upper_bound + 1);
-
-    ROS_WARN_COND(min_diff < 1.0, "Loss of optimality.");
+  } else {
+    ROS_DEBUG("Minimum scale %.9f applied.", min_scale);
+    scale = min_scale;
+    ROS_WARN_COND(
+        min_diff < 1.0,
+        "The adjacency matrix is ill conditioned. Consider removing small "
+        "details in the polygon to have even decomposition sizes.");
   }
 
   ROS_DEBUG("The minimum cost difference is: %.9f", min_diff);
