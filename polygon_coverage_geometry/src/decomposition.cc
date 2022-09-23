@@ -106,6 +106,7 @@ bool computeBestBCDFromPolygonWithHoles(const PolygonWithHoles& pwh,
 
   // Get all possible decomposition directions.
   std::vector<Direction_2> directions = findPerpEdgeDirections(pwh);
+  ROS_DEBUG("Number of perpendicular edge directions: %d", directions.size());
 
   // For all possible rotations:
   for (const auto& dir : directions) {
