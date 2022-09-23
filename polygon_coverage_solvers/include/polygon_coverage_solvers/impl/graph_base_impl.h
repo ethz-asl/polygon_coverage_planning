@@ -372,7 +372,8 @@ GraphBase<NodeProperty, EdgeProperty>::getAdjacencyMatrix() const {
     ROS_WARN_COND(
         min_diff < 1.0,
         "The adjacency matrix is ill conditioned. Consider removing small "
-        "details in the polygon to have even decomposition sizes.");
+        "details in the polygon to have even decomposition sizes. Loss of "
+        "optimality!");
   }
 
   ROS_DEBUG("The minimum cost difference is: %.9f", min_diff);
