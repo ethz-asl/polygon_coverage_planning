@@ -342,12 +342,15 @@ GraphBase<NodeProperty, EdgeProperty>::getAdjacencyMatrix() const {
     }
   }
   sort(sorted_cost.begin(), sorted_cost.end());
-  const double equality = 0.000001; // Min. considered cost difference.
+  const double equality = 0.000001;  // Min. considered cost difference.
   auto min_diff = sorted_cost.back();
+  if (sorted_cost.back() == 0.0) {
+    ROS_ERROR("Adjacency matrix invalid. Greatest cost is 0.0.");
+    min_diff = std::numeric_limits<double>::max();
+  }
   for (size_t i = 0; i < sorted_cost.size() - 1; i++) {
     auto diff = std::fabs(sorted_cost[i + 1] - sorted_cost[i]);
-    if (diff > equality && diff < min_diff)
-      min_diff = diff;
+    if (diff > equality && diff < min_diff) min_diff = diff;
   }
 
   // Only scale with min_diff if this does not blow up the cost.
