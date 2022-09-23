@@ -324,6 +324,7 @@ Solution GraphBase<NodeProperty, EdgeProperty>::reconstructSolution(
 template <class NodeProperty, class EdgeProperty>
 std::vector<std::vector<int>>
 GraphBase<NodeProperty, EdgeProperty>::getAdjacencyMatrix() const {
+  ROS_DEBUG("Create adjacency matrix.");
   // First scale the matrix such that when converting the cost to integers two
   // costs can always be differentiated (except for if they are the same). Find
   // the minimum absolute difference between any two values to normalize the
@@ -341,10 +342,10 @@ GraphBase<NodeProperty, EdgeProperty>::getAdjacencyMatrix() const {
     }
   }
   sort(sorted_cost.begin(), sorted_cost.end());
-  auto min_diff = std::numeric_limits<double>::max();
-  for (size_t i = 0; i < sorted_cost.size() - 2; i++) {
+  const double equality = 0.000001; // Min. considered cost difference.
+  auto min_diff = sorted_cost.back();
+  for (size_t i = 0; i < sorted_cost.size() - 1; i++) {
     auto diff = std::fabs(sorted_cost[i + 1] - sorted_cost[i]);
-    const double equality = 0.000001; // Min. considered cost difference.
     if (diff > equality && diff < min_diff)
       min_diff = diff;
   }
