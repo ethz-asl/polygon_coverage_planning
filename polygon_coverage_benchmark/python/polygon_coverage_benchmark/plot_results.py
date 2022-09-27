@@ -32,6 +32,7 @@ colors = {'our_bcd': 'r',
 mmToInch = 0.0393701
 width = 117 * mmToInch
 aspect = 3
+create_fits = True
 
 def linFit(df, planner, uniform_weight=False):
     is_planner = df['planner'] == planner
@@ -135,14 +136,17 @@ def plotTimes(df):
     # Scatter plot
     g = sns.lmplot('num_hole_vertices', 't_total', data=df_t_total, hue='planner', fit_reg=False, legend=False, legend_out=False, size=width, aspect=aspect)
 
-    # Exponential fit.
-    df_fit = createFits(df_t_total)
     min = df_t_total['t_total'].min()
     max = df_t_total['t_total'].max()
-    is_smaller = df_fit['y'] < max
-    df_fit = df_fit[is_smaller]
 
-    sns.lineplot('x', 'y', data=df_fit, hue='planner', ax=g.axes[0, 0], legend=False)
+    # Exponential fit.
+    if(create_fits):
+        df_fit = createFits(df_t_total)
+        is_smaller = df_fit['y'] < max
+        df_fit = df_fit[is_smaller]
+
+        sns.lineplot('x', 'y', data=df_fit, hue='planner', ax=g.axes[0, 0], legend=False)
+
     g.set(xlim=(df_t_total['num_hole_vertices'].min() - 10, df_t_total['num_hole_vertices'].max() + 10))
     g.set(ylim=(df_t_total['t_total'].min() - 10, df_t_total['t_total'].max() + 10))
     g.set(xlabel="Number of Hole Vertices [1]")
@@ -170,14 +174,18 @@ def plotCosts(df):
     g.ax.legend(loc="upper left")
     g.savefig("./data/cost.pdf", bbox_inches='tight')
 
-    # Linear fit.
-    df_fit = createCostFits(df)
     min = df['cost'].min()
     max = df['cost'].max()
-    is_smaller = df_fit['y'] < max
-    df_fit = df_fit[is_smaller]
 
-    sns.lineplot('x', 'y', data=df_fit, hue='planner', ax=g.axes[0, 0], legend=False)
+    # Linear fit.
+    print(df.shape)
+    if(create_fits):
+        df_fit = createCostFits(df)
+        is_smaller = df_fit['y'] < max
+        df_fit = df_fit[is_smaller]
+
+        sns.lineplot('x', 'y', data=df_fit, hue='planner', ax=g.axes[0, 0], legend=False)
+
     g.set(xlim=(df['num_hole_vertices'].min() - 10, df['num_hole_vertices'].max() + 10))
     g.set(ylim=(df['cost'].min() - 10, df['cost'].max() + 10))
     g.set(xlabel="Number of Hole Vertices [1]")
