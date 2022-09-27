@@ -31,7 +31,7 @@
 
 #include <polygon_coverage_geometry/cgal_definitions.h>
 #include <polygon_coverage_planners/cost_functions/path_cost_functions.h>
-#include "polygon_coverage_planners/graphs/sweep_plan_graph.h"
+#include <polygon_coverage_planners/graphs/sweep_plan_graph.h>
 #include <polygon_coverage_planners/planners/polygon_stripmap_planner.h>
 #include <polygon_coverage_planners/planners/polygon_stripmap_planner_exact.h>
 #include <polygon_coverage_planners/sensor_models/line.h>

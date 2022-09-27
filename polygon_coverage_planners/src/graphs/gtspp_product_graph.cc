@@ -94,7 +94,7 @@ bool GtsppProductGraph::addStartNode(const NodeProperty& node_property) {
     auto current_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = current_time - start_time;
     if (elapsed.count() > kTimeOut) {
-      ROS_ERROR("Timout addStartNode.");
+      ROS_ERROR("Timeout addStartNode.");
       return false;
     }
     if (lattice_id == boolean_lattice_->getStartIdx()) {
@@ -119,7 +119,7 @@ bool GtsppProductGraph::addGoalNode(const NodeProperty& node_property) {
     auto current_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = current_time - start_time;
     if (elapsed.count() > kTimeOut) {
-      ROS_ERROR("Timout addGoalNode.");
+      ROS_ERROR("Timeout addGoalNode.");
       return false;
     }
     if (lattice_id == boolean_lattice_->getGoalIdx()) {
@@ -459,7 +459,7 @@ bool GtsppProductGraph::createDijkstra(Solution* solution) {
     auto current_time = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> elapsed = current_time - start_time;
     if (elapsed.count() > kTimeOut) {
-      ROS_ERROR("Timout createDijkstra.");
+      ROS_ERROR("Timeout createDijkstra.");
       return false;
     }
     // Pop vertex with lowest score from open set.

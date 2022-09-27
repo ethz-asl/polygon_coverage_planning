@@ -32,7 +32,7 @@ colors = {'our_bcd': 'r',
 mmToInch = 0.0393701
 width = 117 * mmToInch
 aspect = 3
-create_fits = True
+create_fits = False
 
 def linFit(df, planner, uniform_weight=False):
     is_planner = df['planner'] == planner
