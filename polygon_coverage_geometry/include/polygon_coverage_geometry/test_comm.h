@@ -160,6 +160,22 @@ PolygonWithHoles createSophisticatedPolygon() {
   return poly_with_holes;
 }
 
+template <class Polygon>
+Polygon createQiangsun89Polygon() {
+  Polygon poly;
+  poly.push_back(Point_2(3572.0, 115.0));
+  poly.push_back(Point_2(2724.0, 460.0));
+  poly.push_back(Point_2(2660.0, 95.0));
+  poly.push_back(Point_2(855.0, 813.0));
+  poly.push_back(Point_2(1182.0, 1497.0));
+  poly.push_back(Point_2(2925.0, 832.0));
+  poly.push_back(Point_2(2905.0, 480.0));
+  poly.push_back(Point_2(3608.0, 208.0));
+
+  return poly;
+}
+
+
 template <class Kernel>
 bool checkVerticesIdentical(const typename Kernel::Point_2& a,
                             const typename Kernel::Point_2& b) {
