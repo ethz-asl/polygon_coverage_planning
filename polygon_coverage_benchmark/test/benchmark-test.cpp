@@ -21,8 +21,7 @@
 #include <sstream>
 
 #include <CGAL/Boolean_set_operations_2.h>
-#include <glog/logging.h>
-#include <gtest/gtest.h>
+#include <ros/assert.h>
 #include <ros/package.h>
 #include <ros/ros.h>
 #include <yaml-cpp/yaml.h>
@@ -54,7 +53,7 @@ const double kMapScale = 1.0;
 using namespace polygon_coverage_planning;
 
 bool loadPolygonFromNode(const YAML::Node& node, Polygon_2* poly) {
-  CHECK_NOTNULL(poly);
+  ROS_ASSERT(poly);
   if (!node) return false;
   YAML::Node points = node["points"];
   if (!points) return false;
@@ -74,7 +73,7 @@ bool loadPolygonFromNode(const YAML::Node& node, Polygon_2* poly) {
 }
 
 bool loadPWHFromFile(const std::string& file, PolygonWithHoles* polygon) {
-  CHECK_NOTNULL(polygon);
+  ROS_ASSERT(polygon);
 
   YAML::Node node = YAML::LoadFile(file);
 
@@ -89,7 +88,7 @@ bool loadPWHFromFile(const std::string& file, PolygonWithHoles* polygon) {
     pwh = *diff.begin();
   }
 
-  CHECK_NOTNULL(polygon);
+  ROS_ASSERT(polygon);
   *polygon = PolygonWithHoles(pwh);
 
   return true;
@@ -107,8 +106,8 @@ size_t computeNoHoleVertices(const PolygonWithHoles& poly) {
 
 bool loadAllInstances(std::vector<PolygonWithHoles>* polys,
                       std::vector<std::string>* names) {
-  CHECK_NOTNULL(polys);
-  CHECK_NOTNULL(names);
+  ROS_ASSERT(polys);
+  ROS_ASSERT(names);
   polys->reserve(kObstacleBins * kNoInstances);
   names->reserve(kObstacleBins * kNoInstances);
 
@@ -238,8 +237,8 @@ void saveTimes(Result* result) {
 
 template <class StripmapPlanner>
 bool runPlanner(StripmapPlanner* planner, Result* result) {
-  CHECK_NOTNULL(planner);
-  CHECK_NOTNULL(result);
+  ROS_ASSERT(planner);
+  ROS_ASSERT(result);
   ROS_INFO_STREAM("Planning with: " << result->planner);
 
   // Setup.
@@ -267,14 +266,18 @@ bool runPlanner(StripmapPlanner* planner, Result* result) {
   return true;
 }
 
-TEST(BenchmarkTest, Benchmark) {
+void runBenchmark() {
   std::vector<PolygonWithHoles> polys;
   std::vector<std::string> names;
 
   // Load polygons.
   ROS_INFO_STREAM("Loading " << kObstacleBins * kNoInstances
                              << " test instances.");
-  EXPECT_TRUE(loadAllInstances(&polys, &names));
+  if(!loadAllInstances(&polys, &names))
+  {
+        ROS_ERROR("Failed to load all instances");
+        return;
+  }
 
   // Run planners.
   for (size_t i = 0; i < polys.size(); ++i) {
@@ -330,9 +333,9 @@ TEST(BenchmarkTest, Benchmark) {
     PolygonStripmapPlannerExact one_dir_exact(one_dir_exact_settings);
 
     // Run planners.
-    EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>(&our_bcd, &our_bcd_result));
-    EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>(&our_tcd, &our_tcd_result));
-    EXPECT_TRUE(runPlanner<PolygonStripmapPlanner>(&one_dir_gkma,
+    ROS_ASSERT(runPlanner<PolygonStripmapPlanner>(&our_bcd, &our_bcd_result));
+    ROS_ASSERT(runPlanner<PolygonStripmapPlanner>(&our_tcd, &our_tcd_result));
+    ROS_ASSERT(runPlanner<PolygonStripmapPlanner>(&one_dir_gkma,
                                                    &one_dir_gkma_result));
 
     bool success_gtsp_exact = false;
@@ -345,24 +348,22 @@ TEST(BenchmarkTest, Benchmark) {
          &one_dir_exact, &one_dir_exact_result);
     }
 
-
     // Save results.
-    if (i == 0) EXPECT_TRUE(initCsv(kResultsFile, our_bcd_result));
+    if (i == 0) ROS_ASSERT(initCsv(kResultsFile, our_bcd_result));
 
-    EXPECT_TRUE(resultToCsv(kResultsFile, our_bcd_result));
-    EXPECT_TRUE(resultToCsv(kResultsFile, our_tcd_result));
-    EXPECT_TRUE(resultToCsv(kResultsFile, one_dir_gkma_result));
+    ROS_ASSERT(resultToCsv(kResultsFile, our_bcd_result));
+    ROS_ASSERT(resultToCsv(kResultsFile, our_tcd_result));
+    ROS_ASSERT(resultToCsv(kResultsFile, one_dir_gkma_result));
 
     if (success_gtsp_exact)
-      EXPECT_TRUE(resultToCsv(kResultsFile, gtsp_exact_result));
+      ROS_ASSERT(resultToCsv(kResultsFile, gtsp_exact_result));
     if (success_one_dir_exact)
-      EXPECT_TRUE(resultToCsv(kResultsFile, one_dir_exact_result));
+      ROS_ASSERT(resultToCsv(kResultsFile, one_dir_exact_result));
   }
 
 }
 
 int main(int argc, char** argv) {
-  testing::InitGoogleTest(&argc, argv);
-  google::InitGoogleLogging(argv[0]);
-  return RUN_ALL_TESTS();
+  runBenchmark();
+  return 0;
 }

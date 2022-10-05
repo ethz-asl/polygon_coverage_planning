@@ -15,4 +15,5 @@
   <depend>polygon_coverage_msgs</depend>
   <depend>polygon_coverage_geometry</depend>
   <depend>polygon_coverage_planners</depend>
+  <depend>polygon_coverage_ros</depend>
 </package>
