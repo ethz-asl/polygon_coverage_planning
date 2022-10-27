@@ -17,15 +17,15 @@
  * this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef POLYGON_COVERAGE_SOLVERS_GK_MA_H_
-#define POLYGON_COVERAGE_SOLVERS_GK_MA_H_
+#ifndef POLYGON_COVERAGE_SOLVERS_GLKH_H_
+#define POLYGON_COVERAGE_SOLVERS_GLKH_H_
 
 #include <string>
 #include <vector>
 
-// Interfaces with the GK MA GTSP solver.
+// Interfaces with the GLKH GTSP solver.
 namespace polygon_coverage_planning {
-namespace gk_ma {
+namespace glkh {
 struct Task {
   Task(const std::vector<std::vector<int>>& m,
        const std::vector<std::vector<int>>& clusters)
@@ -36,37 +36,29 @@ struct Task {
   std::vector<std::vector<int>> clusters;
 };
 
-// References GkMa.exe. Singleton, because it may only be referenced once during
+// References GLKH. Singleton, because it may only be referenced once during
 // runtime.
 // https://stackoverflow.com/questions/1008019/c-singleton-design-pattern
-class GkMa {
+class Glkh {
  public:
-  inline static GkMa& getInstance() {
-    static GkMa instance;
+  inline static Glkh& getInstance() {
+    static Glkh instance;
     return instance;
   }
-  GkMa(GkMa const&) = delete;
-  void operator=(GkMa const&) = delete;
+  Glkh(Glkh const&) = delete;
+  void operator=(Glkh const&) = delete;
 
-  void setSolver(const std::string& file, bool binary);
   void setSolver(const Task& task);
   bool solve();
   inline std::vector<int> getSolution() const { return solution_; }
 
  private:
-  GkMa();
-  ~GkMa();
-
-  MonoArray* vectorOfVectorToMonoArray(
-      const std::vector<std::vector<int>>& in) const;
-
-  MonoDomain* domain_;
-  MonoObject* solver_;
-  MonoClass* solver_class_;
+  Glkh();
+  ~Glkh() = default;
 
   std::vector<int> solution_;
 };
-}  // namespace gk_ma
+}  // namespace glkh
 }  // namespace polygon_coverage_planning
 
-#endif  // POLYGON_COVERAGE_SOLVERS_GK_MA_H_
+#endif  // POLYGON_COVERAGE_SOLVERS_GLKH_H_

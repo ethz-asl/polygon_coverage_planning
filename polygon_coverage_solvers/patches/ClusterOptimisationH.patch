@@ -1,7 +1,0 @@
-3,4c3,4
-< 	__declspec(dllexport) int ClusterOptimisation(int *solution);
-< }
-\ No newline at end of file
----
-> 	__attribute__ ((visibility ("default"))) int ClusterOptimisation(int *solution);
-> }

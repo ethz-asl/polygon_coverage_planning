@@ -1,0 +1,11 @@
+--- ./SRC/SolveTSP.c	2014-05-07 17:05:32.000000000 +0200
++++ ./SRC/SolveTSP_new.c	2021-08-10 15:12:54.771882638 +0200
+@@ -25,7 +25,7 @@
+     char Command[256], Key[256], Buffer[256], *Line, *Keyword;
+     char Delimiters[] = " :=\n\t\r\f\v\xef\xbb\xbf";
+
+-    sprintf(Command, "./LKH %s", ParFileName);
++    sprintf(Command, "rosrun polygon_coverage_solvers LKH %s", ParFileName);
+     assert(p = popen(Command, "r"));
+     Cost = PLUS_INFINITY;
+     while (fgets(Buffer, sizeof(Buffer), p)) {

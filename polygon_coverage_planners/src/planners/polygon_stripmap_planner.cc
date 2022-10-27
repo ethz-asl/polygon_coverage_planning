@@ -99,7 +99,7 @@ bool PolygonStripmapPlanner::runSolver(const Point_2& start,
                                        std::vector<Point_2>* solution) const {
   ROS_ASSERT(solution);
 
-  ROS_INFO("Start solving GTSP using GK MA.");
+  ROS_INFO("Start solving GTSP using GLKH.");
   return sweep_plan_graph_.solve(start, goal, solution);
 }
 

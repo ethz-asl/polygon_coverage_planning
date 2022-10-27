@@ -1,4 +1,0 @@
-98c98
-< 			return ProgramDirectory.FullName + '\\' + fileName;
----
-> 			return ProgramDirectory.FullName + '/' + fileName;

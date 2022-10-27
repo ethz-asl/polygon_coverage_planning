@@ -24,15 +24,15 @@
 #include <gtest/gtest.h>
 #include <ros/package.h>
 
-#include "polygon_coverage_solvers/gk_ma.h"
+#include "polygon_coverage_solvers/glkh.h"
 
 using namespace polygon_coverage_planning;
-using namespace gk_ma;
+using namespace glkh;
 
 const std::string kPackageName = "polygon_coverage_solvers";
 
-TEST(GkMa, LoadFromFile) {
-  GkMa& instance = GkMa::getInstance();
+TEST(Glkh, LoadFromFile) {
+  Glkh& instance = Glkh::getInstance();
 
   // Package directory.
   std::string instances_path = ros::package::getPath(kPackageName);
@@ -52,8 +52,8 @@ TEST(GkMa, LoadFromFile) {
   }
 }
 
-TEST(GkMa, LoadFromTask) {
-  GkMa& instance = GkMa::getInstance();
+TEST(Glkh, LoadFromTask) {
+  Glkh& instance = Glkh::getInstance();
 
   std::srand(123456);
 
