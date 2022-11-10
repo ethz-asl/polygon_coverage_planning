@@ -14,6 +14,7 @@
 
   <depend>rosconsole</depend>
   <depend>roslib</depend>
+  <depend>cgal</depend>
   <depend>rosunit</depend>
   <depend>polygon_coverage_solvers</depend>
 
