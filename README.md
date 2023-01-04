@@ -63,6 +63,10 @@ The plan is generated via
 
 The resulting waypointlist is published as [geometry_msgs/PoseArray](http://docs.ros.org/en/lunar/api/geometry_msgs/html/msg/PoseArray.html) on topic `/waypoint_list`.
 
+To publish the waypoint list
+- call `rosservice call /coverage_planner/publish_path_points` or
+- set `publish_plan_on_planning_complete: true` in [coverage.yaml](polygon_coverage_ros/cfg/coverage_planner.yaml#L17)
+
 ### Euclidean Shortest Path Planning
 ```
 roslaunch polygon_coverage_ros shortest_path_planner.launch
