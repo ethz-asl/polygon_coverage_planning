@@ -11,4 +11,9 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>rospy</depend>
+  <depend>roslib</depend>
+  <depend>polygon_coverage_msgs</depend>
+  <depend>polygon_coverage_geometry</depend>
+  <depend>polygon_coverage_planners</depend>
+  <depend>polygon_coverage_ros</depend>
 </package>
