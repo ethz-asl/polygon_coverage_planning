@@ -24,7 +24,25 @@
 #include <CGAL/Exact_predicates_inexact_constructions_kernel.h>
 #include <CGAL/Polygon_with_holes_2.h>
 
-typedef CGAL::Exact_predicates_exact_constructions_kernel K;
+#include <CGAL/Exact_circular_kernel_2.h>
+
+// Explicitely define the EPECK to use for CGAL that uses Gmpq to allow conversion to circular kernel.
+// See https://stackoverflow.com/questions/67141983/cgal-coordinate-value-transformation-not-working-anymore-in-5-2-1
+namespace CGAL
+{
+    class Kernel
+        : public Type_equality_wrapper<
+              Lazy_kernel_base<Simple_cartesian<Gmpq>,
+                               Simple_cartesian<Interval_nt_advanced>,
+                               Cartesian_converter<Simple_cartesian<Gmpq>,
+                                                   Simple_cartesian<Interval_nt_advanced>>,
+                               Kernel>,
+              Kernel>
+    {
+    };
+} // namespace CGAL
+
+typedef CGAL::Kernel K;
 typedef K::FT FT;
 typedef K::Point_2 Point_2;
 typedef K::Point_3 Point_3;
@@ -45,5 +63,10 @@ typedef Polygon_2::Edge_const_iterator EdgeConstIterator;
 typedef Polygon_2::Edge_const_circulator EdgeConstCirculator;
 typedef CGAL::Polygon_with_holes_2<K> PolygonWithHoles;
 typedef CGAL::Exact_predicates_inexact_constructions_kernel InexactKernel;
+
+typedef CGAL::Exact_circular_kernel_2 Kc;
+typedef Kc::Point_2 Point_2c; 
+typedef CGAL::Cartesian_converter<K, Kc> K_to_Kc;
+typedef CGAL::Cartesian_converter<Kc, K> Kc_to_K;
 
 #endif  // POLYGON_COVERAGE_GEOMETRY_CGAL_DEFINITIONS_H_
