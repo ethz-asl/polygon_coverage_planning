@@ -22,6 +22,7 @@ include_directories(include ${catkin_INCLUDE_DIRS})
 add_library(${PROJECT_NAME}
   src/bcd.cc
   src/boolean.cc
+  src/circular_segments.cc
   src/cgal_comm.cc
   src/decomposition.cc
   src/offset.cc
